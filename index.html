@@ -313,10 +313,26 @@ function getCfg(key,lvl,path){
   return TS[key][lvl+(path||'')]||TS[key][1];
 }
 
-// ── UPGRADE COSTS ── (edit multipliers here)
-function upgCost(key,toLvl){
+// ── UPGRADE COSTS ── reads directly from TS table
+function upgCost(key,toLvl,path){
+  if(key==='wall'){
+    const s=TS.wall[Math.min(toLvl,5)];
+    return s?s.cost:TS.wall[1].cost;
+  }
+  if(toLvl===2){
+    // if path is specified, use it; otherwise default to A for display
+    const lk2='2'+(path||'A');
+    const s2=TS[key]&&TS[key][lk2];
+    if(s2) return s2.cost;
+    const sA=TS[key]&&TS[key]['2A'];
+    return sA?sA.cost:Math.round(TS[key][1].cost*0.6);
+  }
+  // for lvl 3-5, need the path
+  const lk=toLvl+(path||'A');
+  const s=TS[key]&&TS[key][lk];
+  if(s) return s.cost;
+  // fallback
   const base=TS[key][1].cost;
-  if(toLvl===2) return Math.round(base*0.6);
   if(toLvl===3) return Math.round(base*1.0);
   if(toLvl===4) return Math.round(base*1.45);
   if(toLvl===5) return Math.round(base*2.0);
@@ -576,18 +592,19 @@ function showPanel(t){
   if(isChoice){
     pr.style.display='flex';ub.style.display='none';
     const pN=PATH_NAMES[t.key]||{A:'A',B:'B'},pC=PATH_COLORS[t.key]||{A:'#33aaff',B:'#ff8844'};
-    const uc=upgCost(t.key,2);
+    const ucA=upgCost(t.key,2,'A');
+    const ucB=upgCost(t.key,2,'B');
     const pa=document.getElementById('pA'),pb=document.getElementById('pB');
     pa.style.setProperty('--pc',pC.A);pb.style.setProperty('--pc',pC.B);
-    pa.innerHTML=`${pN.A}<br><small>${uc}g</small>`;
-    pb.innerHTML=`${pN.B}<br><small>${uc}g</small>`;
-    pa.disabled=gold<uc;pb.disabled=gold<uc;
+    pa.innerHTML=`${pN.A}<br><small>${ucA}g</small>`;
+    pb.innerHTML=`${pN.B}<br><small>${ucB}g</small>`;
+    pa.disabled=gold<ucA;pb.disabled=gold<ucB;
   } else {
     pr.style.display='none';
     if(t.level>=ML){ub.style.display='';ub.textContent='MAX LEVEL';ub.disabled=true;}
     else{
       ub.style.display='';
-      const uc=upgCost(t.key,t.level+1);
+      const uc=upgCost(t.key,t.level+1,t.path);
       ub.textContent=`UPGRADE (${uc}g)`;
       ub.disabled=gold<uc;
     }
@@ -597,7 +614,7 @@ function hidePanel(){selTower=null;document.getElementById('up').classList.remov
 
 function doUpgrade(path){
   if(!selTower||selTower.level>=ML) return;
-  const uc=upgCost(selTower.key,selTower.level+1);
+  const uc=upgCost(selTower.key,selTower.level+1,path||selTower.path);
   if(gold<uc){msg('⚠ Not enough gold!');return;}
   gold-=uc;
   if(path) selTower.path=path;
@@ -1605,7 +1622,7 @@ function draw(){
   }
 }
 
-function loop(){if(!gameOver)for(let i=0;i<speed;i++)update();draw();requestAnimationFrame(loop);}
+function loop(){if(!gameOver)for(let i=0;i<spv v vvc vc vcvc vcx vc vc v ccv cv  vcvc cvc cv vcv vvv vcvc vc vc vc v cvc vc v vc v vv cv v cv v v vv v v v vv v v vv cv v v v v vc v v cv cv v v vv cvv vv cvv cv cvvvv vv cv vvvc vc vv vc v cvc v cv v cv vc v vc vc vc vc vc vv v v v cvvv vc v vv cvc v vvvv vc vc v v v vc vc vv cvv cvv v vv vv vvv v vc vc v cvc vvv vvvvvc vv vc vvv vc vc vvvc vv cv cv v cvc vc v cvv cv vc vc v v cvc v cvc vc vc vc vc vc vv cvvvc vvvvv cvc v cv cv v cvv cvv v v cvc vvv cvc vcvv cv cv cv cv v cv v cv v cv cv v v cv v cv cv cv cvvv cvvcv eed;i++)update();draw();requestAnimationFrame(loop);}
 gameMode='easy';
 init();
 requestAnimationFrame(loop);
