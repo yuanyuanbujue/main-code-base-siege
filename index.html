@@ -221,13 +221,13 @@ const TS={
   basic:{
     1:   {t:CT.BASIC,cost:75,hp:80,  rng:148,dmg:18,cd:55, aoe:0,  chn:0,col:'#33aaff',name:'BLASTER'},
     '2A':{t:CT.BASIC,cost:350,hp:110, rng:155,dmg:9, cd:14, aoe:0,  chn:0,col:'#33aaff',name:'MINIGUN',    minigun:true},
-    '2B':{t:CT.BASIC,cost:150,hp:110, rng:175,dmg:38,cd:72, aoe:0,  chn:0,col:'#55ddff',name:'SHOCKWAVE',  shockwave:true,shockSpd:3.2,shockMaxR:200},
+    '2B':{t:CT.BASIC,cost:150,hp:110, rng:175,dmg:20,cd:72, aoe:0,  chn:0,col:'#55ddff',name:'SHOCKWAVE',  shockwave:true,shockSpd:3.2,shockMaxR:200},
     '3A':{t:CT.BASIC,cost:500,hp:148, rng:162,dmg:12,cd:9,  aoe:0,  chn:0,col:'#55aaff',name:'MINIGUN+',   minigun:true},
-    '3B':{t:CT.BASIC,cost:1750,hp:148, rng:220,dmg:58,cd:60, aoe:0,  chn:0,col:'#44eeff',name:'SHOCKWAVE+', shockwave:true,shockSpd:4,shockMaxR:290},
+    '3B':{t:CT.BASIC,cost:1750,hp:148, rng:220,dmg:30,cd:60, aoe:0,  chn:0,col:'#44eeff',name:'SHOCKWAVE+', shockwave:true,shockSpd:4,shockMaxR:290},
     '4A':{t:CT.BASIC,cost:750,hp:195, rng:172,dmg:16,cd:6,  aoe:0,  chn:0,col:'#66bbff',name:'MINIGUN++',  minigun:true},
-    '4B':{t:CT.BASIC,cost:2500,hp:195, rng:260,dmg:80,cd:50, aoe:0,  chn:0,col:'#33eeff',name:'SHOCKWAVE++',shockwave:true,shockSpd:4.8,shockMaxR:360},
+    '4B':{t:CT.BASIC,cost:2500,hp:195, rng:260,dmg:40,cd:50, aoe:0,  chn:0,col:'#33eeff',name:'SHOCKWAVE++',shockwave:true,shockSpd:4.8,shockMaxR:360},
     '5A':{t:CT.BASIC,cost:1000,hp:260, rng:185,dmg:24,cd:4,  aoe:0,  chn:0,col:'#88ccff',name:'GATLING',    minigun:true},
-    '5B':{t:CT.BASIC,cost:5000,hp:260, rng:320,dmg:115,cd:40,aoe:0,  chn:0,col:'#00ffff',name:'STORM WAVE', shockwave:true,shockSpd:5.5,shockMaxR:440},
+    '5B':{t:CT.BASIC,cost:5000,hp:260, rng:320,dmg:80,cd:40,aoe:0,  chn:0,col:'#00ffff',name:'STORM WAVE', shockwave:true,shockSpd:5.5,shockMaxR:440},
   },
   sniper:{
     1:   {t:CT.SNIPER,cost:175,hp:60, rng:285,dmg:42, cd:100,aoe:0,  chn:0,col:'#bb44ff',name:'RAILGUN'},
@@ -548,6 +548,7 @@ function syncUI(){
   document.getElementById('vs').textContent=score;
   document.getElementById('vk').textContent=kills;
   document.getElementById('start').disabled=waveOn||gameOver;
+  if(selTower) showPanel(selTower);
 }
 function msg(t,d=2500){const e=document.getElementById('msg');e.textContent=t;clearTimeout(e._t);e._t=setTimeout(()=>e.textContent='',d);}
 function ft(x,y,t,col='#ffd700'){floats.push({x,y,t,col,life:62,vy:-.6});}
@@ -784,10 +785,10 @@ const EDEFS={
   heavyarmor:{hpM:3.5,  spdM:.48,  rw:55, sz:13, col:'#cc9944',glow:'#ddbb55', lbl:'🛡',atkD:38,atkCdB:42,flying:false,robot:false,heavyArmor:true},
   gunner:    {hpM:1.2,  spdM:.85,  rw:18, sz:9,  col:'#ff6600',glow:'#ff9944', lbl:'🔫',atkD:8, atkCdB:38,flying:false,robot:false,isGunner:true},
   shielder:  {hpM:2.8,  spdM:.50,  rw:30, sz:12, col:'#00ddff',glow:'#44eeff', lbl:'🔵',atkD:15,atkCdB:55,flying:false,robot:false,isShielder:true},
-  boss_normal:{hpM:12,  spdM:.40,  rw:180,sz:20, col:'#ff0055',glow:'#ff0099', lbl:'★', atkD:90,atkCdB:48,flying:false,robot:false,isBoss:true,bossType:'normal'},
-  boss_armor: {hpM:18,  spdM:.34,  rw:250,sz:20, col:'#8844ff',glow:'#bb55ff', lbl:'★', atkD:80,atkCdB:50,flying:false,robot:false,isBoss:true,bossType:'armor',heavyArmor:true},
-  boss_robot: {hpM:15,  spdM:.38,  rw:220,sz:20, col:'#55aacc',glow:'#77ccee', lbl:'★', atkD:85,atkCdB:48,flying:false,robot:true, isBoss:true,bossType:'robot'},
-  boss_flying:{hpM:10,  spdM:.70,  rw:200,sz:18, col:'#00ccff',glow:'#44eeff', lbl:'★', atkD:75,atkCdB:44,flying:true, robot:false,isBoss:true,bossType:'flying',altitude:28},
+  boss_normal:{hpM:15,  spdM:.40,  rw:180,sz:20, col:'#ff0055',glow:'#ff0099', lbl:'★', atkD:90,atkCdB:48,flying:false,robot:false,isBoss:true,bossType:'normal'},
+  boss_armor: {hpM:25,  spdM:.34,  rw:250,sz:20, col:'#8844ff',glow:'#bb55ff', lbl:'★', atkD:80,atkCdB:50,flying:false,robot:false,isBoss:true,bossType:'armor',heavyArmor:true},
+  boss_robot: {hpM:18,  spdM:.38,  rw:220,sz:20, col:'#55aacc',glow:'#77ccee', lbl:'★', atkD:85,atkCdB:48,flying:false,robot:true, isBoss:true,bossType:'robot'},
+  boss_flying:{hpM:11,  spdM:.70,  rw:200,sz:18, col:'#00ccff',glow:'#44eeff', lbl:'★', atkD:75,atkCdB:44,flying:true, robot:false,isBoss:true,bossType:'flying',altitude:28},
 };
 
 function spawnE(entry){
@@ -1622,7 +1623,7 @@ function draw(){
   }
 }
 
-function loop(){if(!gameOver)for(let i=0;i<spv v vvc vc vcvc vcx vc vc v ccv cv  vcvc cvc cv vcv vvv vcvc vc vc vc v cvc vc v vc v vv cv v cv v v vv v v v vv v v vv cv v v v v vc v v cv cv v v vv cvv vv cvv cv cvvvv vv cv vvvc vc vv vc v cvc v cv v cv vc v vc vc vc vc vc vv v v v cvvv vc v vv cvc v vvvv vc vc v v v vc vc vv cvv cvv v vv vv vvv v vc vc v cvc vvv vvvvvc vv vc vvv vc vc vvvc vv cv cv v cvc vc v cvv cv vc vc v v cvc v cvc vc vc vc vc vc vv cvvvc vvvvv cvc v cv cv v cvv cvv v v cvc vvv cvc vcvv cv cv cv cv v cv v cv v cv cv v v cv v cv cv cv cvvv cvvcv eed;i++)update();draw();requestAnimationFrame(loop);}
+function loop(){if(!gameOver)for(let i=0;i<speed;i++)update();draw();requestAnimationFrame(loop);}
 gameMode='easy';
 init();
 requestAnimationFrame(loop);
