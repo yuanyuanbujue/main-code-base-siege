@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>BASE SIEGE v14</title>
+<title>BASE SIEGE v15</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -67,7 +67,6 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 #boss-hud-bar.robot{background:#888888;}
 #boss-hud-bar.flying{background:#00aaff;}
 #boss-hud-hp{font-size:8px;color:#ff4488;letter-spacing:1px;text-align:right;}
-/* Base upgrade panel */
 #base-up{display:none;background:#001a0d;border:1px solid #00ff88;padding:9px;flex-direction:column;gap:6px;}
 #base-up.vis{display:flex;}
 #base-up-title{font-size:11px;color:#00ff88;letter-spacing:2px;font-weight:bold;}
@@ -93,19 +92,19 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 </style>
 </head>
 <body>
-<header><h1>BASE SIEGE</h1><span class="ver">v14.0 // MINE·BASE UPGRADE UPDATE</span></header>
+<header><h1>BASE SIEGE</h1><span class="ver">v15.0 // HELICOPTER · SHIELD FIX UPDATE</span></header>
 
 <!-- START SCREEN -->
 <div id="startScreen">
   <div class="ss-title">BASE SIEGE</div>
-  <div class="ss-ver">v14.0 // MINE · GUNNER REWORK · BASE UPGRADES</div>
+  <div class="ss-ver">v15.0 // HELICOPTER TOWER · SHIELD OVERHAUL</div>
   <div class="ss-sub">SELECT YOUR DIFFICULTY AND DEFEND THE BASE</div>
   <div class="ss-box">
     <div class="ss-sh">── SELECT MODE ─────────────────</div>
     <div class="ss-modes">
-      <button class="ss-mode on" data-m="easy">EASY<br><span class="ss-mode-desc">+30% gold · 200 HP · 5 tower levels</span></button>
-      <button class="ss-mode" data-m="normal">NORMAL<br><span class="ss-mode-desc">Standard · 150 HP · 5 tower levels</span></button>
-      <button class="ss-mode" data-m="hard">HARD<br><span class="ss-mode-desc">-15% gold · 120 HP · 5 tower levels</span></button>
+      <button class="ss-mode on" data-m="easy">EASY<br><span class="ss-mode-desc">+30% gold · 200 HP · All towers</span></button>
+      <button class="ss-mode" data-m="normal">NORMAL<br><span class="ss-mode-desc">Standard · 150 HP · All towers</span></button>
+      <button class="ss-mode" data-m="hard">HARD<br><span class="ss-mode-desc">-15% gold · 120 HP · All towers</span></button>
       <button class="ss-mode" data-m="hardcore">HARDCORE<br><span class="ss-mode-desc">-30% gold · 100 HP · Barrier/Blaster/Railgun/Cannon only</span></button>
     </div>
     <button class="ss-begin" id="ss-begin">▶ BEGIN SIEGE</button>
@@ -150,6 +149,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
   <button class="bb"    data-t="spike"   style="--a:#ff4488"><span class="bl"><span class="bd"></span>SPIKE 🔨</span><span class="bc">200g</span></button>
   <button class="bb"    data-t="buff"    style="--a:#ffaa33"><span class="bl"><span class="bd"></span>BUFF TWR ⬆</span><span class="bc">225g</span></button>
   <button class="bb"    data-t="mine"    style="--a:#ffe066"><span class="bl"><span class="bd"></span>MINE 💰</span><span class="bc">300g</span></button>
+  <button class="bb"    data-t="heli"    style="--a:#44ffcc" id="heli-btn"><span class="bl"><span class="bd"></span>HELI PAD 🚁</span><span class="bc">400g</span></button>
   <button class="ab upg-on" id="ubtn">⬆ UPGRADE [click tower]</button>
   <button class="ab" id="sbtn">⤴ SELL [50% back]</button>
   <button class="ab" id="basebtn">🏛 UPGRADE BASE</button>
@@ -162,7 +162,6 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     </div>
     <button id="up-btn" style="display:none">UPGRADE</button>
   </div>
-  <!-- Base upgrade panel -->
   <div id="base-up">
     <div id="base-up-title">🏛 BASE UPGRADE</div>
     <div id="base-up-stats"></div>
@@ -190,18 +189,15 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     <div class="li"><span class="ld" style="background:#ff4444"></span>Berserk — fast atk</div>
     <div class="li"><span class="ld" style="background:#cc9944"></span>Heavy Armor 🛡 — resist non-⚡</div>
     <div class="li"><span class="ld" style="background:#ff6600"></span>Gunner 🔫 — destroys towers!</div>
-    <div class="li"><span class="ld" style="background:#00ddff"></span>Shielder 🔵 — protects nearby!</div>
+    <div class="li"><span class="ld" style="background:#00ddff"></span>Shielder 🔵 — blocks bullets for nearby!</div>
     <div class="li"><span class="ld" style="background:#ff0055;box-shadow:0 0 4px #ff0055"></span>★ Boss variants</div>
   </div>
-  <div class="sh">── NEW: MINE TWR ─</div>
+  <div class="sh">── HELI TOWER 🚁 ─</div>
   <div class="leg">
-    <div class="li"><span class="ld" style="background:#ffe066"></span>Mine A: Compound — +gold/wave (stacks)</div>
-    <div class="li"><span class="ld" style="background:#ffd700"></span>Mine B: Bank — interest on gold (max cap)</div>
-  </div>
-  <div class="sh">── BASE UPGRADE ─</div>
-  <div class="leg">
-    <div class="li"><span class="ld" style="background:#00ff88"></span>Path A: Fortress — HP + defense turret</div>
-    <div class="li"><span class="ld" style="background:#ffd700"></span>Path B: Treasury — +gold income/round</div>
+    <div class="li"><span class="ld" style="background:#44ffcc"></span>Places landing pad. Helicopter pursues nearest enemy to base!</div>
+    <div class="li"><span class="ld" style="background:#00ffaa"></span>Path A: Missile + Bullets (AOE)</div>
+    <div class="li"><span class="ld" style="background:#44ffaa"></span>Path B: Minigun (faster heli)</div>
+    <div class="li"><span class="ld" style="background:#ff2244"></span>⚠ Unavailable in HARDCORE</div>
   </div>
   <div class="sh">── PATHS ───────</div>
   <div class="leg">
@@ -213,16 +209,18 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     <div class="li"><span class="ld" style="background:#ff4400"></span>Cannon B: Devastator</div>
     <div class="li"><span class="ld" style="background:#aaff00"></span>Tesla A: Storm</div>
     <div class="li"><span class="ld" style="background:#88ff44"></span>Tesla B: Plasma Ball</div>
-    <div class="li"><span class="ld" style="background:#00ccff"></span>Medic A: Base Medic (reduces stun!)</div>
-    <div class="li"><span class="ld" style="background:#00ffcc"></span>Medic B: Regen+ (reduces stun!)</div>
+    <div class="li"><span class="ld" style="background:#00ccff"></span>Medic A: Base Medic</div>
+    <div class="li"><span class="ld" style="background:#00ffcc"></span>Medic B: Regen+</div>
     <div class="li"><span class="ld" style="background:#ff4488"></span>Spike A: Rapid Strike</div>
     <div class="li"><span class="ld" style="background:#ff2255"></span>Spike B: Warhammer (stun)</div>
     <div class="li"><span class="ld" style="background:#ffd700"></span>Buff A: Cost Reducer</div>
     <div class="li"><span class="ld" style="background:#ff8800"></span>Buff B: War Beacon</div>
     <div class="li"><span class="ld" style="background:#ffe066"></span>Mine A: Compound Interest</div>
     <div class="li"><span class="ld" style="background:#ffd700"></span>Mine B: Bank (gold ×%/wave)</div>
+    <div class="li"><span class="ld" style="background:#00ffaa"></span>Heli A: Missile+Bullets</div>
+    <div class="li"><span class="ld" style="background:#44ffcc"></span>Heli B: Minigun Speed</div>
   </div>
-  <div class="msg" id="msg">Build defenses — NEW: Mine towers earn gold each wave!</div>
+  <div class="msg" id="msg">Build defenses — NEW: Helicopter tower pursues enemies!</div>
 </div>
 </div>
 
@@ -232,9 +230,9 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 // ══════════════════════════════════════════════
 const COLS=22,ROWS=14,CS=38,W=COLS*CS,H=ROWS*CS;
 const BASE_R=7,BASE_C=COLS-1,SPAWN_R=1,SPAWN_C=0;
-const CT={EMPTY:0,WALL:1,BASIC:2,SNIPER:3,CANNON:4,BASE:5,SPAWN:6,ELECTRIC:7,HEALER:8,SPIKE:9,BUFF:10,MINE:11};
+const CT={EMPTY:0,WALL:1,BASIC:2,SNIPER:3,CANNON:4,BASE:5,SPAWN:6,ELECTRIC:7,HEALER:8,SPIKE:9,BUFF:10,MINE:11,HELI:12};
 const ML=5;
-const BSET=new Set([CT.WALL,CT.BASIC,CT.SNIPER,CT.CANNON,CT.ELECTRIC,CT.HEALER,CT.SPIKE,CT.BUFF,CT.MINE]);
+const BSET=new Set([CT.WALL,CT.BASIC,CT.SNIPER,CT.CANNON,CT.ELECTRIC,CT.HEALER,CT.SPIKE,CT.BUFF,CT.MINE,CT.HELI]);
 
 // ── Tower stats ──
 const TS={
@@ -290,7 +288,6 @@ const TS={
     '5B':{t:CT.ELECTRIC,cost:4000,hp:235,rng:235,dmg:125,cd:60,aoe:175,chn:9,col:'#22ff00',name:'PLASMA CANNON',elecBall:true},
   },
   healer:{
-    // healStunReduce: amount of stun ticks reduced per heal tick to nearby towers
     1:   {t:CT.HEALER,cost:175,hp:90, rng:114,dmg:0,cd:0,aoe:0,chn:0,col:'#00ffcc',name:'MEDIC',         healAmt:5, healTick:72,healWalls:true,healStunReduce:8},
     '2A':{t:CT.HEALER,cost:100,hp:128,rng:124,dmg:0,cd:0,aoe:0,chn:0,col:'#00ccff',name:'BASE MEDIC',    healAmt:7, healTick:65,healWalls:true,baseHealAmt:4,  baseMaxBonus:25,healStunReduce:12},
     '2B':{t:CT.HEALER,cost:200,hp:128,rng:150,dmg:0,cd:0,aoe:0,chn:0,col:'#00ffcc',name:'REGEN+',        healAmt:17,healTick:38,healWalls:true,healStunReduce:16},
@@ -323,9 +320,6 @@ const TS={
     '5A':{t:CT.BUFF,cost:9500,hp:340,rng:200,dmg:0,cd:0,col:'#ffffff',name:'GOLD FORGE',  buffType:'cost',costReduce:.100,dmgBoost:.18,goldBonus:.500},
     '5B':{t:CT.BUFF,cost:15000,hp:1000,rng:99999,dmg:0,cd:0,col:'#ff2200',name:'REAL WAR BEACON',buffType:'combat',dmgBoost:.350,spdBoost:.150,rngBoost:.150},
   },
-  // ── MINE TOWER ──
-  // Path A: Compound — flat gold per wave, stacks per tower, grows with level
-  // Path B: Bank — earns interest % of current gold per wave, capped at maxInterest
   mine:{
     1:   {t:CT.MINE,cost:300,hp:80,rng:0,dmg:0,cd:0,col:'#ffe066',name:'MINE',          mineType:'basic',   goldPerWave:20},
     '2A':{t:CT.MINE,cost:200,hp:110,rng:0,dmg:0,cd:0,col:'#ffe066',name:'COMPOUND',     mineType:'compound',goldPerWave:35},
@@ -337,6 +331,30 @@ const TS={
     '5A':{t:CT.MINE,cost:1200,hp:255,rng:0,dmg:0,cd:0,col:'#ffe066',name:'GOLDMINE',     mineType:'compound',goldPerWave:300},
     '5B':{t:CT.MINE,cost:9000,hp:255,rng:0,dmg:0,cd:0,col:'#ffd700',name:'TREASURY',    mineType:'bank',    interestRate:.20,maxInterest:20000},
   },
+  // ── HELICOPTER TOWER ──
+  // Spawns a flying helicopter that pursues the nearest enemy to the base
+  // Path A: Missile + Bullets — fires missile (AOE) + bullet bursts; medium speed
+  // Path B: Minigun — rapid fire bullets; faster helicopter
+  heli:{
+    1:   {t:CT.HELI,cost:10,hp:120,rng:0,dmg:0,cd:0,col:'#44ffcc',name:'HELI PAD',
+          heliSpd:1.8, heliDmg:28, heliCd:70, heliRng:240, heliAoe:0},
+    '2A':{t:CT.HELI,cost:10,hp:160,rng:0,dmg:0,cd:0,col:'#00ffaa',name:'missile heli',
+          heliSpd:2.0, heliDmg:35, heliCd:55, heliRng:260, heliAoe:55, heliMissile:true},
+    '2B':{t:CT.HELI,cost:10,hp:160,rng:0,dmg:0,cd:0,col:'#44ffcc',name:'military heli',
+          heliSpd:2.8, heliDmg:20, heliCd:18, heliRng:250, heliAoe:0,  heliMinigun:true},
+    '3A':{t:CT.HELI,cost:10,hp:210,rng:0,dmg:0,cd:0,col:'#00ffaa',name:'missile heli+',
+          heliSpd:2.2, heliDmg:55, heliCd:50, heliRng:280, heliAoe:80, heliMissile:true},
+    '3B':{t:CT.HELI,cost:10,hp:210,rng:0,dmg:0,cd:0,col:'#44ffcc',name:'military heli+',
+          heliSpd:3.4, heliDmg:28, heliCd:12, heliRng:265, heliAoe:0,  heliMinigun:true},
+    '4A':{t:CT.HELI,cost:10,hp:280,rng:0,dmg:0,cd:0,col:'#00ffaa',name:'missile heli ++',
+          heliSpd:2.5, heliDmg:85, heliCd:45, heliRng:310, heliAoe:110,heliMissile:true},
+    '4B':{t:CT.HELI,cost:10,hp:280,rng:0,dmg:0,cd:0,col:'#44ffcc',name:'military heli++',
+          heliSpd:4.0, heliDmg:38, heliCd:8,  heliRng:280, heliAoe:0,  heliMinigun:true},
+    '5A':{t:CT.HELI,cost:10,hp:380,rng:0,dmg:0,cd:0,col:'#00ffdd',name:'APACHE',
+          heliSpd:2.8, heliDmg:130,heliCd:38, heliRng:350, heliAoe:160,heliMissile:true},
+    '5B':{t:CT.HELI,cost:10,hp:380,rng:0,dmg:0,cd:0,col:'#66ffdd',name:'THUNDERBOLT',
+          heliSpd:5.0, heliDmg:55, heliCd:5,  heliRng:320, heliAoe:0,  heliMinigun:true},
+  },
 };
 
 const PATH_NAMES={
@@ -344,12 +362,14 @@ const PATH_NAMES={
   cannon:{A:'RAPID FIRE',B:'DEVASTATOR'},electric:{A:'STORM',B:'PLASMA BALL'},
   healer:{A:'BASE MEDIC',B:'REGEN+'},spike:{A:'RAPID STRIKE',B:'WARHAMMER'},
   buff:{A:'COST AMP',B:'WAR BEACON'},mine:{A:'COMPOUND',B:'BANK'},
+  heli:{A:'MISSILE+BULLETS',B:'MINIGUN SPEED'},
 };
 const PATH_COLORS={
   basic:{A:'#33aaff',B:'#55ddff'},sniper:{A:'#cc55ff',B:'#ff44bb'},
   cannon:{A:'#ff9900',B:'#ff6600'},electric:{A:'#aaff00',B:'#88ff44'},
   healer:{A:'#00ccff',B:'#00ffcc'},spike:{A:'#ff4488',B:'#ff2255'},
   buff:{A:'#ffd700',B:'#ff8800'},mine:{A:'#ffe066',B:'#ffd700'},
+  heli:{A:'#00ffaa',B:'#44ffcc'},
 };
 
 function getCfg(key,lvl,path){
@@ -369,11 +389,7 @@ function upgCost(key,toLvl,path){
 }
 
 // ── BASE UPGRADE SYSTEM ──
-// Path A: Fortress — increases HP, adds/upgrades a defense turret that shoots enemies
-// Path B: Treasury — increases gold income each wave
 const BASE_UPG={
-  // base level 0 = no upgrades
-  // path A upgrades: each level adds HP + turret damage
   A:{
     1:{cost:300, hpBonus:50,  turretDmg:25, turretRng:180, turretCd:50,  name:'FORTRESS I'},
     2:{cost:600, hpBonus:80,  turretDmg:50, turretRng:200, turretCd:40,  name:'FORTRESS II'},
@@ -417,7 +433,7 @@ const WAVE_TYPES=[
   {name:'BLITZ ASSAULT',    col:'#ff2200',desc:'Everything at once — survive if you can!',       comp:(w)=>mkComp(w,{normal:.15,fast:.2,tank:.1,boss:.1,flyer:.2,robot:.15,berserk:.1},1.5,0.7)},
   {name:'IRON PHALANX',     col:'#cc9944',desc:'Heavy Armored troops — use ELECTRIC weapons!',  comp:(w)=>mkComp(w,{heavyarmor:.55,tank:.3,normal:.15},1.0,0.8)},
   {name:'GUNNER SQUAD 🔫',  col:'#ff6600',desc:'Gunners destroy your towers!',                  comp:(w)=>mkComp(w,{gunner:.55,fast:.3,normal:.15},1.1)},
-  {name:'SHIELD WALL 🔵',   col:'#00ddff',desc:'Shielders protect nearby allies!',              comp:(w)=>mkComp(w,{shielder:.35,tank:.35,armored:.3},1.0,0.7)},
+  {name:'SHIELD WALL 🔵',   col:'#00ddff',desc:'Shielders block bullets for nearby allies!',    comp:(w)=>mkComp(w,{shielder:.35,tank:.35,armored:.3},1.0,0.7)},
   {name:'⚠ BOSS WAVE — NORMAL',col:'#ff0055',desc:'A massive Normal Boss leads the charge!',
    comp:(w)=>[{variant:'boss_normal',sizeMult:1},...mkComp(w,{normal:.5,fast:.3,tank:.2},0.9)]},
   {name:'⚠ BOSS WAVE — ARMOR', col:'#8844ff',desc:'Armor Boss — use ELECTRIC weapons!',
@@ -454,20 +470,21 @@ function pickWaveType(w){
 const cv=document.getElementById('cv');cv.width=W;cv.height=H;
 const ctx=cv.getContext('2d');
 let grid,flow,towers,enemies,projs,shockwaves,parts,floats,lxfx,healBeams;
+// Helicopters: array of flying helicopter objects linked to heli towers
+let helicopters=[];
 let gold,baseHP,baseMaxHP,wave,score,kills;
 let gameOver,waveOn,spawnQ,spawnT,curWaveType;
 let selBuild='wall',sellMode=false,upgMode=false,baseUpgMode=false;
 let hov=null,selTower=null,speed=1,frame=0;
 let pathBlocked=false,gameStarted=false;
 let _towerIdCounter=0;
-// Base upgrade state
-let baseUpgPath=null; // null=not chosen, 'A' or 'B'
+let baseUpgPath=null;
 let baseUpgLevel=0;
 let baseTurretAngle=0,baseTurretCd=0;
 
 function init(){
   grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));
-  towers=[];enemies=[];projs=[];shockwaves=[];parts=[];floats=[];lxfx=[];healBeams=[];
+  towers=[];enemies=[];projs=[];shockwaves=[];parts=[];floats=[];lxfx=[];healBeams=[];helicopters=[];
   const md=MODES[gameMode];
   gold=Math.round(200*md.goldBonus);baseHP=md.startHp;baseMaxHP=md.startHp;
   wave=0;score=0;kills=0;
@@ -529,6 +546,11 @@ function destroyTower(t){
   const i=towers.indexOf(t);if(i===-1) return;
   towers.splice(i,1);grid[t.row][t.col]=CT.EMPTY;
   for(const e of enemies) if(e.atkTarget===t){e.atkTarget=null;e.mode='move';}
+  // Remove associated helicopter if heli tower
+  if(t.key==='heli'){
+    const hi=helicopters.findIndex(h=>h.towerId===t.id);
+    if(hi!==-1) helicopters.splice(hi,1);
+  }
   if(selTower===t) hidePanel();
   bfs();
   sparks(t.col*CS+CS/2,t.row*CS+CS/2,t.cfg.col,24,3.5);
@@ -562,7 +584,9 @@ function updateModeUI(){
   const md=MODES[gameMode];
   document.querySelectorAll('.bb').forEach(b=>{
     const tp=b.dataset.t;
-    if(md.allowed&&tp&&!md.allowed.has(tp)){b.style.opacity='.25';b.style.pointerEvents='none';}
+    // Hardcore: also disable heli tower
+    const effectiveAllowed=md.allowed?new Set([...md.allowed]):null;
+    if(effectiveAllowed&&tp&&!effectiveAllowed.has(tp)){b.style.opacity='.25';b.style.pointerEvents='none';}
     else{b.style.opacity='';b.style.pointerEvents='';}
   });
   if(md.allowed&&!md.allowed.has(selBuild)){
@@ -614,6 +638,13 @@ function showPanel(t){
     if(c.mineType==='compound'||c.mineType==='basic') s+=`\nGOLD/WAVE: +${c.goldPerWave}g`;
     if(c.mineType==='bank') s+=`\nINTEREST: ${Math.round(c.interestRate*100)}%/wave\nMAX EARN: ${c.maxInterest}g`;
   }
+  if(t.key==='heli'){
+    s+=`\nHELI SPD: ${c.heliSpd}  RNG: ${c.heliRng}`;
+    s+=`\nHELI DMG: ${c.heliDmg}  CD: ${c.heliCd}`;
+    if(c.heliAoe) s+=`  AOE: ${c.heliAoe}`;
+    if(c.heliMissile) s+='\n★ Path A: Missile + Bullet burst';
+    if(c.heliMinigun) s+='\n★ Path B: Minigun rapid fire';
+  }
   if(c.minigun)   s+='\n★ Triple-barrel rapid fire';
   if(c.shockwave) s+=`\n★ Expanding shockwave ring (R:${c.shockMaxR})`;
   if(c.burst)     s+=`\n★ Storm burst ×${c.burst}`;
@@ -644,7 +675,6 @@ function showPanel(t){
 }
 function hidePanel(){selTower=null;document.getElementById('up').classList.remove('vis');}
 
-// ── BASE UPGRADE PANEL ──
 function showBasePanel(){
   hidePanel();
   document.getElementById('base-up').classList.add('vis');
@@ -656,42 +686,27 @@ function hideBasePanel(){
 function updateBasePanelUI(){
   const pa=document.getElementById('bpA'),pb=document.getElementById('bpB');
   const ubtn=document.getElementById('base-up-btn');
-  const statsEl=document.getElementById('base-up-stats');
   let title='🏛 BASE UPGRADE';
   if(baseUpgPath) title+=` — PATH ${baseUpgPath} LVL ${baseUpgLevel}`;
   document.getElementById('base-up-title').textContent=title;
-
   let s=`Current: HP ${Math.round(baseHP)}/${Math.round(baseMaxHP)}\n`;
-  if(baseUpgPath==='A'){
-    const cur=BASE_UPG.A[baseUpgLevel];
-    s+=`Turret DMG:${cur.turretDmg} RNG:${cur.turretRng}\n`;
-  }
-  if(baseUpgPath==='B'){
-    const cur=BASE_UPG.B[baseUpgLevel];
-    s+=`Treasury gold/wave: +${cur.goldPerWave}\n`;
-  }
-  if(baseUpgLevel===0 && !baseUpgPath){
-    s+='Choose a path to upgrade the base!\nA: HP + defense turret\nB: Treasury — extra gold/wave';
-  }
+  if(baseUpgPath==='A'){const cur=BASE_UPG.A[baseUpgLevel];s+=`Turret DMG:${cur.turretDmg} RNG:${cur.turretRng}\n`;}
+  if(baseUpgPath==='B'){const cur=BASE_UPG.B[baseUpgLevel];s+=`Treasury gold/wave: +${cur.goldPerWave}\n`;}
+  if(baseUpgLevel===0&&!baseUpgPath){s+='Choose a path to upgrade the base!\nA: HP + defense turret\nB: Treasury — extra gold/wave';}
   document.getElementById('base-up-stats').textContent=s;
-
-  // Show path buttons if not yet chosen
   const prDiv=document.getElementById('base-pr');
   if(baseUpgPath===null){
-    prDiv.style.display='flex';
-    ubtn.style.display='none';
-    const costA=BASE_UPG.A[1].cost, costB=BASE_UPG.B[1].cost;
+    prDiv.style.display='flex';ubtn.style.display='none';
+    const costA=BASE_UPG.A[1].cost,costB=BASE_UPG.B[1].cost;
     pa.innerHTML=`PATH A<br>Fortress<br><small>${costA}g</small>`;
     pb.innerHTML=`PATH B<br>Treasury<br><small>${costB}g</small>`;
     pa.disabled=gold<costA;pb.disabled=gold<costB;
   } else {
     prDiv.style.display='none';
-    if(baseUpgLevel>=BASE_ML){
-      ubtn.style.display='';ubtn.textContent='BASE MAX LEVEL';ubtn.disabled=true;
-    } else {
+    if(baseUpgLevel>=BASE_ML){ubtn.style.display='';ubtn.textContent='BASE MAX LEVEL';ubtn.disabled=true;}
+    else{
       ubtn.style.display='';
-      const nextLvl=baseUpgLevel+1;
-      const cost=BASE_UPG[baseUpgPath][nextLvl].cost;
+      const nextLvl=baseUpgLevel+1;const cost=BASE_UPG[baseUpgPath][nextLvl].cost;
       const upd=BASE_UPG[baseUpgPath][nextLvl];
       if(baseUpgPath==='A') ubtn.textContent=`UPGRADE (${cost}g)\n→ +${upd.hpBonus}HP, Turret↑`;
       else ubtn.textContent=`UPGRADE (${cost}g)\n→ +${upd.goldPerWave}g/wave`;
@@ -702,30 +717,24 @@ function updateBasePanelUI(){
 
 function doBaseUpgrade(path){
   if(baseUpgPath===null){
-    // First choice
     const cost=BASE_UPG[path][1].cost;
     if(gold<cost){msg('⚠ Not enough gold!');return;}
-    gold-=cost;
-    baseUpgPath=path;baseUpgLevel=1;
-    applyBaseUpgrade();
-    msg(`Base: ${BASE_UPG[path][1].name} unlocked!`,2500);
+    gold-=cost;baseUpgPath=path;baseUpgLevel=1;
+    applyBaseUpgrade();msg(`Base: ${BASE_UPG[path][1].name} unlocked!`,2500);
   } else {
-    if(baseUpgPath!==path) return; // can't switch paths
+    if(baseUpgPath!==path) return;
     if(baseUpgLevel>=BASE_ML) return;
-    const nextLvl=baseUpgLevel+1;
-    const cost=BASE_UPG[baseUpgPath][nextLvl].cost;
+    const nextLvl=baseUpgLevel+1;const cost=BASE_UPG[baseUpgPath][nextLvl].cost;
     if(gold<cost){msg('⚠ Not enough gold!');return;}
     gold-=cost;baseUpgLevel=nextLvl;
-    applyBaseUpgrade();
-    msg(`Base upgraded to ${BASE_UPG[baseUpgPath][nextLvl].name}!`,2500);
+    applyBaseUpgrade();msg(`Base upgraded to ${BASE_UPG[baseUpgPath][nextLvl].name}!`,2500);
   }
   syncUI();updateBasePanelUI();
 }
 function applyBaseUpgrade(){
   if(baseUpgPath==='A'){
     const upd=BASE_UPG.A[baseUpgLevel];
-    baseMaxHP+=upd.hpBonus;
-    baseHP=Math.min(baseMaxHP,baseHP+upd.hpBonus);
+    baseMaxHP+=upd.hpBonus;baseHP=Math.min(baseMaxHP,baseHP+upd.hpBonus);
     ft(BASE_C*CS+CS/2,BASE_R*CS,`BASE HP +${upd.hpBonus}`,'#00ff88');
     sparks(BASE_C*CS+CS/2,BASE_R*CS+CS/2,'#00ff88',20,3);
   } else if(baseUpgPath==='B'){
@@ -748,6 +757,11 @@ function doUpgrade(path){
     baseMaxHP+=selTower.cfg.baseMaxBonus;
     baseHP=Math.min(baseHP+selTower.cfg.baseMaxBonus,baseMaxHP);
     ft(BASE_C*CS+CS/2,BASE_R*CS,`MAX HP +${selTower.cfg.baseMaxBonus}`,'#00ccff');
+  }
+  // Update helicopter if heli tower upgraded
+  if(selTower.key==='heli'){
+    const h=helicopters.find(h=>h.towerId===selTower.id);
+    if(h) syncHelicopterConfig(h,selTower);
   }
   ft(selTower.col*CS+CS/2,selTower.row*CS,`LVL ${selTower.level}!`,'#ffd700');
   sparks(selTower.col*CS+CS/2,selTower.row*CS+CS/2,selTower.cfg.col,12,2);
@@ -819,7 +833,6 @@ cv.addEventListener('click',e=>{
   const row=Math.floor((e.clientY-r.top)*(H/r.height)/CS);
   if(col<0||col>=COLS||row<0||row>=ROWS) return;
 
-  // Click on base cell
   if(row===BASE_R&&col===BASE_C){
     if(baseUpgMode){showBasePanel();return;}
     if(sellMode||upgMode) return;
@@ -836,6 +849,11 @@ cv.addEventListener('click',e=>{
         const bon=t.level===2?25:t.level===3?55:t.level===4?90:140;
         baseMaxHP=Math.max(150,baseMaxHP-bon);baseHP=Math.min(baseHP,baseMaxHP);
       }
+      // Remove helicopter if selling heli tower
+      if(t.key==='heli'){
+        const hi=helicopters.findIndex(h=>h.towerId===t.id);
+        if(hi!==-1) helicopters.splice(hi,1);
+      }
       gold+=ref;towers.splice(ti,1);grid[row][col]=CT.EMPTY;bfs();
       ft(col*CS+CS/2,row*CS,`+${ref}g`);hidePanel();syncUI();
     }return;
@@ -847,6 +865,12 @@ cv.addEventListener('click',e=>{
   }
   if(baseUpgMode) return;
   if(grid[row][col]!==CT.EMPTY) return;
+
+  // Block heli tower in hardcore
+  if(selBuild==='heli'&&gameMode==='hardcore'){
+    msg('⚠ Helicopter unavailable in HARDCORE mode!',2500);return;
+  }
+
   const cfg=getCfg(selBuild,1,null);
   const actualCost=getDiscountedCost(selBuild,col,row);
   if(gold<actualCost){msg('⚠ Insufficient gold!');return;}
@@ -855,6 +879,12 @@ cv.addEventListener('click',e=>{
   gold-=actualCost;
   const newTower={row,col,key:selBuild,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,angle:0,level:1,path:null,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter};
   towers.push(newTower);
+
+  // Spawn helicopter for heli tower
+  if(selBuild==='heli'){
+    spawnHelicopter(newTower);
+  }
+
   sparks(col*CS+CS/2,row*CS+CS/2,cfg.col,7,1.5);
   if(saved>0) ft(col*CS+CS/2,row*CS-14,`DISCOUNT -${saved}g!`,'#ffd700');
   if(pathBlocked) msg('⚠ Path sealed! Enemies will breach!',2500);
@@ -867,6 +897,147 @@ cv.addEventListener('mousemove',e=>{
   hov=(col>=0&&col<COLS&&row>=0&&row<ROWS)?{col,row}:null;
 });
 cv.addEventListener('mouseleave',()=>hov=null);
+
+// ══════════════════════════════════════════════
+// HELICOPTER SYSTEM
+// ══════════════════════════════════════════════
+function spawnHelicopter(tower){
+  const cfg=tower.cfg;
+  const h={
+    towerId:tower.id,
+    towerRef:tower,
+    x:tower.col*CS+CS/2,
+    y:tower.row*CS+CS/2-30, // hovers above pad
+    angle:0,
+    rotorAngle:0,
+    spd:cfg.heliSpd||1.8,
+    dmg:cfg.heliDmg||28,
+    cd:cfg.heliCd||70,
+    fireCd:0,
+    rng:cfg.heliRng||240,
+    aoe:cfg.heliAoe||0,
+    missile:cfg.heliMissile||false,
+    minigun:cfg.heliMinigun||false,
+    state:'patrol', // patrol | pursue | returning
+    wobX:Math.random()*Math.PI*2,
+    wobY:Math.random()*Math.PI*2,
+    altitude:30,
+    altitudeTarget:30,
+  };
+  helicopters.push(h);
+  return h;
+}
+
+function syncHelicopterConfig(h,tower){
+  const cfg=tower.cfg;
+  h.spd=cfg.heliSpd||1.8;
+  h.dmg=cfg.heliDmg||28;
+  h.cd=cfg.heliCd||70;
+  h.rng=cfg.heliRng||240;
+  h.aoe=cfg.heliAoe||0;
+  h.missile=cfg.heliMissile||false;
+  h.minigun=cfg.heliMinigun||false;
+}
+
+function updateHelicopters(){
+  const bx=BASE_C*CS+CS/2,by=BASE_R*CS+CS/2;
+  for(let i=helicopters.length-1;i>=0;i--){
+    const h=helicopters[i];
+    // Check tower still exists
+    if(!towers.find(t=>t.id===h.towerId)){helicopters.splice(i,1);continue;}
+    const tower=h.towerRef;
+    const padX=tower.col*CS+CS/2,padY=tower.row*CS+CS/2;
+
+    // Rotor always spins
+    h.rotorAngle+=h.missile?0.14:0.22;
+
+    // Find nearest enemy to base (smallest BFS distance to base)
+    let target=null,bestScore=Infinity;
+    for(const e of enemies){
+      if(e.flying) continue; // heli targets ground enemies primarily (but can hit flying too as secondary)
+      // Score = distance from enemy to base
+      const dToBase=Math.hypot(e.x-bx,e.y-by);
+      if(dToBase<bestScore){bestScore=dToBase;target=e;}
+    }
+    // Fallback: also consider flyers
+    if(!target){
+      for(const e of enemies){
+        const dToBase=Math.hypot(e.x-bx,e.y-by);
+        if(dToBase<bestScore){bestScore=dToBase;target=e;}
+      }
+    }
+
+    if(target){
+      // Pursue target
+      const tx=target.x,ty=target.y-20; // hover above enemy
+      const dx=tx-h.x,dy=ty-h.y;
+      const dist=Math.hypot(dx,dy);
+      h.angle=Math.atan2(dy,dx);
+
+      if(dist>h.rng*0.5){
+        // Move toward target
+        const moveSpd=h.spd*(h.minigun?1.2:1.0);
+        h.x+=dx/dist*moveSpd;
+        h.y+=dy/dist*moveSpd;
+      }
+
+      // Fire when in range
+      const engageDist=Math.hypot(h.x-target.x,h.y-target.y);
+      if(h.fireCd>0){h.fireCd--;}
+      else if(engageDist<=h.rng){
+        h.fireCd=h.cd;
+        if(h.missile){
+          // Path A: Fire missile (big AOE) + a couple of bullets
+          projs.push({
+            x:h.x,y:h.y,tgt:target,lastX:target.x,lastY:target.y,
+            spd:5.5,dmg:h.dmg,aoe:h.aoe,chn:0,col:'#00ffaa',sz:7,
+            type:'missile',heliMissile:true
+          });
+          // Extra bullets
+          for(let b=0;b<3;b++){
+            const spreadAngle=h.angle+(Math.random()-.5)*0.35;
+            projs.push({
+              x:h.x+(Math.random()-.5)*6,y:h.y+(Math.random()-.5)*6,
+              tgt:target,lastX:target.x,lastY:target.y,
+              spd:8,dmg:Math.round(h.dmg*0.35),aoe:0,chn:0,col:'#44ffcc',sz:2,
+              type:'normal'
+            });
+          }
+          sparks(h.x,h.y,'#00ffaa',8,2.5);
+        } else if(h.minigun){
+          // Path B: Rapid minigun bursts
+          for(let b=0;b<5;b++){
+            projs.push({
+              x:h.x+(Math.random()-.5)*4,y:h.y+(Math.random()-.5)*4,
+              tgt:target,lastX:target.x,lastY:target.y,
+              spd:10,dmg:h.dmg,aoe:0,chn:0,col:'#44ffcc',sz:2,
+              type:'normal'
+            });
+          }
+          sparks(h.x,h.y,'#44ffcc',5,1.8);
+        } else {
+          // Base level: single shot
+          projs.push({
+            x:h.x,y:h.y,tgt:target,lastX:target.x,lastY:target.y,
+            spd:7,dmg:h.dmg,aoe:0,chn:0,col:'#44ffcc',sz:3,type:'normal'
+          });
+          sparks(h.x,h.y,'#44ffcc',3,1.5);
+        }
+      }
+    } else {
+      // No enemies - patrol near pad
+      h.wobX+=0.018;h.wobY+=0.024;
+      const tx=padX+Math.cos(h.wobX)*40;
+      const ty=padY-h.altitude+Math.sin(h.wobY)*15;
+      const dx=tx-h.x,dy=ty-h.y,dist=Math.hypot(dx,dy);
+      if(dist>2){h.x+=dx/dist*Math.min(dist,h.spd*.5);h.y+=dy/dist*Math.min(dist,h.spd*.5);}
+    }
+
+    // Keep heli above pad altitude range
+    h.y=Math.max(h.y, padY-80);
+    h.y=Math.min(h.y, padY-10);
+  }
+}
 
 // ══════════════════════════════════════════════
 // WAVE SYSTEM
@@ -918,8 +1089,8 @@ const EDEFS={
   armored:   {hpM:4.0,  spdM:.42,  rw:90, sz:14, col:'#8844ff',glow:'#aa66ff', lbl:'A', atkD:45,atkCdB:44,flying:false,robot:false},
   berserk:   {hpM:.9,   spdM:1.4,  rw:20, sz:9,  col:'#ff4444',glow:'#ff8888', lbl:'!', atkD:30,atkCdB:18,flying:false,robot:false},
   heavyarmor:{hpM:2.6,  spdM:.48,  rw:55, sz:13, col:'#cc9944',glow:'#ddbb55', lbl:'🛡',atkD:38,atkCdB:42,flying:false,robot:false,heavyArmor:true},
-  // Gunner: shoots projectiles that deal REAL damage to towers (not just stun)
   gunner:    {hpM:1.2,  spdM:.85,  rw:18, sz:9,  col:'#ff6600',glow:'#ff9944', lbl:'🔫',atkD:8, atkCdB:38,flying:false,robot:false,isGunner:true},
+  // SHIELDER: no spawn flash; blocks bullets for nearby enemies
   shielder:  {hpM:2.8,  spdM:.50,  rw:30, sz:12, col:'#00ddff',glow:'#44eeff', lbl:'🔵',atkD:15,atkCdB:55,flying:false,robot:false,isShielder:true},
   boss_normal:{hpM:12,  spdM:.40,  rw:180,sz:20, col:'#ff0055',glow:'#ff0099', lbl:'★', atkD:90,atkCdB:48,flying:false,robot:false,isBoss:true,bossType:'normal'},
   boss_armor: {hpM:18,  spdM:.34,  rw:250,sz:20, col:'#8844ff',glow:'#bb55ff', lbl:'★', atkD:80,atkCdB:50,flying:false,robot:false,isBoss:true,bossType:'armor',heavyArmor:true},
@@ -945,14 +1116,33 @@ function spawnE(entry){
     gunCd:0,shielded:false,
   };
   if(d.flying) e.y=SPAWN_R*CS+CS*.5-e.altitude;
+  // NOTE: No spawn flash/sparks for shielder (removed)
   return e;
+}
+
+// ── SHIELD BLOCKING ──
+// Returns true if a bullet traveling toward (tx,ty) from (px,py) would be blocked by a shielder
+// Shielders intercept bullets aimed at shielded allies within 65px of the shielder
+function isBlockedByShield(px,py,targetEnemy){
+  if(!targetEnemy.shielded) return false;
+  // Find the shielder that's shielding this enemy
+  for(const e of enemies){
+    if(!e.isShielder||e.stun>0) continue;
+    const dx=targetEnemy.x-e.x,dy=targetEnemy.y-e.y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist>65) continue;
+    // This shielder is protecting the target — bullet is absorbed by shield
+    // Deal partial damage to the shielder instead
+    return e; // return the shielder that blocks it
+  }
+  return null;
 }
 
 // ── DAMAGE MODIFIERS ──
 function applyArmor(e,dmg,isElec=false){
   let d=dmg;
   if(e.heavyArmor&&!isElec) d=Math.max(1,Math.round(d*0.15));
-  if(e.shielded) d=Math.max(1,Math.round(d*0.40));
+  if(e.shielded) d=Math.max(1,Math.round(d*0.35)); // shield reduces bullet dmg significantly
   return d;
 }
 function elecDmg(e,dmg){
@@ -1014,7 +1204,7 @@ function update(){
 
   // Reset shield flags
   for(let i=0;i<enemies.length;i++) enemies[i].shielded=false;
-  // Apply shielder bubbles
+  // Apply shielder bubbles — shielders protect nearby allies
   for(let i=0;i<enemies.length;i++){
     const e=enemies[i];
     if(!e.isShielder||e.stun>0) continue;
@@ -1065,11 +1255,10 @@ function update(){
       continue;
     }
 
-    // ── GUNNER: shoots damaging projectiles at towers, can destroy them ──
+    // Gunner
     if(e.isGunner){
       if(e.gunCd>0) e.gunCd--;
       if(e.gunCd<=0){
-        // Find closest non-wall tower in range
         let closestTwr=null,bestD2=190*190;
         for(const t of towers){
           if(t.cfg.t===CT.WALL) continue;
@@ -1079,11 +1268,9 @@ function update(){
         }
         if(closestTwr){
           const twx=closestTwr.col*CS+CS/2,twy=closestTwr.row*CS+CS/2;
-          // Gunner bullet: real tower damage + short stun
-          const gunDmg=Math.round(8+wave*3.5); // scales with wave
+          const gunDmg=Math.round(8+wave*3.5);
           projs.push({
-            x:e.x,y:e.y,
-            tgt:null,lastX:twx,lastY:twy,
+            x:e.x,y:e.y,tgt:null,lastX:twx,lastY:twy,
             spd:5.5,dmg:gunDmg,aoe:0,chn:0,
             col:'#ff8800',sz:3,type:'towershot',
             stunTwr:closestTwr,stunDur:45,towerDmg:true
@@ -1107,6 +1294,9 @@ function update(){
       else{const d=Math.sqrt(dist2)||1;e.x+=dx/d*e.spd*.25;e.y+=dy/d*e.spd*.25;}
     }
   }
+
+  // Helicopters
+  updateHelicopters();
 
   // ── BASE TURRET (path A) ──
   if(baseUpgPath==='A'&&baseUpgLevel>0){
@@ -1135,8 +1325,8 @@ function update(){
     if(t.stunned>0){t.stunned--;continue;}
     const cfg=t.cfg;
     if(cfg.t===CT.WALL&&cfg.wallRegen&&t.hp<t.maxHp){t.hp=Math.min(t.maxHp,t.hp+cfg.wallRegen/60);}
-    // Mine towers don't shoot — passive
     if(cfg.t===CT.MINE){t.cd=0;continue;}
+    if(cfg.t===CT.HELI){t.cd=0;continue;} // Heli pad is passive; helicopter handles attacks
     if(cfg.t===CT.HEALER){
       if(!t.healCd) t.healCd=0;t.healCd--;
       if(t.healCd<=0){
@@ -1152,7 +1342,6 @@ function update(){
               addBeam(tx,ty,ot.col*CS+CS/2,ot.row*CS+CS/2);
               sparks(ot.col*CS+CS/2,ot.row*CS+CS/2,'#00ffcc',2,.8);
             }
-            // Reduce stun on nearby towers
             if(stunReduce>0&&ot.stunned>0){
               ot.stunned=Math.max(0,ot.stunned-stunReduce);
               if(ot.stunned===0){
@@ -1227,28 +1416,62 @@ function update(){
       if(p.type==='elecBall'){
         explodeElecBall(p);
       } else if(p.type==='towershot'){
-        // GUNNER SHOT — deals real HP damage to towers, can destroy them
         const tw=p.stunTwr;
         if(tw&&towers.includes(tw)){
           tw.hp-=p.dmg;tw.hitFlash=12;
-          // Short stun
           tw.stunned=(tw.stunned||0)+p.stunDur;
           sparks(p.lastX,p.lastY,'#ff8800',10,2.5);
           if(p.stunDur>0) ft(p.lastX,p.lastY-8,'STUNNED!','#ff8800');
-          if(tw.hp<=0){
-            ft(tw.col*CS+CS/2,tw.row*CS,'SHOT DOWN!','#ff6600');
-            destroyTower(tw);
+          if(tw.hp<=0){ft(tw.col*CS+CS/2,tw.row*CS,'SHOT DOWN!','#ff6600');destroyTower(tw);}
+        }
+      } else if(p.type==='missile'){
+        // Heli missile: big AOE explosion
+        sparks(p.lastX,p.lastY,'#00ffaa',20,4);
+        sparks(p.lastX,p.lastY,'#ffffff',8,5.5);
+        sparks(p.lastX,p.lastY,'#ff8800',12,3);
+        ft(p.lastX,p.lastY-10,'💥 MISSILE','#00ffaa');
+        if(p.aoe>0){
+          for(const e of enemies){
+            const ex=e.x-p.lastX,ey=e.y-p.lastY;
+            if(ex*ex+ey*ey<=p.aoe*p.aoe){
+              // Shield blocks AOE partially
+              const actualDmg=e.shielded?Math.round(p.dmg*0.4):p.dmg;
+              e.hp-=actualDmg;
+              sparks(e.x,e.y,'#00ffaa',4,1.5);
+            }
           }
+        } else if(p.tgt&&enemies.includes(p.tgt)){
+          const actualDmg=applyArmor(p.tgt,p.dmg);p.tgt.hp-=actualDmg;
         }
       } else if(p.type==='hammer'){
         if(p.aoe>0){for(const e of enemies){const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){const d2=applyArmor(e,p.dmg);e.hp-=d2;applyStun(e,p.stunDur||45);sparks(e.x,e.y,p.col,4,1.5);}}}
         sparks(p.lastX,p.lastY,'#ff2255',16,3.5);sparks(p.lastX,p.lastY,'#ffffff',6,4.5);ft(p.lastX,p.lastY-8,'STUN!','#ff2255');
       } else {
+        // Normal projectile — check shield blocking
         if(p.aoe>0){
-          for(const e of enemies){const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){const d2=applyArmor(e,p.dmg);e.hp-=d2;sparks(e.x,e.y,p.col,3,1);}}
+          for(const e of enemies){
+            const ex=e.x-p.lastX,ey=e.y-p.lastY;
+            if(ex*ex+ey*ey<=p.aoe*p.aoe){
+              const d2=applyArmor(e,p.dmg);e.hp-=d2;sparks(e.x,e.y,p.col,3,1);
+            }
+          }
           sparks(p.lastX,p.lastY,p.col,12,2.5);
         } else {
-          if(p.tgt&&enemies.includes(p.tgt)){const d2=applyArmor(p.tgt,p.dmg);p.tgt.hp-=d2;}
+          if(p.tgt&&enemies.includes(p.tgt)){
+            // Check if shielder blocks this bullet
+            const blocker=isBlockedByShield(p.x,p.y,p.tgt);
+            if(blocker){
+              // Bullet hits the shielder's shield — reduced dmg to shielder
+              const shieldDmg=Math.max(1,Math.round(p.dmg*0.25));
+              blocker.hp-=shieldDmg;
+              sparks(blocker.x,blocker.y,'#00ddff',8,2.5);
+              // Visual: shield flash
+              ft(blocker.x,blocker.y-blocker.sz-6,'BLOCKED!','#00ddff');
+              addLx(p.x,p.y,blocker.x,blocker.y,'#00ddff');
+            } else {
+              const d2=applyArmor(p.tgt,p.dmg);p.tgt.hp-=d2;
+            }
+          }
           sparks(p.x,p.y,p.col,4,1.5);
         }
       }
@@ -1297,13 +1520,11 @@ function update(){
   if(waveOn&&enemies.length===0&&spawnQ.length===0){
     waveOn=false;
     const bon=wave*32;gold+=bon;
-    // Mine tower payouts
     let minePayout=0,bankPayout=0;
     for(const t of towers){
       if(t.cfg.t===CT.MINE){
         if(t.cfg.mineType==='compound'||t.cfg.mineType==='basic'){
-          const g=t.cfg.goldPerWave||20;
-          gold+=g;minePayout+=g;
+          const g=t.cfg.goldPerWave||20;gold+=g;minePayout+=g;
         } else if(t.cfg.mineType==='bank'){
           const interest=Math.round(gold*t.cfg.interestRate);
           const capped=Math.min(interest,t.cfg.maxInterest||100);
@@ -1311,7 +1532,6 @@ function update(){
         }
       }
     }
-    // Treasury (base path B)
     let treasuryPayout=0;
     if(baseUpgPath==='B'&&baseUpgLevel>0){
       const upd=BASE_UPG.B[baseUpgLevel];
@@ -1354,6 +1574,143 @@ function pips(x,y,lvl,col){
   for(let i=0;i<ML;i++){ctx.beginPath();ctx.arc(x+i*5,y,2,0,Math.PI*2);ctx.fillStyle=i<lvl?col:'#1a2a3a';ctx.fill();}
 }
 
+// ── DRAW HELICOPTER ──
+function drawHelicopter(h){
+  ctx.save();
+  ctx.translate(h.x,h.y);
+
+  // Rotor shadow / blur
+  const rotPulse=(Math.sin(frame*0.3)+1)*0.5;
+  gl('#44ffcc',8+rotPulse*6);
+
+  // Body
+  ctx.fillStyle='#1a3a2a';
+  ctx.beginPath();
+  ctx.ellipse(0,0,14,7,h.angle,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#44ffcc';ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.ellipse(0,0,14,7,h.angle,0,Math.PI*2);
+  ctx.stroke();
+  ng();
+
+  // Cockpit
+  ctx.save();ctx.rotate(h.angle);
+  ctx.fillStyle='#00ffcc44';
+  ctx.beginPath();ctx.ellipse(4,0,6,4,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#00ffccaa';ctx.lineWidth=1;
+  ctx.beginPath();ctx.ellipse(4,0,6,4,0,0,Math.PI*2);ctx.stroke();
+
+  // Tail
+  ctx.strokeStyle='#44ffcc';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(-18,-4);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-18,-4);ctx.lineTo(-20,-4);ctx.stroke();
+
+  // Main rotor
+  ctx.save();ctx.rotate(h.rotorAngle);
+  ctx.strokeStyle=h.missile?'#00ffaa':'#44ffcc';
+  ctx.lineWidth=h.missile?2.5:2;
+  gl(h.missile?'#00ffaa':'#44ffcc',6);
+  for(let b=0;b<2;b++){
+    const ra=b*Math.PI;
+    ctx.beginPath();ctx.moveTo(Math.cos(ra)*2,Math.sin(ra)*2);
+    ctx.lineTo(Math.cos(ra)*18,Math.sin(ra)*18);ctx.stroke();
+  }
+  ng();ctx.restore();
+
+  // Tail rotor
+  ctx.save();ctx.translate(-19,-4);ctx.rotate(h.rotorAngle*2);
+  ctx.strokeStyle='#44ffcc';ctx.lineWidth=1;
+  for(let b=0;b<2;b++){
+    const ra=b*Math.PI;
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(ra)*4,Math.sin(ra)*4);ctx.stroke();
+  }
+  ctx.restore();
+
+  // Weapon indicator
+  if(h.missile){
+    // Missile pods
+    ctx.fillStyle='#00ffaa';
+    ctx.fillRect(-2,-9,4,4);
+    ctx.fillRect(-2,5,4,4);
+    ctx.fillStyle='#ff8800';ctx.beginPath();ctx.arc(-2,-7,2,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(-2,7,2,0,Math.PI*2);ctx.fill();
+  } else if(h.minigun){
+    // Minigun barrel
+    ctx.strokeStyle='#44ffcc';ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(12,0);ctx.lineTo(20,0);ctx.stroke();
+    ctx.strokeStyle='#88ffdd';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(12,-2);ctx.lineTo(20,-2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(12,2);ctx.lineTo(20,2);ctx.stroke();
+  } else {
+    // Basic gun
+    ctx.strokeStyle='#44ffcc';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(10,2);ctx.lineTo(18,2);ctx.stroke();
+  }
+
+  ctx.restore(); // undo h.angle rotation
+  ctx.restore(); // undo translate
+
+  // Fire cooldown indicator (arc below heli)
+  if(h.fireCd>0){
+    const cdPct=h.fireCd/h.cd;
+    ctx.save();ctx.translate(h.x,h.y+12);
+    ctx.strokeStyle='#44ffcc44';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(0,0,8,-Math.PI/2,-Math.PI/2+Math.PI*2*(1-cdPct));ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// ── DRAW HELI PAD ──
+function drawHeliPad(t){
+  const x=t.col*CS,y=t.row*CS,tcx=x+CS/2,tcy=y+CS/2;
+  const fl=t.hitFlash>0;
+  const pc=(Math.sin(frame*.08)+1)*.5;
+  const col='#44ffcc';
+
+  // Platform base
+  ctx.fillStyle=fl?'#0a1a14':'#040e0a';ctx.fillRect(x+2,y+2,CS-4,CS-4);
+
+  // Helipad H symbol
+  gl(fl?'#ff4444':col,6+pc*6);
+  ctx.strokeStyle=fl?'#ff4444':col;ctx.lineWidth=1.5;
+  ctx.strokeRect(x+4,y+4,CS-8,CS-8);
+  ng();
+
+  // H letter
+  ctx.strokeStyle=fl?'#ff4444':col+'cc';ctx.lineWidth=2.5;
+  ctx.beginPath();
+  ctx.moveTo(tcx-6,tcy-8);ctx.lineTo(tcx-6,tcy+8);
+  ctx.moveTo(tcx+6,tcy-8);ctx.lineTo(tcx+6,tcy+8);
+  ctx.moveTo(tcx-6,tcy);ctx.lineTo(tcx+6,tcy);
+  ctx.stroke();
+
+  // Circle
+  ctx.beginPath();ctx.arc(tcx,tcy,13,0,Math.PI*2);
+  ctx.strokeStyle=col+Math.round(30+pc*40).toString(16).padStart(2,'0');
+  ctx.lineWidth=1;ctx.stroke();
+
+  // Path indicator
+  if(t.path){
+    const pc2=t.path==='A'?'#00ffaa':'#44ffcc';
+    ctx.fillStyle=pc2;ctx.font='bold 5px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(`P.${t.path}`,tcx,tcy+16);
+  }
+
+  if(selTower===t){ctx.strokeStyle='#ffd700';ctx.lineWidth=2;ctx.strokeRect(x+1,y+1,CS-2,CS-2);}
+  pips(x+3,y+5,t.level,col);
+  hbar(x+2,y+CS-7,CS-4,4,t.hp/t.maxHp);
+
+  // Vertical line to helicopter above
+  const h=helicopters.find(h=>h.towerId===t.id);
+  if(h){
+    ctx.save();ctx.globalAlpha=0.2;
+    ctx.strokeStyle='#44ffcc';ctx.lineWidth=1;ctx.setLineDash([3,4]);
+    ctx.beginPath();ctx.moveTo(tcx,tcy);ctx.lineTo(h.x,h.y);ctx.stroke();
+    ctx.setLineDash([]);ctx.restore();
+  }
+}
+
 function draw(){
   ctx.fillStyle='#04080f';ctx.fillRect(0,0,W,H);
   ctx.fillStyle='rgba(0,0,0,0.04)';for(let y=0;y<H;y+=3)ctx.fillRect(0,y,W,1);
@@ -1373,13 +1730,11 @@ function draw(){
       hbar(x+3,y+CS-9,CS-6,5,hr);
       ctx.fillStyle=bc;ctx.font='bold 7px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('BASE',x+CS/2,y+CS/2-7);
       ctx.fillStyle='#ffffff77';ctx.font='5px Share Tech Mono';ctx.fillText(`${Math.round(baseHP)}/${Math.round(baseMaxHP)}`,x+CS/2,y+CS/2+2);
-      // Draw base path indicator
       if(baseUpgPath){
         const pc=baseUpgPath==='A'?'#00ff88':'#ffd700';
         ctx.fillStyle=pc;ctx.font='bold 5px Share Tech Mono';
         ctx.fillText(`P${baseUpgPath} L${baseUpgLevel}`,x+CS/2,y+CS/2+11);
       }
-      // Draw base turret barrel if path A
       if(baseUpgPath==='A'&&baseUpgLevel>0){
         ctx.save();ctx.translate(x+CS/2,y+CS/2);ctx.rotate(baseTurretAngle);
         gl('#00ff88',8);ctx.strokeStyle='#00ff88';ctx.lineWidth=3;
@@ -1398,7 +1753,7 @@ function draw(){
   if(hov&&!sellMode&&!upgMode&&!baseUpgMode&&!gameOver){
     const{col,row}=hov;if(grid[row][col]===CT.EMPTY){
       const cfg=getCfg(selBuild,1,null),x=col*CS,y=row*CS;
-      const dCost=getDiscountedCost(selBuild,col,row),ok=gold>=dCost;
+      const dCost=getDiscountedCost(selBuild,col,row),ok=gold>=dCost&&!(selBuild==='heli'&&gameMode==='hardcore');
       ctx.fillStyle=ok?'rgba(0,255,136,0.08)':'rgba(255,50,50,0.08)';ctx.fillRect(x,y,CS,CS);
       ctx.strokeStyle=ok?'rgba(0,255,136,0.5)':'rgba(255,50,50,0.5)';ctx.lineWidth=1;ctx.strokeRect(x+1,y+1,CS-2,CS-2);
       if(cfg.rng>0){const bfx=getBuffsAt(col,row),effRng=cfg.rng*bfx.rngMult;ctx.beginPath();ctx.arc(x+CS/2,y+CS/2,effRng,0,Math.PI*2);ctx.strokeStyle=cfg.col+'44';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle=cfg.col+'08';ctx.fill();}
@@ -1424,12 +1779,12 @@ function draw(){
 
   // ── TOWERS ──
   for(const t of towers){
+    if(t.key==='heli'){drawHeliPad(t);continue;}
     const x=t.col*CS,y=t.row*CS,tcx=x+CS/2,tcy=y+CS/2,isSel=selTower===t;
     const fl=t.hitFlash>0,ua=enemies.some(e=>e.atkTarget===t);
     const cfg=t.cfg;
 
     if(cfg.t===CT.MINE){
-      // Mine tower drawing
       const mc=t.path==='B'||t.cfg.mineType==='bank'?'#ffd700':'#ffe066';
       const mp=(Math.sin(frame*.08+t.col)+1)*.5;
       ctx.fillStyle=fl?'#1a1a00':'#090900';ctx.fillRect(x+2,y+2,CS-4,CS-4);
@@ -1566,9 +1921,8 @@ function draw(){
       pips(x+3,y+5,t.level,cfg.col);hbar(x+2,y+CS-7,CS-4,4,t.hp/t.maxHp);
     }
 
-    if(ua&&cfg.t!==CT.MINE){const p=(Math.sin(frame*.25)+1)*.5;ctx.strokeStyle=`rgba(255,60,0,${.5+p*.5})`;ctx.lineWidth=1.5;ctx.strokeRect(x,y,CS,CS);}
+    if(ua&&cfg.t!==CT.MINE&&cfg.t!==CT.HELI){const p=(Math.sin(frame*.25)+1)*.5;ctx.strokeStyle=`rgba(255,60,0,${.5+p*.5})`;ctx.lineWidth=1.5;ctx.strokeRect(x,y,CS,CS);}
 
-    // Stunned overlay
     if(t.stunned>0){
       const sp=(Math.sin(frame*.3)+1)*.5;
       ctx.fillStyle=`rgba(255,136,0,${0.18+sp*.14})`;ctx.fillRect(x+2,y+2,CS-4,CS-4);
@@ -1596,7 +1950,6 @@ function draw(){
     ctx.beginPath();ctx.arc(e.x,drawY,e.sz*.45,0,Math.PI*2);ctx.fillStyle=stn?'#aaff00':unst?'#ff8800':atk?'#ff8800':e.col;ctx.fill();
     if(unst&&frame%4===0){const sa=Math.random()*Math.PI*2;ctx.strokeStyle='#ff8800';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(e.x+Math.cos(sa)*e.sz*.6,drawY+Math.sin(sa)*e.sz*.6);ctx.lineTo(e.x+Math.cos(sa+.5)*(e.sz+6),drawY+Math.sin(sa+.5)*(e.sz+6));ctx.stroke();}
     if(e.robot&&!atk&&!stn){ctx.fillStyle='#aaaaaa44';ctx.fillRect(e.x-e.sz*.6,drawY-e.sz*.1,e.sz*1.2,e.sz*.2);for(let rb=0;rb<3;rb++){ctx.strokeStyle='#888888';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(e.x-e.sz*.5+rb*e.sz*.45,drawY-e.sz*.3);ctx.lineTo(e.x-e.sz*.5+rb*e.sz*.45,drawY+e.sz*.3);ctx.stroke();}}
-    // Gunner barrel — bigger and more menacing
     if(e.isGunner&&!stn){
       const nearTwr=towers.reduce((best,t)=>{const dx=t.col*CS+CS/2-e.x,dy=t.row*CS+CS/2-e.y,d=dx*dx+dy*dy;return(!best||d<best.d)?{t,d}:best;},null);
       const ang=nearTwr?Math.atan2(nearTwr.t.row*CS+CS/2-e.y,nearTwr.t.col*CS+CS/2-e.x):0;
@@ -1609,16 +1962,51 @@ function draw(){
       ng();ctx.restore();
       ctx.fillStyle='#ff6600';ctx.font='bold 5px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('GUN',e.x,drawY+e.sz+5);
     }
+
+    // ── SHIELDER: always visible shield bubble, no flash ──
     if(e.isShielder&&!stn){
-      const sp=(Math.sin(frame*.12+e.wob)+1)*.5;gl('#00ddff',10+sp*10);
+      const sp=(Math.sin(frame*.12+e.wob)+1)*.5;
+      // Big visible shield dome
+      gl('#00ddff',14+sp*10);
       ctx.save();ctx.translate(e.x,drawY);ctx.rotate(frame*.04);
-      ctx.strokeStyle=`rgba(0,220,255,${0.5+sp*.4})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,0,e.sz+5+sp*2,0,Math.PI*2);ctx.stroke();
-      ctx.strokeStyle='rgba(0,220,255,0.2)';ctx.lineWidth=.8;ctx.beginPath();ctx.arc(0,0,e.sz+9,0,Math.PI*2);ctx.stroke();
+      // Outer shield ring — strong and visible
+      ctx.strokeStyle=`rgba(0,220,255,${0.6+sp*.35})`;ctx.lineWidth=2.5;
+      ctx.beginPath();ctx.arc(0,0,e.sz+7+sp*2,0,Math.PI*2);ctx.stroke();
+      // Shield fill
+      ctx.fillStyle=`rgba(0,220,255,${0.08+sp*.07})`;
+      ctx.beginPath();ctx.arc(0,0,e.sz+7+sp*2,0,Math.PI*2);ctx.fill();
+      // Inner ring
+      ctx.strokeStyle='rgba(0,220,255,0.35)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.arc(0,0,e.sz+11,0,Math.PI*2);ctx.stroke();
       ng();ctx.restore();
-      ctx.strokeStyle=`rgba(0,220,255,${0.08+sp*.07})`;ctx.lineWidth=.8;ctx.beginPath();ctx.arc(e.x,drawY,65,0,Math.PI*2);ctx.stroke();
-      ctx.fillStyle='#00ddff';ctx.font='5px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('SHIELD',e.x,drawY+e.sz+5);
+      // Sphere gleam
+      ctx.save();ctx.translate(e.x,drawY);
+      for(let qi=0;qi<4;qi++){
+        const qa=qi/4*Math.PI*2+frame*.03;
+        const qr=e.sz+7;
+        ctx.fillStyle=`rgba(180,255,255,${0.15+sp*.1})`;
+        ctx.beginPath();ctx.arc(Math.cos(qa)*qr*.7,Math.sin(qa)*qr*.7,2+sp,0,Math.PI*2);ctx.fill();
+      }
+      ctx.restore();
+      // Aura range indicator (faint)
+      ctx.strokeStyle=`rgba(0,220,255,${0.07+sp*.05})`;ctx.lineWidth=.8;
+      ctx.beginPath();ctx.arc(e.x,drawY,65,0,Math.PI*2);ctx.stroke();
+      ctx.fillStyle='#00ddff';ctx.font='bold 6px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('SHIELD',e.x,drawY+e.sz+9);
     }
-    if(e.shielded&&!e.isShielder&&!stn){const sp2=(Math.sin(frame*.2+e.wob)+1)*.5;gl('#00ddff',8+sp2*6);ctx.strokeStyle=`rgba(0,220,255,${0.35+sp2*.25})`;ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(e.x,drawY,e.sz+3+sp2,0,Math.PI*2);ctx.stroke();ng();}
+
+    // Shielded ally glow
+    if(e.shielded&&!e.isShielder&&!stn){
+      const sp2=(Math.sin(frame*.2+e.wob)+1)*.5;
+      gl('#00ddff',10+sp2*8);
+      ctx.strokeStyle=`rgba(0,220,255,${0.45+sp2*.3})`;ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(e.x,drawY,e.sz+4+sp2,0,Math.PI*2);ctx.stroke();
+      ng();
+      // Shield indicator
+      ctx.fillStyle='rgba(0,200,255,0.7)';ctx.font='bold 7px Share Tech Mono';ctx.textAlign='center';
+      ctx.fillText('🛡',e.x,drawY-e.sz-4);
+    }
+
     if(e.flying){
       const wb=Math.sin(frame*.25+e.flyWob)*0.3;ctx.save();ctx.translate(e.x,drawY);gl(e.col,5);ctx.strokeStyle=e.col+'cc';ctx.lineWidth=1.2;
       ctx.beginPath();ctx.moveTo(-2,0);ctx.quadraticCurveTo(-e.sz*1.4,-e.sz*(0.9+wb),-e.sz*2.5,e.sz*.2);ctx.stroke();
@@ -1636,10 +2024,24 @@ function draw(){
     if(e.heavyArmor&&!stn){ctx.save();ctx.translate(e.x,drawY);gl('#cc9944',8);ctx.strokeStyle='#ddbb55';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,e.sz+2,0,Math.PI*2);ctx.stroke();ctx.strokeStyle='#aa8833';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-e.sz*.7,0);ctx.lineTo(e.sz*.7,0);ctx.stroke();ctx.beginPath();ctx.moveTo(0,-e.sz*.7);ctx.lineTo(0,e.sz*.7);ctx.stroke();ng();ctx.restore();ctx.fillStyle='#ddbb55';ctx.font='5px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('⚡!',e.x,drawY+e.sz+3);}
   }
 
+  // ── HELICOPTERS (drawn above enemies) ──
+  for(const h of helicopters) drawHelicopter(h);
+
   // Projectiles
   for(const p of projs){
     if(p.type==='elecBall'){const bp=(Math.sin(frame*.35+p.x*.05)+1)*.5;gl(p.col,22+bp*12);ctx.beginPath();ctx.arc(p.x,p.y,p.sz+bp*2,0,Math.PI*2);ctx.fillStyle=p.col;ctx.fill();ng();ctx.strokeStyle='#ccff00';ctx.lineWidth=.8;for(let i=0;i<5;i++){const a=i/5*Math.PI*2+frame*.08;ctx.beginPath();ctx.moveTo(p.x+Math.cos(a)*p.sz,p.y+Math.sin(a)*p.sz);ctx.lineTo(p.x+Math.cos(a)*(p.sz+7+Math.random()*5),p.y+Math.sin(a)*(p.sz+7+Math.random()*5));ctx.stroke();}}
     else if(p.type==='towershot'){gl('#ff8800',12);ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fillStyle='#ff8800';ctx.fill();ng();ctx.beginPath();ctx.arc(p.x,p.y,2,0,Math.PI*2);ctx.fillStyle='#ffcc00';ctx.fill();}
+    else if(p.type==='missile'){
+      // Missile: elongated + trail
+      const mAngle=Math.atan2(p.lastY-p.y,p.lastX-p.x);
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(mAngle);
+      gl('#00ffaa',18);
+      ctx.fillStyle='#00ffaa';ctx.beginPath();ctx.ellipse(0,0,p.sz,3,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#ffffff';ctx.beginPath();ctx.ellipse(p.sz*.6,0,p.sz*.4,1.5,0,0,Math.PI*2);ctx.fill();
+      // Fire trail
+      ctx.fillStyle='#ff880088';ctx.beginPath();ctx.ellipse(-p.sz*.8,0,p.sz*.7,2,0,0,Math.PI*2);ctx.fill();
+      ng();ctx.restore();
+    }
     else{gl(p.col,10);ctx.beginPath();ctx.arc(p.x,p.y,p.sz,0,Math.PI*2);ctx.fillStyle=p.col;ctx.fill();ng();}
   }
 
@@ -1662,7 +2064,6 @@ function draw(){
   const md2=MODES[gameMode];
   ctx.fillStyle='rgba(4,8,15,.85)';ctx.fillRect(W-170,H-22,90,18);
   ctx.fillStyle=md2.col;ctx.font='9px Share Tech Mono';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(`◈ ${md2.label}`,W-167,H-13);
-  // Mine income display
   let mineIncome=0;
   for(const t of towers){if(t.cfg.t===CT.MINE&&(t.cfg.mineType==='compound'||t.cfg.mineType==='basic')) mineIncome+=t.cfg.goldPerWave||0;}
   if(baseUpgPath==='B'&&baseUpgLevel>0) mineIncome+=BASE_UPG.B[baseUpgLevel].goldPerWave;
