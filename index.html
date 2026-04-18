@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>BASE SIEGE v17</title>
+<title>BASE SIEGE v18</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -64,10 +64,10 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 #wname{font-size:9px;padding:4px 8px;text-align:center;background:#040a14;border:1px solid #1a4a2a;color:#00ff88;display:none;letter-spacing:2px;}
 #wname.vis{display:block;}
 @keyframes blk{0%,100%{opacity:1;}50%{opacity:.3;}}
-.msel{display:flex;gap:4px;margin-bottom:4px;}
+.msel{display:flex;gap:4px;margin-bottom:4px;flex-wrap:wrap;}
 .mb{flex:1;background:#04090f;border:1px solid #0e2030;color:#2a4a6a;font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 2px;cursor:pointer;text-align:center;transition:all .1s;letter-spacing:1px;}
 .mb:hover,.mb.on{border-color:var(--mc);color:var(--mc);background:#06101a;}
-.mb[data-m="easy"]{--mc:#00ff88;}.mb[data-m="normal"]{--mc:#ffcc00;}.mb[data-m="hard"]{--mc:#ff8800;}.mb[data-m="hardcore"]{--mc:#ff2244;}
+.mb[data-m="easy"]{--mc:#00ff88;}.mb[data-m="normal"]{--mc:#ffcc00;}.mb[data-m="hard"]{--mc:#ff8800;}.mb[data-m="hardcore"]{--mc:#ff2244;}.mb[data-m="sandbox"]{--mc:#00eeff;}
 #buff-hint{font-size:9px;color:#aa8800;padding:3px 6px;background:#0a0800;border:1px solid #443300;display:none;letter-spacing:1px;}
 #buff-hint.vis{display:block;}
 #boss-hud{display:none;background:#060c18;border:1px solid #ff0055;padding:6px 12px;margin-bottom:6px;flex-direction:column;gap:3px;width:100%;}
@@ -150,20 +150,22 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 .ss-modes{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .ss-mode{background:#04090f;border:1px solid #0e2030;color:#2a4a6a;font-family:'Share Tech Mono',monospace;font-size:11px;padding:12px 8px;cursor:pointer;text-align:center;transition:all .15s;letter-spacing:1px;line-height:1.5;}
 .ss-mode:hover,.ss-mode.on{border-color:var(--mc);color:var(--mc);background:#060e1a;}
-.ss-mode[data-m="easy"]{--mc:#00ff88;}.ss-mode[data-m="normal"]{--mc:#ffcc00;}.ss-mode[data-m="hard"]{--mc:#ff8800;}.ss-mode[data-m="hardcore"]{--mc:#ff2244;}
+.ss-mode[data-m="easy"]{--mc:#00ff88;}.ss-mode[data-m="normal"]{--mc:#ffcc00;}.ss-mode[data-m="hard"]{--mc:#ff8800;}.ss-mode[data-m="hardcore"]{--mc:#ff2244;}.ss-mode[data-m="sandbox"]{--mc:#00eeff;}
 .ss-mode-desc{font-size:9px;color:#1a3a2a;}
 .ss-begin{font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:4px;background:#061a0e;border:1px solid #00ff88;color:#00ff88;padding:14px;cursor:pointer;width:100%;transition:all .2s;text-align:center;margin-top:4px;}
 .ss-begin:hover{background:#00ff88;color:#04080f;box-shadow:0 0 30px #00ff8844;}
 .ss-tip{font-size:9px;color:#1a3a2a;text-align:center;letter-spacing:1px;}
 .ss-save-section{display:flex;flex-direction:column;gap:8px;}
 .ss-save-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
-.ss-slot{background:#04090f;border:1px solid #0e2030;color:#2a4a6a;font-family:'Share Tech Mono',monospace;font-size:9px;padding:10px 4px;cursor:pointer;text-align:center;transition:all .15s;line-height:1.5;}
+.ss-slot{background:#04090f;border:1px solid #0e2030;color:#2a4a6a;font-family:'Share Tech Mono',monospace;font-size:9px;padding:10px 4px;cursor:pointer;text-align:center;transition:all .15px;line-height:1.5;}
 .ss-slot:hover{border-color:#00ff88;color:#00ff88;background:#001a0d;}
 .ss-slot.has-data{border-color:#1a4a2a;color:#00cc66;}
 .ss-slot .slot-wave{font-size:12px;font-weight:bold;color:#ffd700;}
 .ss-slot .slot-score{font-size:8px;color:#4a7a5a;}
 #autoskip-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);background:#001a0d;border:2px solid #00ff88;color:#00ff88;font-family:'Orbitron',sans-serif;font-size:14px;letter-spacing:4px;padding:16px 32px;z-index:200;pointer-events:none;transition:transform .2s,opacity .3s;opacity:0;}
 #autoskip-toast.show{transform:translate(-50%,-50%) scale(1);opacity:1;}
+/* Sandbox mode glow */
+.sandbox-badge{display:inline-block;font-size:8px;background:#001a1f;border:1px solid #00eeff;color:#00eeff;padding:1px 5px;letter-spacing:2px;margin-left:4px;}
 </style>
 </head>
 <body>
@@ -222,12 +224,12 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 <div id="lb-toast">✓ SCORE SUBMITTED</div>
 
 <div id="autoskip-toast">⚡ AUTO-SKIP ON</div>
-<header><h1>BASE SIEGE</h1><span class="ver">v17.0 // AUTO-SKIP · SAVE/LOAD · LEADERBOARD</span></header>
+<header><h1>BASE SIEGE</h1><span class="ver">v18.0 // SANDBOX · SHOCKWAVE CANNON · LEADERBOARD</span></header>
 
 <!-- START SCREEN -->
 <div id="startScreen">
   <div class="ss-title">BASE SIEGE</div>
-  <div class="ss-ver">v17.0 // AUTO-SKIP · SAVE / LOAD · LEADERBOARD</div>
+  <div class="ss-ver">v18.0 // SANDBOX · SHOCKWAVE CANNON · SAVE/LOAD · LEADERBOARD</div>
   <div class="ss-sub">SELECT YOUR DIFFICULTY AND DEFEND THE BASE</div>
   <div class="ss-box">
     <div class="ss-sh">── SELECT MODE ─────────────────</div>
@@ -236,6 +238,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
       <button class="ss-mode" data-m="normal">NORMAL<br><span class="ss-mode-desc">Standard · 150 HP · All towers</span></button>
       <button class="ss-mode" data-m="hard">HARD<br><span class="ss-mode-desc">-15% gold · 120 HP · All towers</span></button>
       <button class="ss-mode" data-m="hardcore">HARDCORE<br><span class="ss-mode-desc">-30% gold · 100 HP · Barrier/Blaster/Railgun/Cannon only</span></button>
+      <button class="ss-mode" data-m="sandbox" style="grid-column:span 2;border-color:#00eeff44;">💰 SANDBOX<br><span class="ss-mode-desc" style="color:#006677;">×10 GOLD · 500 HP · All towers · No leaderboard</span></button>
     </div>
     <div class="ss-save-section">
       <div class="ss-sh">── CONTINUE FROM SAVE ──────────</div>
@@ -247,7 +250,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     </div>
     <button class="ss-begin" id="ss-begin">▶ BEGIN SIEGE</button>
   </div>
-  <div class="ss-tip">⚠ MODE CANNOT BE CHANGED ONCE THE SIEGE BEGINS</div>
+  <div class="ss-tip">⚠ MODE CANNOT BE CHANGED ONCE THE SIEGE BEGINS · SANDBOX SCORES NOT SUBMITTED</div>
 </div>
 
 <div id="gw">
@@ -266,6 +269,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     <button class="mb" data-m="normal">NORMAL</button>
     <button class="mb" data-m="hard">HARD</button>
     <button class="mb" data-m="hardcore">HCORE</button>
+    <button class="mb" data-m="sandbox" style="flex-basis:100%;margin-top:2px;">💰 SANDBOX</button>
   </div>
   <div id="buff-hint">⬆ BUFF TOWER: affects nearby towers in range</div>
   <div class="sh">── INTEL ──────</div>
@@ -397,14 +401,17 @@ document.querySelectorAll('.lb-f').forEach(btn=>{btn.addEventListener('click',()
 async function openLeaderboard(){document.getElementById('lb-modal').classList.add('vis');updateSubmitRow();loadLeaderboard();}
 function updateSubmitRow(){
   const row=document.getElementById('lb-submit-row'),info=document.getElementById('lb-submit-info');
+  // Sandbox scores are not submitted
+  if(gameMode==='sandbox'){row.style.display='flex';info.textContent='Sandbox mode — scores not submitted';document.getElementById('lb-submit-btn').disabled=true;return;}
   if(currentUser&&gameStarted&&(gameOver||wave>0)){row.style.display='flex';info.textContent=`Submit: Wave ${wave} · ${score.toLocaleString()} pts · ${gameMode.toUpperCase()}`;}
   else if(!currentUser){row.style.display='flex';info.textContent='Sign in to submit scores';document.getElementById('lb-submit-btn').disabled=true;}
   else{row.style.display='none';}
-  if(currentUser) document.getElementById('lb-submit-btn').disabled=false;
+  if(currentUser&&gameMode!=='sandbox') document.getElementById('lb-submit-btn').disabled=false;
 }
 document.getElementById('lb-submit-btn').addEventListener('click',submitScore);
 async function submitScore(){
   if(!currentUser){openAuthModal();return;}
+  if(gameMode==='sandbox'){msg('⚠ Sandbox scores cannot be submitted!',2500);return;}
   const btn=document.getElementById('lb-submit-btn');btn.disabled=true;btn.textContent='SUBMITTING...';
   try{const{error}=await sb.from('leaderboard').upsert({id:currentUser.id,wave,score,mode:MODE_MAP[gameMode]??0},{onConflict:'id'});
   if(error){btn.textContent='⚠ ERROR';setTimeout(()=>{btn.textContent='SUBMIT SCORE';btn.disabled=false;},2000);}
@@ -425,9 +432,9 @@ async function loadLeaderboard(){
   tbody.appendChild(tr);});}catch(e){loading.style.display='none';empty.style.display='block';}
 }
 function showLbToast(msg){const t=document.getElementById('lb-toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
-function tryPromptLeaderboard(){if(!currentUser) return;setTimeout(()=>{updateSubmitRow();showLbToast('🏆 SUBMIT SCORE TO LEADERBOARD?');},1200);}
+function tryPromptLeaderboard(){if(!currentUser||gameMode==='sandbox') return;setTimeout(()=>{updateSubmitRow();showLbToast('🏆 SUBMIT SCORE TO LEADERBOARD?');},1200);}
 
-//saving why not try hardcore(original hardcore cannot save but now it can save)
+//saving
 const SAVE_KEY_PREFIX='basesiege_v17_slot_';
 let selectedSaveSlot=0;
 
@@ -456,7 +463,6 @@ function deserializeGameState(data){
 
 // ═══════════════════════════════════════════════
 // GAME CONSTANTS
-// 
 const COLS=22,ROWS=14,CS=38,W=COLS*CS,H=ROWS*CS;
 const BASE_R=7,BASE_C=COLS-1,SPAWN_R=1,SPAWN_C=0;
 const CT={EMPTY:0,WALL:1,BASIC:2,SNIPER:3,CANNON:4,BASE:5,SPAWN:6,ELECTRIC:7,HEALER:8,SPIKE:9,BUFF:10,MINE:11,HELI:12};
@@ -486,7 +492,14 @@ function upgCost(key,toLvl,path){if(key==='wall'){const s=TS.wall[Math.min(toLvl
 const BASE_UPG={A:{1:{cost:200,hpBonus:50,turretDmg:25,turretRng:180,turretCd:75,name:'FORTRESS I'},2:{cost:600,hpBonus:100,turretDmg:50,turretRng:200,turretCd:40,name:'FORTRESS II'},3:{cost:2200,hpBonus:600,turretDmg:90,turretRng:220,turretCd:30,name:'FORTRESS III'},4:{cost:4500,hpBonus:2000,turretDmg:160,turretRng:250,turretCd:22,name:'CITADEL'},5:{cost:8000,hpBonus:5000,turretDmg:280,turretRng:300,turretCd:14,name:'FORTRESS MAX'}},B:{1:{cost:250,goldPerWave:30,name:'TREASURY I'},2:{cost:500,goldPerWave:65,name:'TREASURY II'},3:{cost:900,goldPerWave:110,name:'TREASURY III'},4:{cost:1800,goldPerWave:180,name:'VAULT'},5:{cost:3500,goldPerWave:300,name:'TREASURY MAX'}}};
 const BASE_ML=5;
 
-const MODES={easy:{label:'EASY',scaleBonus:0.0,goldBonus:1.3,allowed:null,startHp:200,col:'#00ff88'},normal:{label:'NORMAL',scaleBonus:0.15,goldBonus:1.0,allowed:null,startHp:150,col:'#ffcc00'},hard:{label:'HARD',scaleBonus:0.35,goldBonus:0.85,allowed:null,startHp:120,col:'#ff8800'},hardcore:{label:'HARDCORE',scaleBonus:0.6,goldBonus:0.7,allowed:new Set(['wall','basic','sniper','cannon']),startHp:100,col:'#ff2244'}};
+// ── MODES — sandbox added with 10x gold multiplier
+const MODES={
+  easy:{label:'EASY',scaleBonus:0.0,goldBonus:1.3,allowed:null,startHp:200,col:'#00ff88'},
+  normal:{label:'NORMAL',scaleBonus:0.15,goldBonus:1.0,allowed:null,startHp:150,col:'#ffcc00'},
+  hard:{label:'HARD',scaleBonus:0.35,goldBonus:0.85,allowed:null,startHp:120,col:'#ff8800'},
+  hardcore:{label:'HARDCORE',scaleBonus:0.6,goldBonus:0.7,allowed:new Set(['wall','basic','sniper','cannon']),startHp:100,col:'#ff2244'},
+  sandbox:{label:'SANDBOX',scaleBonus:0.0,goldBonus:10.0,allowed:null,startHp:500,col:'#00eeff',isSandbox:true}
+};
 let gameMode='easy';
 
 const WAVE_TYPES=[
@@ -515,7 +528,6 @@ function pickWaveType(w){if(w===1) return 0;if(w===2) return 1;if(w===3) return 
 const cv=document.getElementById('cv');cv.width=W;cv.height=H;
 const ctx=cv.getContext('2d');
 
-// ── BUG FIX: initialize all state at declaration so canvas clicks before game start never crash
 let grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));
 let flow=Array.from({length:ROWS},()=>Array(COLS).fill(null));
 let towers=[],enemies=[],projs=[],shockwaves=[],parts=[],floats=[],lxfx=[],healBeams=[],helicopters=[];
@@ -645,13 +657,12 @@ document.querySelectorAll('.mb').forEach(b=>{b.addEventListener('click',()=>{if(
 document.querySelectorAll('.spb').forEach(b=>{b.addEventListener('click',()=>{speed=parseInt(b.dataset.spd);document.querySelectorAll('.spb').forEach(x=>x.classList.remove('on'));b.classList.add('on');});});
 document.getElementById('start').addEventListener('click',startWave);
 
-// ── BUG FIX: guard canvas clicks before game starts + block BASE/SPAWN cells
 cv.addEventListener('click',e=>{
-  if(!gameStarted) return; // ← FIX: grid undefined before init()
+  if(!gameStarted) return;
   if(gameOver) return;
   const r=cv.getBoundingClientRect();const col=Math.floor((e.clientX-r.left)*(W/r.width)/CS);const row=Math.floor((e.clientY-r.top)*(H/r.height)/CS);
   if(col<0||col>=COLS||row<0||row>=ROWS) return;
-  if(grid[row][col]===CT.BASE||grid[row][col]===CT.SPAWN) { // ← FIX: block BASE/SPAWN
+  if(grid[row][col]===CT.BASE||grid[row][col]===CT.SPAWN){
     if(grid[row][col]===CT.BASE&&(baseUpgMode||(!sellMode&&!upgMode))){baseUpgMode=true;document.getElementById('basebtn').classList.add('base-on');showBasePanel();}
     return;
   }
@@ -678,7 +689,10 @@ cv.addEventListener('mouseleave',()=>hov=null);
   let ssMode='easy';
   ssModes.forEach(b=>{b.addEventListener('click',()=>{ssMode=b.dataset.m;ssModes.forEach(x=>x.classList.remove('on'));b.classList.add('on');});});
   document.querySelectorAll('#ss-save-slots .ss-slot').forEach((btn,i)=>{btn.addEventListener('click',()=>{const data=getSaveData(i);if(!data) return;if(!confirm(`Load Slot ${i+1}? (Wave ${data.wave})`)) return;if(deserializeGameState(data)){gameStarted=true;ss.classList.add('gone');document.querySelectorAll('.mb').forEach(b=>{b.classList.toggle('on',b.dataset.m===gameMode);b.style.opacity=b.dataset.m===gameMode?'1':'.25';b.style.pointerEvents='none';});msg(`Loaded Slot ${i+1} — Wave ${data.wave}!`,3000);}else alert('Incompatible save!');});});
-  document.getElementById('ss-begin').addEventListener('click',()=>{gameMode=ssMode;gameStarted=true;document.querySelectorAll('.mb').forEach(b=>{b.classList.toggle('on',b.dataset.m===gameMode);b.style.opacity=b.dataset.m===gameMode?'1':'.25';b.style.pointerEvents='none';});init();ss.classList.add('gone');msg(`${MODES[gameMode].label} mode — BUILD DEFENSES!`,3000);});
+  document.getElementById('ss-begin').addEventListener('click',()=>{gameMode=ssMode;gameStarted=true;document.querySelectorAll('.mb').forEach(b=>{b.classList.toggle('on',b.dataset.m===gameMode);b.style.opacity=b.dataset.m===gameMode?'1':'.25';b.style.pointerEvents='none';});init();ss.classList.add('gone');
+    if(gameMode==='sandbox') msg(`💰 SANDBOX MODE — ×10 GOLD! Go nuts! No leaderboard.`,4000);
+    else msg(`${MODES[gameMode].label} mode — BUILD DEFENSES!`,3000);
+  });
   refreshSaveSlotUI();
 })();
 
@@ -730,7 +744,10 @@ function update(){
   const ecol=Math.floor(e.x/CS),erow=Math.floor(e.y/CS);const dx=bx-e.x,dy=by-e.y,dist2=dx*dx+dy*dy;if(dist2<(CS*.85)**2){e.mode='attackBase';e.atkCd=0;continue;}if(erow<0||erow>=ROWS||ecol<0){enemies.splice(i,1);continue;}const f=(erow>=0&&erow<ROWS&&ecol>=0&&ecol<COLS)?flow[erow][ecol]:null;if(f){e.x+=f.dx*e.spd;e.y+=f.dy*e.spd;}else{const tgt=findBreakthrough(erow,ecol);if(tgt){e.mode='attack';e.atkTarget=tgt;e.atkCd=0;}else{const d=Math.sqrt(dist2)||1;e.x+=dx/d*e.spd*.25;e.y+=dy/d*e.spd*.25;}}}
   updateHelicopters();
   if(baseUpgPath==='A'&&baseUpgLevel>0){const upd=BASE_UPG.A[baseUpgLevel];baseTurretCd--;if(baseTurretCd<=0){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-bx,dy=e.y-by,d=dx*dx+dy*dy;if(d<=upd.turretRng*upd.turretRng&&d<bd){bd=d;closest=e;}}if(closest){baseTurretAngle=Math.atan2(closest.y-by,closest.x-bx);baseTurretCd=upd.turretCd;const effDmg=Math.round(upd.turretDmg*getBuffsAt(BASE_C,BASE_R).dmgMult);projs.push({x:bx,y:by,tgt:closest,lastX:closest.x,lastY:closest.y,spd:9,dmg:effDmg,aoe:0,chn:0,col:'#00ff88',sz:3,type:'normal'});sparks(bx,by,'#00ff88',4,1.2);}}}
-  for(const t of towers){if(t.hitFlash>0) t.hitFlash--;if(t.stunned>0){t.stunned--;continue;}const cfg=t.cfg;if(cfg.t===CT.WALL&&cfg.wallRegen&&t.hp<t.maxHp){t.hp=Math.min(t.maxHp,t.hp+cfg.wallRegen/60);}if(cfg.t===CT.MINE||cfg.t===CT.HELI||cfg.t===CT.BUFF){t.cd=0;continue;}if(cfg.t===CT.HEALER){if(!t.healCd) t.healCd=0;t.healCd--;if(t.healCd<=0){t.healCd=cfg.healTick||60;const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;for(const ot of towers){if(ot===t) continue;const ddx=ot.col*CS+CS/2-tx,ddy=ot.row*CS+CS/2-ty;if(ddx*ddx+ddy*ddy<=(cfg.rng||110)**2){if(ot.hp<ot.maxHp){ot.hp=Math.min(ot.maxHp,ot.hp+(cfg.healAmt||7));addBeam(tx,ty,ot.col*CS+CS/2,ot.row*CS+CS/2);}if((cfg.healStunReduce||0)>0&&ot.stunned>0) ot.stunned=Math.max(0,ot.stunned-cfg.healStunReduce);}}if(t.path==='A'&&cfg.baseHealAmt&&baseHP<baseMaxHP){baseHP=Math.min(baseMaxHP,baseHP+cfg.baseHealAmt);syncUI();}}continue;}if(!cfg.rng){t.cd=0;continue;}if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effRng=cfg.rng*bfx.rngMult;const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;if(cfg.shockwave){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<bd){bd=d;closest=e;}}if(!closest) continue;t.cd=effCd;shockwaves.push({ox:tx,oy:ty,r:CS*.3,maxR:cfg.shockMaxR||200,spd:cfg.shockSpd||3.2,dmg:effDmg,col:cfg.col,life:1,hit:new Set(),width:3});sparks(tx,ty,cfg.col,6,1);continue;}let tgt=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<bd){bd=d;tgt=e;}}if(!tgt) continue;t.angle=Math.atan2(tgt.y-ty,tgt.x-tx);t.cd=effCd;if(cfg.t===CT.ELECTRIC){if(cfg.burst&&cfg.burst>1){const inR=enemies.filter(e=>{const dx=e.x-tx,dy=e.y-ty;return dx*dx+dy*dy<=effRng*effRng;});inR.sort((a,b)=>(a.x-tx)**2+(a.y-ty)**2-(b.x-tx)**2-(b.y-ty)**2);for(const bt of inR.slice(0,cfg.burst)) fireElectric(tx,ty,bt,effDmg,cfg.chn);}else if(cfg.elecBall){projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:2.6,dmg:effDmg,aoe:cfg.aoe||0,chn:cfg.chn||3,chainRng:105,col:cfg.col,sz:8,type:'elecBall'});}else fireElectric(tx,ty,tgt,effDmg,cfg.chn);}else if(cfg.t===CT.SPIKE){if(cfg.hammer) projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:6,dmg:effDmg,aoe:cfg.aoe||45,chn:0,col:cfg.col,sz:6,type:'hammer',stunDur:cfg.stunDur||45});else if(cfg.rapidStrike){for(let rb=0;rb<2;rb++) projs.push({x:tx+(Math.random()-.5)*3,y:ty+(Math.random()-.5)*3,tgt,lastX:tgt.x,lastY:tgt.y,spd:8,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:3,type:'normal'});}else projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:4,type:'normal'});}else if(cfg.minigun){for(let b=0;b<3;b++) projs.push({x:tx+(Math.random()-.5)*4,y:ty+(Math.random()-.5)*4,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:2,type:'normal'});}else projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:cfg.t===CT.SNIPER?10:5.5,dmg:effDmg,aoe:cfg.aoe||0,chn:0,col:cfg.col,sz:cfg.t===CT.CANNON?5:3,type:'normal'});}
+  for(const t of towers){if(t.hitFlash>0) t.hitFlash--;if(t.stunned>0){t.stunned--;continue;}const cfg=t.cfg;if(cfg.t===CT.WALL&&cfg.wallRegen&&t.hp<t.maxHp){t.hp=Math.min(t.maxHp,t.hp+cfg.wallRegen/60);}if(cfg.t===CT.MINE||cfg.t===CT.HELI||cfg.t===CT.BUFF){t.cd=0;continue;}if(cfg.t===CT.HEALER){if(!t.healCd) t.healCd=0;t.healCd--;if(t.healCd<=0){t.healCd=cfg.healTick||60;const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;for(const ot of towers){if(ot===t) continue;const ddx=ot.col*CS+CS/2-tx,ddy=ot.row*CS+CS/2-ty;if(ddx*ddx+ddy*ddy<=(cfg.rng||110)**2){if(ot.hp<ot.maxHp){ot.hp=Math.min(ot.maxHp,ot.hp+(cfg.healAmt||7));addBeam(tx,ty,ot.col*CS+CS/2,ot.row*CS+CS/2);}if((cfg.healStunReduce||0)>0&&ot.stunned>0) ot.stunned=Math.max(0,ot.stunned-cfg.healStunReduce);}}if(t.path==='A'&&cfg.baseHealAmt&&baseHP<baseMaxHP){baseHP=Math.min(baseMaxHP,baseHP+cfg.baseHealAmt);syncUI();}}continue;}if(!cfg.rng){t.cd=0;continue;}if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effRng=cfg.rng*bfx.rngMult;const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;if(cfg.shockwave){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<bd){bd=d;closest=e;}}if(!closest) continue;t.cd=effCd;
+  // Update shockwave tower angle to face closest target (for cannon barrel visual)
+  t.angle=Math.atan2(closest.y-ty,closest.x-tx);
+  shockwaves.push({ox:tx,oy:ty,r:CS*.3,maxR:cfg.shockMaxR||200,spd:cfg.shockSpd||3.2,dmg:effDmg,col:cfg.col,life:1,hit:new Set(),width:3});sparks(tx,ty,cfg.col,6,1);continue;}let tgt=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<bd){bd=d;tgt=e;}}if(!tgt) continue;t.angle=Math.atan2(tgt.y-ty,tgt.x-tx);t.cd=effCd;if(cfg.t===CT.ELECTRIC){if(cfg.burst&&cfg.burst>1){const inR=enemies.filter(e=>{const dx=e.x-tx,dy=e.y-ty;return dx*dx+dy*dy<=effRng*effRng;});inR.sort((a,b)=>(a.x-tx)**2+(a.y-ty)**2-(b.x-tx)**2-(b.y-ty)**2);for(const bt of inR.slice(0,cfg.burst)) fireElectric(tx,ty,bt,effDmg,cfg.chn);}else if(cfg.elecBall){projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:2.6,dmg:effDmg,aoe:cfg.aoe||0,chn:cfg.chn||3,chainRng:105,col:cfg.col,sz:8,type:'elecBall'});}else fireElectric(tx,ty,tgt,effDmg,cfg.chn);}else if(cfg.t===CT.SPIKE){if(cfg.hammer) projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:6,dmg:effDmg,aoe:cfg.aoe||45,chn:0,col:cfg.col,sz:6,type:'hammer',stunDur:cfg.stunDur||45});else if(cfg.rapidStrike){for(let rb=0;rb<2;rb++) projs.push({x:tx+(Math.random()-.5)*3,y:ty+(Math.random()-.5)*3,tgt,lastX:tgt.x,lastY:tgt.y,spd:8,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:3,type:'normal'});}else projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:4,type:'normal'});}else if(cfg.minigun){for(let b=0;b<3;b++) projs.push({x:tx+(Math.random()-.5)*4,y:ty+(Math.random()-.5)*4,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:2,type:'normal'});}else projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:cfg.t===CT.SNIPER?10:5.5,dmg:effDmg,aoe:cfg.aoe||0,chn:0,col:cfg.col,sz:cfg.t===CT.CANNON?5:3,type:'normal'});}
   for(let i=shockwaves.length-1;i>=0;i--){const sw=shockwaves[i];const prevR=sw.r;sw.r+=sw.spd;for(const e of enemies){if(sw.hit.has(e)) continue;const dx=e.x-sw.ox,dy=e.y-sw.oy,d=Math.sqrt(dx*dx+dy*dy);if(d>=prevR-e.sz*0.5&&d<=sw.r+e.sz*0.5){e.hp-=applyArmor(e,sw.dmg);sw.hit.add(e);sparks(e.x,e.y,sw.col,4,1.5);if(!e.robot) applyStun(e,6);}}if(sw.r>=sw.maxR) shockwaves.splice(i,1);}
   for(let i=projs.length-1;i>=0;i--){const p=projs[i];if(p.tgt&&enemies.includes(p.tgt)){p.lastX=p.tgt.x;p.lastY=p.tgt.y;}const dx=p.lastX-p.x,dy=p.lastY-p.y,d=Math.sqrt(dx*dx+dy*dy);if(d<p.spd*1.5){if(p.type==='elecBall') explodeElecBall(p);else if(p.type==='towershot'){const tw=p.stunTwr;if(tw&&towers.includes(tw)){tw.hp-=p.dmg;tw.hitFlash=12;tw.stunned=(tw.stunned||0)+p.stunDur;sparks(p.lastX,p.lastY,'#ff8800',10,2.5);if(tw.hp<=0) destroyTower(tw);}}else if(p.type==='missile'){sparks(p.lastX,p.lastY,'#00ffaa',20,4);if(p.aoe>0){for(const e of enemies){const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe) e.hp-=e.shielded?Math.round(p.dmg*0.4):p.dmg;}}else if(p.tgt&&enemies.includes(p.tgt)) p.tgt.hp-=applyArmor(p.tgt,p.dmg);}else if(p.type==='hammer'){if(p.aoe>0){for(const e of enemies){const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){e.hp-=applyArmor(e,p.dmg);applyStun(e,p.stunDur||45);sparks(e.x,e.y,p.col,4,1.5);}}}sparks(p.lastX,p.lastY,'#ff2255',16,3.5);ft(p.lastX,p.lastY-8,'STUN!','#ff2255');}else{if(p.aoe>0){for(const e of enemies){const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){e.hp-=applyArmor(e,p.dmg);sparks(e.x,e.y,p.col,3,1);}}}else{if(p.tgt&&enemies.includes(p.tgt)){const blocker=isBlockedByShield(p.x,p.y,p.tgt);if(blocker){blocker.hp-=Math.max(1,Math.round(p.dmg*0.25));sparks(blocker.x,blocker.y,'#00ddff',8,2.5);ft(blocker.x,blocker.y-blocker.sz-6,'BLOCKED!','#00ddff');}else p.tgt.hp-=applyArmor(p.tgt,p.dmg);}}}projs.splice(i,1);}else{p.x+=dx/d*p.spd;p.y+=dy/d*p.spd;}}
   for(let i=enemies.length-1;i>=0;i--){if(enemies[i].hp<=0){const e=enemies[i];const bfx=getBuffsAt(Math.floor(e.x/CS),Math.floor(e.y/CS));const rw=Math.round(e.rw*(1+bfx.goldBonusMult));gold+=rw;score+=rw*10;kills++;ft(e.x,e.y-e.sz,`+${rw}g`);sparks(e.x,e.y,e.col,14,2.2);enemies.splice(i,1);syncUI();}}
@@ -752,7 +769,7 @@ function drawBeam(x1,y1,x2,y2,a){ctx.save();ctx.globalAlpha=a*.6;ctx.strokeStyle
 function pips(x,y,lvl,col){for(let i=0;i<ML;i++){ctx.beginPath();ctx.arc(x+i*5,y,2,0,Math.PI*2);ctx.fillStyle=i<lvl?col:'#1a2a3a';ctx.fill();}}
 
 // ══════════════════════════════
-// TOWER DRAW — clean distinct shapes from doc3
+// TOWER DRAW
 // ══════════════════════════════
 function drawTower(t){
   const x=t.col*CS,y=t.row*CS,cx=x+CS/2,cy=y+CS/2;
@@ -769,10 +786,39 @@ function drawTower(t){
     ctx.beginPath();ctx.moveTo(x+4,cy);ctx.lineTo(x+CS-4,cy);ctx.stroke();
     if(cfg.thorns){ctx.fillStyle=col;ctx.font='9px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('⚡',cx,cy);}
   } else if(cfg.t===CT.BASIC){
-    ctx.beginPath();ctx.arc(cx,cy,12,0,Math.PI*2);ctx.fillStyle='#0a1828';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();
-    ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle);ctx.strokeStyle=col;ctx.lineWidth=cfg.minigun?2:2.5;ctx.beginPath();ctx.moveTo(4,0);ctx.lineTo(17,0);ctx.stroke();
-    if(cfg.minigun){ctx.strokeStyle=col+'cc';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(4,-3);ctx.lineTo(15,-3);ctx.stroke();ctx.beginPath();ctx.moveTo(4,3);ctx.lineTo(15,3);ctx.stroke();}
-    ctx.restore();ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+    // ── SHOCKWAVE path: cannon-style body with rotating barrel + shockwave ring indicator
+    if(cfg.shockwave){
+      // Outer ring pulsing — shows it's a shockwave type
+      const swPulse=(Math.sin(frame*.15)+1)*.5;
+      ctx.beginPath();ctx.arc(cx,cy,14+swPulse*2,0,Math.PI*2);
+      ctx.fillStyle='#030c1a';ctx.fill();
+      ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.stroke();
+      // Inner decorative ring (shockwave indicator)
+      ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);
+      ctx.strokeStyle=col+'66';ctx.lineWidth=1;ctx.stroke();
+      // Cannon barrel (thick, like the Cannon tower) — rotates toward target
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle);
+      ctx.strokeStyle=col;ctx.lineWidth=5;
+      ctx.beginPath();ctx.moveTo(3,0);ctx.lineTo(15,0);ctx.stroke();
+      // Barrel ring near base
+      ctx.strokeStyle=col+'aa';ctx.lineWidth=1;
+      ctx.beginPath();ctx.arc(4,0,4,Math.PI/2,-Math.PI/2);ctx.stroke();
+      // Muzzle cap
+      ctx.fillStyle=col;ctx.beginPath();ctx.arc(15,0,2.5,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+      // Center orb
+      ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fillStyle='#030c1a';ctx.fill();
+      ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();
+      ctx.beginPath();ctx.arc(cx,cy,2.5,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+      // Shockwave label
+      ctx.fillStyle=col+'99';ctx.font='5px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('SW',cx,cy+10);
+    } else {
+      // Standard Blaster / Minigun
+      ctx.beginPath();ctx.arc(cx,cy,12,0,Math.PI*2);ctx.fillStyle='#0a1828';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle);ctx.strokeStyle=col;ctx.lineWidth=cfg.minigun?2:2.5;ctx.beginPath();ctx.moveTo(4,0);ctx.lineTo(17,0);ctx.stroke();
+      if(cfg.minigun){ctx.strokeStyle=col+'cc';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(4,-3);ctx.lineTo(15,-3);ctx.stroke();ctx.beginPath();ctx.moveTo(4,3);ctx.lineTo(15,3);ctx.stroke();}
+      ctx.restore();ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+    }
   } else if(cfg.t===CT.SNIPER){
     ctx.save();ctx.translate(cx,cy);ctx.beginPath();for(let i=0;i<8;i++){const a=i/8*Math.PI*2-Math.PI/8,R=12;ctx[i===0?'moveTo':'lineTo'](Math.cos(a)*R,Math.sin(a)*R);}ctx.closePath();ctx.fillStyle='#0d0818';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();ctx.rotate(t.angle);ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(4,0);ctx.lineTo(22,0);ctx.stroke();ctx.strokeStyle=col+'99';ctx.lineWidth=0.8;ctx.beginPath();ctx.moveTo(14,-2);ctx.lineTo(14,2);ctx.stroke();ctx.beginPath();ctx.moveTo(18,-2);ctx.lineTo(18,2);ctx.stroke();ctx.restore();ctx.beginPath();ctx.arc(cx,cy,3,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
   } else if(cfg.t===CT.CANNON){
@@ -876,6 +922,8 @@ function draw(){
   ctx.fillStyle='rgba(4,8,15,.85)';ctx.fillRect(W-170,4,166,20);const wt2=WAVE_TYPES[curWaveType];ctx.fillStyle=waveOn?(curWaveType>=14?'#ff0055':wt2.col):'#00ff88';ctx.font='10px Share Tech Mono';ctx.textAlign='right';ctx.fillText(waveOn?`WAVE ${wave} — ${enemies.length+spawnQ.length} left`:`WAVE ${wave} COMPLETE`,W-6,14);
 
   const md2=MODES[gameMode];ctx.fillStyle='rgba(4,8,15,.85)';ctx.fillRect(W-170,H-22,90,18);ctx.fillStyle=md2.col;ctx.font='9px Share Tech Mono';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(`◈ ${md2.label}`,W-167,H-13);
+  // Sandbox indicator
+  if(gameMode==='sandbox'){ctx.fillStyle='rgba(4,8,15,.9)';ctx.fillRect(W-170,H-44,90,18);ctx.fillStyle='#00eeff';ctx.font='8px Share Tech Mono';ctx.textAlign='left';ctx.fillText('💰 ×10 GOLD',W-167,H-35);}
   if(autoSkip){ctx.fillStyle='#00ff88';ctx.font='9px Share Tech Mono';ctx.textAlign='right';ctx.fillText('⚡AUTO',W-85,H-13);}
 
   let mineIncome=0;for(const t of towers){if(t.cfg.t===CT.MINE&&(t.cfg.mineType==='compound'||t.cfg.mineType==='basic')) mineIncome+=t.cfg.goldPerWave||0;}if(baseUpgPath==='B'&&baseUpgLevel>0) mineIncome+=BASE_UPG.B[baseUpgLevel].goldPerWave;
