@@ -1658,15 +1658,7 @@ function executeAdminCommand(cmd) {
 // ================================================================
 // DATABASE-BASED ADMIN SYSTEM (no Realtime rate limits!)
 // ================================================================
-console.log('[DB] >>> DB ADMIN SYSTEM CODE LOADED <<<');
-// Show visible on-screen indicator
-try {
-  const _dbIndicator = document.createElement('div');
-  _dbIndicator.id = 'db-status-indicator';
-  _dbIndicator.style.cssText = 'position:fixed;top:5px;left:50%;transform:translateX(-50%);background:#001a0d;border:1px solid #00ff88;color:#00ff88;font-family:monospace;font-size:10px;padding:4px 12px;border-radius:4px;z-index:9999;opacity:0.8;pointer-events:none;';
-  _dbIndicator.textContent = '🗄️ DB ADMIN: Loading...';
-  document.body.appendChild(_dbIndicator);
-} catch(e) { console.warn('Indicator error:', e); }
+
 let dbPlayerId = localStorage.getItem('bs_rt_id');
 if(!dbPlayerId){dbPlayerId='anon_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);localStorage.setItem('bs_rt_id',dbPlayerId);}
 let lastCmdId = 0;
@@ -1703,7 +1695,6 @@ async function syncPlayerToDb() {
 let _pollCount = 0;
 async function pollCommands() {
   _pollCount++;
-  const ind = document.getElementById('db-status-indicator');
   try {
     const pid = getPlayerId();
     const { data, error } = await sb.from('admin_commands')
@@ -1713,13 +1704,12 @@ async function pollCommands() {
       .limit(20);
     
     if (error) {
-      if(ind) ind.textContent = '⚠️ POLL ERROR: ' + error.message;
+  
       console.warn('[DB] Poll error:', error.message);
       return;
     }
     
-    // Show poll status
-    if(ind) ind.textContent = '🗄️ Poll #'+_pollCount+' | lastID:'+lastCmdId+' | found:'+(data?data.length:0)+' | pid:'+pid.slice(0,10);
+
     
     if (!data || data.length === 0) return;
     
@@ -1727,13 +1717,13 @@ async function pollCommands() {
       if (row.id > lastCmdId) lastCmdId = row.id;
       if (row.target === 'all' || row.target === pid) {
         console.log('[DB] EXECUTING:', row.type, row.value, 'id:', row.id);
-        if(ind) { ind.textContent = '🔥 EXEC: '+row.type+' (id:'+row.id+')'; ind.style.borderColor='#ff4444'; }
+
         executeAdminCommand({ type: row.type, value: row.value, target: row.target });
-        setTimeout(()=>{ if(ind) ind.style.borderColor='#00ff88'; }, 2000);
+
       }
     }
   } catch(err) {
-    if(ind) ind.textContent = '❌ POLL FAIL: ' + err.message;
+
     console.warn('[DB] Poll failed:', err);
   }
 }
@@ -1772,21 +1762,23 @@ async function initDbSystem() {
   setInterval(pollCommands, 2000);
   updateRtStatus(true, 0);
   console.log('[DB] Admin system initialized. Player ID:', getPlayerId());
-  // Update visible indicator
-  try {
-    const ind = document.getElementById('db-status-indicator');
-    if (ind) { ind.textContent = '🗄️ DB ADMIN: Active | Polling cmds every 2s | ID: ' + getPlayerId().slice(0,12) + '...'; ind.style.borderColor = '#00ff88'; }
-  } catch(e) {}
+  
 }
 
-// Start after a short delay (wait for auth)
-setTimeout(initDbSystem, 1500);
+// Start after a delay (wait for auth to load)
+setTimeout(initDbSystem, 2500);
 
 // Re-init when user signs in/out
-sb.auth.onAuthStateChange((_event, session) => {
+sb.auth.onAuthStateChange(async (_event, session) => {
+  const oldPid = getPlayerId(); // Save old ID before auth change
   currentUser = session?.user ?? null;
   updateAuthBar();
-  // Sync new identity
+  const newPid = getPlayerId();
+  // If ID changed (logged in/out), delete the old player entry
+  if (oldPid !== newPid) {
+    try { await sb.from('live_players').delete().eq('player_id', oldPid); } catch(e) {}
+    console.log('[DB] Player ID changed:', oldPid, '→', newPid);
+  }
   setTimeout(syncPlayerToDb, 500);
 });
 
