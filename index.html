@@ -1849,16 +1849,22 @@ function switchTab(ch){
 async function fetchChat(){
   try{
     const lastId=chatChannel==='global'?lastGlobalId:lastTop3Id;
-    const{data}=await sb.from('game_chat').select('*').eq('channel',chatChannel).gt('id',lastId).order('id',{ascending:true}).limit(20);
+    // Fetch all recent messages, filter by channel in JS
+    const{data,error}=await sb.from('game_chat').select('*').gt('id',lastId).order('id',{ascending:true}).limit(30);
+    if(error){console.warn('Chat error:',error.message);return;}
     if(!data||data.length===0) return;
     const msgs=document.getElementById('chat-msgs');
     for(const m of data){
-      if(chatChannel==='global'&&m.id>lastGlobalId) lastGlobalId=m.id;
-      if(chatChannel==='top3'&&m.id>lastTop3Id) lastTop3Id=m.id;
+      // Track max ID for both channels
+      if(m.id>lastGlobalId) lastGlobalId=m.id;
+      if(m.id>lastTop3Id) lastTop3Id=m.id;
+      // Only display messages for current channel
+      const ch=m.channel||'global';
+      if(ch!==chatChannel) continue;
       const div=document.createElement('div');div.className='chat-msg';
       const t=new Date(m.created_at);
       const ts=t.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'});
-      const nameCol=chatChannel==='top3'?'#ffd700':'#ff8844';
+      const nameCol=ch==='top3'?'#ffd700':'#ff8844';
       div.innerHTML='<span class="chat-name" style="color:'+nameCol+'">'+esc(m.player_name)+':</span> <span class="chat-text">'+esc(m.message)+'</span><span class="chat-time">'+ts+'</span>';
       msgs.appendChild(div);
     }
