@@ -563,19 +563,19 @@ async function submitScore(){
   if(!currentUser){openAuthModal();return;}
   if(gameMode==='sandbox'){msg('⚠ Sandbox scores cannot be submitted!',2500);return;}
   const btn=document.getElementById('lb-submit-btn');btn.disabled=true;btn.textContent='SUBMITTING...';
-  const payload={user_id:currentUser.id,email:currentUser.email||'anon',wave,score,mode:MODE_MAP[gameMode]??0,name:playerName||currentUser.email?.split('@')[0]||'anon'};
+  const basePay={wave,score,mode:MODE_MAP[gameMode]??0};const namePay=playerName?{name:playerName}:{};
   try{
-    // Try insert first
-    let{data,error}=await sb.from('leaderboard').insert(payload);
-    // If duplicate, try upsert
-    if(error&&(error.code==='23505'||error.message?.includes('duplicate'))){
-      console.warn('Insert duplicate, trying upsert...',error.message);
-      const r2=await sb.from('leaderboard').upsert({id:currentUser.id,...payload},{onConflict:'id'});
+    // Try upsert with name first
+    let{data,error}=await sb.from('leaderboard').upsert({id:currentUser.id,...basePay,...namePay},{onConflict:'id'});
+    // If name column doesn't exist, retry without name
+    if(error&&(error.message?.includes('name')||error.code==='42703')){
+      console.warn('Name column not found, retrying without name...');
+      const r2=await sb.from('leaderboard').upsert({id:currentUser.id,...basePay},{onConflict:'id'});
       data=r2.data;error=r2.error;
     }
-    // If still failing, try with just id as PK
+    // Fallback: minimal upsert
     if(error){
-      console.warn('Upsert with user_id failed, trying id-only...',error.message);
+      console.warn('Retrying minimal upsert...',error.message);
       const r3=await sb.from('leaderboard').upsert({id:currentUser.id,wave,score,mode:MODE_MAP[gameMode]??0},{onConflict:'id'});
       data=r3.data;error=r3.error;
     }
@@ -602,11 +602,11 @@ async function loadLeaderboard(){
   try{let q=sb.from('leaderboard').select('id,wave,score,mode,name').order('score',{ascending:false}).limit(50);
   if(lbFilter!=='all') q=q.eq('mode',parseInt(lbFilter));
   const{data,error}=await q;loading.style.display='none';
-  if(error){console.error('Leaderboard load error:',error);empty.textContent='⚠ ERROR: '+error.message;empty.style.display='block';return;}
+  if(error){console.warn('Leaderboard query error, retrying without name:',error.message);const r2=await sb.from('leaderboard').select('id,wave,score,mode').order('score',{ascending:false}).limit(50);if(lbFilter!=='all'&&r2.data) {/* refilter */};data=r2.data;error=r2.error;if(error){empty.textContent='⚠ ERROR: '+error.message;empty.style.display='block';return;}}
   if(!data||data.length===0){empty.textContent='NO RECORDS FOUND';empty.style.display='block';return;}
   table.style.display='table';const tbody=document.getElementById('lb-body');tbody.innerHTML='';
   data.forEach((row,i)=>{const isMe=currentUser&&row.id===currentUser.id;const tr=document.createElement('tr');if(isMe) tr.className='me';
-  const pid=row.name||row.email||(row.id?row.id.slice(0,8)+'…':'—');
+  const pid=isMe?(playerName||currentUser.email||row.id?.slice(0,8)+'…'):(row.name||(row.id?row.id.slice(0,8)+'…':'—'));
   tr.innerHTML=`<td class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</td><td>${pid}</td><td class="lb-score-val">${Number(row.score).toLocaleString()}</td><td class="lb-wave-val">${row.wave}</td><td style="color:${['#00ff88','#ffcc00','#ff8800','#ff2244'][row.mode]??'#aaa'}">${MODE_LABEL[row.mode]??'?'}</td>`;
   tbody.appendChild(tr);});}catch(e){loading.style.display='none';empty.style.display='block';}
 }
