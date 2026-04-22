@@ -1564,30 +1564,178 @@ function draw(){
 function loop(){if(!gameOver)for(let i=0;i<speed;i++)update();draw();requestAnimationFrame(loop);}
 gameMode='easy';init();requestAnimationFrame(loop);
 
+
 // ================================================================
-// SUPABASE REALTIME — PRESENCE + ADMIN COMMANDS
+// ADMIN COMMAND EXECUTOR
 // ================================================================
-const RT_CHANNEL_NAME = 'base_siege_live';
-let rtChannel = null;
-let rtConnected = false;
-let presenceInterval = null;
-let rtPlayerId = 'anon_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+function executeAdminCommand(cmd) {
+  try {
+  const type = cmd.type;
+  const value = cmd.value;
+  // Visual feedback
+  const flashDiv = document.createElement('div');
+  flashDiv.style.cssText='position:fixed;inset:0;border:4px solid #ff4444;pointer-events:none;z-index:9999;animation:cmdFlash .5s';
+  document.body.appendChild(flashDiv);
+  setTimeout(()=>flashDiv.remove(),500);
+
+  switch(type) {
+    case 'ping':
+      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '📡 ADMIN PING!', '#00ff88');
+      break;
+    case 'set_gold':
+      gold = parseInt(value) || 0;
+      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '💰 Gold → ' + gold, '#ffd700');
+      break;
+    case 'set_wave':
+      wave = parseInt(value) || 0;
+      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '🌊 Wave → ' + wave, '#00ccff');
+      break;
+    case 'set_score':
+      score = parseInt(value) || 0;
+      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '🏆 Score → ' + score, '#aa88ff');
+      break;
+    case 'set_hp':
+      const hpVal = parseInt(value) || 100;
+      baseHP = hpVal; baseMaxHP = Math.max(baseMaxHP, hpVal);
+      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '❤️ HP → ' + hpVal, '#ff4444');
+      break;
+    case 'set_speed':
+      speed = parseInt(value) || 1;
+      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '⏩ Speed → ' + speed, '#00ff88');
+      break;
+    case 'set_mode':
+      if (MODES[value]) { gameMode = value; ft(BASE_C*CS+CS/2, BASE_R*CS-10, '🎯 Mode → ' + value.toUpperCase(), '#ffcc00'); }
+      break;
+    case 'kill_enemies':
+      const kc = enemies.length;
+      for (const e of enemies) sparks(e.x, e.y, '#ff0044', 8, 3);
+      enemies.length = 0; spawnQ.length = 0;
+      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '💀 Killed ' + kc, '#ff0044');
+      break;
+    case 'spawn_boss':
+      const bv = value || 'boss_normal';
+      if (EDEFS[bv]) { const b = spawnE({variant:bv,sizeMult:1}); enemies.push(b); ft(BASE_C*CS+CS/2, BASE_R*CS-10, '👾 '+bv, '#ff0055'); sparks(b.x,b.y,'#ff0055',20,5); }
+      break;
+    case 'spawn_king':
+      const k = spawnE({variant:'boss_king',sizeMult:1}); enemies.push(k);
+      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '👑 THE KING!', '#ffd700'); sparks(k.x,k.y,'#ffd700',30,6);
+      break;
+    case 'heal_base':
+      baseHP = baseMaxHP;
+      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '💚 Base Healed!', '#00ff88'); sparks(BASE_C*CS+CS/2,BASE_R*CS+CS/2,'#00ff88',20,4);
+      break;
+    case 'nuke':
+      for (const e of enemies) { e.hp=0; sparks(e.x,e.y,'#ff0044',15,5); }
+      enemies.length=0; spawnQ.length=0;
+      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '☢️ NUKE!', '#ff2200');
+      break;
+    case 'give_drone_pad':
+      let placed=false;
+      for(let dr=1;dr<=5&&!placed;dr++){for(let dc=-dr;dc<=dr&&!placed;dc++){for(let dd of[-dr,dr]){
+        const pr=BASE_R+dd,pc=BASE_C+dc;
+        if(pr>=0&&pr<ROWS&&pc>=0&&pc<COLS&&grid[pr][pc]===CT.EMPTY){
+          const cfg2=getCfg('admindrone',1,null);grid[pr][pc]=CT.DRONE;bfs();
+          const t2={row:pr,col:pc,key:'admindrone',cfg:cfg2,hp:cfg2.hp,maxHp:cfg2.hp,cd:0,angle:0,level:1,path:null,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[]};
+          towers.push(t2);spawnAdminDrones(t2);
+          ft(pc*CS+CS/2,pr*CS-10,'🛸 DRONE PAD!','#ff88ff');sparks(pc*CS+CS/2,pr*CS+CS/2,'#ff88ff',15,4);placed=true;
+        }}}}
+      if(!placed) ft(BASE_C*CS+CS/2,BASE_R*CS-10,'⚠ No space!','#ff4444');
+      break;
+    case 'upgrade_drone':
+      const up=value||'A';
+      for(const t of towers){if(t.key==='admindrone'){
+        const nl=Math.min(5,t.level+1),np=t.path||up,nc=getCfg('admindrone',nl,np);
+        if(nc&&nc.t===CT.DRONE){t.cfg=nc;t.level=nl;t.path=np;t.maxHp=nc.hp;t.hp=Math.min(t.hp+50,t.maxHp);syncAdminDroneConfig(t);
+          ft(t.col*CS+CS/2,t.row*CS-10,'⬆ DRONE L'+nl,'#ff88ff');}
+      }}
+      break;
+    default:
+      console.warn('[CMD] Unknown:', type);
+  }
+  } catch(err) { console.error('[CMD ERROR]', err); }
+}
+
+// ================================================================
+// DATABASE-BASED ADMIN SYSTEM (no Realtime rate limits!)
+// ================================================================
+console.log('[DB] >>> DB ADMIN SYSTEM CODE LOADED <<<');
+// Show visible on-screen indicator
+try {
+  const _dbIndicator = document.createElement('div');
+  _dbIndicator.id = 'db-status-indicator';
+  _dbIndicator.style.cssText = 'position:fixed;top:5px;left:50%;transform:translateX(-50%);background:#001a0d;border:1px solid #00ff88;color:#00ff88;font-family:monospace;font-size:10px;padding:4px 12px;border-radius:4px;z-index:9999;opacity:0.8;pointer-events:none;';
+  _dbIndicator.textContent = '🗄️ DB ADMIN: Loading...';
+  document.body.appendChild(_dbIndicator);
+} catch(e) { console.warn('Indicator error:', e); }
+let dbPlayerId = localStorage.getItem('bs_rt_id');
+if(!dbPlayerId){dbPlayerId='anon_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);localStorage.setItem('bs_rt_id',dbPlayerId);}
+let lastCmdId = 0;
+let dbConnected = false;
+
+function getPlayerId() {
+  return currentUser ? currentUser.id : dbPlayerId;
+}
 
 function getPlayerDisplayName() {
   return playerName || (currentUser ? currentUser.email : null) || 'Anonymous';
 }
 
-function getGameState() {
-  return {
-    name: getPlayerDisplayName(),
-    email: currentUser ? currentUser.email : '',
-    odium: currentUser ? currentUser.id : rtPlayerId,
-    gold, hp: baseHP, maxHp: baseMaxHP, wave, score, kills,
-    mode: gameMode, gameOver, speed,
-    towersCount: towers.length,
-    enemiesCount: enemies.length,
-    ts: Date.now()
-  };
+// Update player state in database every 5 seconds
+async function syncPlayerToDb() {
+  try {
+    const pid = getPlayerId();
+    const { error } = await sb.from('live_players').upsert({
+      player_id: pid,
+      name: getPlayerDisplayName(),
+      email: currentUser ? currentUser.email : '',
+      gold, hp: baseHP, max_hp: baseMaxHP, wave, score, kills,
+      mode: gameMode, game_over: gameOver, speed,
+      towers_count: towers.length,
+      enemies_count: enemies.length,
+      last_seen: new Date().toISOString()
+    }, { onConflict: 'player_id' });
+    if (error) console.warn('[DB] Sync error:', error.message);
+    else if (!dbConnected) { dbConnected = true; updateRtStatus(true, 0); }
+  } catch(err) { console.warn('[DB] Sync failed:', err); }
+}
+
+// Poll for admin commands every 2 seconds
+let _pollCount = 0;
+async function pollCommands() {
+  _pollCount++;
+  const ind = document.getElementById('db-status-indicator');
+  try {
+    const pid = getPlayerId();
+    const { data, error } = await sb.from('admin_commands')
+      .select('*')
+      .gt('id', lastCmdId)
+      .order('id', { ascending: true })
+      .limit(20);
+    
+    if (error) {
+      if(ind) ind.textContent = '⚠️ POLL ERROR: ' + error.message;
+      console.warn('[DB] Poll error:', error.message);
+      return;
+    }
+    
+    // Show poll status
+    if(ind) ind.textContent = '🗄️ Poll #'+_pollCount+' | lastID:'+lastCmdId+' | found:'+(data?data.length:0)+' | pid:'+pid.slice(0,10);
+    
+    if (!data || data.length === 0) return;
+    
+    for (const row of data) {
+      if (row.id > lastCmdId) lastCmdId = row.id;
+      if (row.target === 'all' || row.target === pid) {
+        console.log('[DB] EXECUTING:', row.type, row.value, 'id:', row.id);
+        if(ind) { ind.textContent = '🔥 EXEC: '+row.type+' (id:'+row.id+')'; ind.style.borderColor='#ff4444'; }
+        executeAdminCommand({ type: row.type, value: row.value, target: row.target });
+        setTimeout(()=>{ if(ind) ind.style.borderColor='#00ff88'; }, 2000);
+      }
+    }
+  } catch(err) {
+    if(ind) ind.textContent = '❌ POLL FAIL: ' + err.message;
+    console.warn('[DB] Poll failed:', err);
+  }
 }
 
 function updateRtStatus(connected, playerCount) {
@@ -1601,211 +1749,55 @@ function updateRtStatus(connected, playerCount) {
     cnt.textContent = playerCount > 0 ? '(' + playerCount + ' online)' : '';
   } else {
     el.classList.remove('connected');
-    txt.textContent = 'OFFLINE';
+    txt.textContent = 'CONNECTING...';
     cnt.textContent = '';
   }
 }
 
-function initRealtime() {
-  if (!sb) return;
-  const presKey = currentUser ? currentUser.id : rtPlayerId;
+// Initialize: get last command ID, then start polling
+async function initDbSystem() {
+  try {
+    const { data, error } = await sb.from('admin_commands')
+      .select('id')
+      .order('id', { ascending: false })
+      .limit(1);
+    if (error) console.warn('[DB] Init query error:', error.message);
+    if (data && data.length > 0) lastCmdId = data[0].id;
+    console.log('[DB] Starting from command ID:', lastCmdId);
+  } catch(err) { console.warn('[DB] Init failed:', err); }
   
-  rtChannel = sb.channel(RT_CHANNEL_NAME, {
-    config: { broadcast: { ack: true, self: false }, presence: { key: presKey } }
-  });
-  
-  // Listen for admin commands
-  rtChannel.on('broadcast', { event: 'admin_command' }, (payload) => {
-    const cmd = payload.payload;
-    const myId = currentUser ? currentUser.id : rtPlayerId;
-    if (cmd.target === 'all' || cmd.target === myId) {
-      executeAdminCommand(cmd);
-    }
-  });
-  
-  // Track presence changes
-  rtChannel.on('presence', { event: 'sync' }, () => {
-    const state = rtChannel.presenceState();
-    const count = Object.keys(state).length;
-    updateRtStatus(true, count);
-  });
-  
-  rtChannel.subscribe(async (status) => {
-    if (status === 'SUBSCRIBED') {
-      rtConnected = true;
-      await rtChannel.track(getGameState());
-      updateRtStatus(true, 1);
-      console.log('[RT] Connected to live channel');
-    }
-  });
-  
-  // Update presence + broadcast heartbeat every 2 seconds
-  presenceInterval = setInterval(async () => {
-    if (rtChannel && rtConnected) {
-      try {
-        const state = getGameState();
-        await rtChannel.track(state);
-        // Also broadcast heartbeat for reliability (presence can be flaky)
-        await rtChannel.send({type:'broadcast', event:'player_heartbeat', payload:state});
-      } catch(err) {
-        console.warn('[RT] Update failed:', err);
-        // Try to reconnect
-        rtConnected = false;
-        clearInterval(presenceInterval);
-        setTimeout(initRealtime, 2000);
-      }
-    }
-  }, 2000);
+  // Start syncing and polling
+  syncPlayerToDb();
+  setInterval(syncPlayerToDb, 5000);
+  setInterval(pollCommands, 2000);
+  updateRtStatus(true, 0);
+  console.log('[DB] Admin system initialized. Player ID:', getPlayerId());
+  // Update visible indicator
+  try {
+    const ind = document.getElementById('db-status-indicator');
+    if (ind) { ind.textContent = '🗄️ DB ADMIN: Active | Polling cmds every 2s | ID: ' + getPlayerId().slice(0,12) + '...'; ind.style.borderColor = '#00ff88'; }
+  } catch(e) {}
 }
 
-function executeAdminCommand(cmd) {
-  console.log('[ADMIN CMD]', cmd);
-  // Visual feedback - flash the screen border
-  const flashDiv = document.createElement('div');
-  flashDiv.style.cssText='position:fixed;inset:0;border:4px solid #ff4444;pointer-events:none;z-index:9999;animation:cmdFlash .5s';
-  document.body.appendChild(flashDiv);
-  setTimeout(()=>flashDiv.remove(),500);
-  const type = cmd.type;
-  const value = cmd.value;
-  
-  switch(type) {
-    case 'set_gold':
-      gold = parseInt(value) || 0;
-      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '💰 ADMIN: Gold → ' + gold, '#ffd700');
-      break;
-    case 'set_wave':
-      wave = parseInt(value) || 0;
-      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '🌊 ADMIN: Wave → ' + wave, '#00ccff');
-      break;
-    case 'set_score':
-      score = parseInt(value) || 0;
-      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '🏆 ADMIN: Score → ' + score, '#aa88ff');
-      break;
-    case 'set_hp':
-      const hpVal = parseInt(value) || 100;
-      baseHP = hpVal;
-      baseMaxHP = Math.max(baseMaxHP, hpVal);
-      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '❤️ ADMIN: HP → ' + hpVal, '#ff4444');
-      break;
-    case 'set_speed':
-      speed = parseInt(value) || 1;
-      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '⏩ ADMIN: Speed → ' + speed, '#00ff88');
-      break;
-    case 'set_mode':
-      if (MODES[value]) {
-        gameMode = value;
-        ft(BASE_C*CS+CS/2, BASE_R*CS-10, '🎯 ADMIN: Mode → ' + value.toUpperCase(), '#ffcc00');
-      }
-      break;
-    case 'kill_enemies':
-      const killCount = enemies.length;
-      for (const e of enemies) {
-        sparks(e.x, e.y, '#ff0044', 8, 3);
-      }
-      enemies.length = 0;
-      spawnQ.length = 0;
-      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '💀 ADMIN: Killed ' + killCount + ' enemies', '#ff0044');
-      break;
-    case 'spawn_boss':
-      const bossVariant = value || 'boss_normal';
-      if (EDEFS[bossVariant]) {
-        const boss = spawnE({ variant: bossVariant, sizeMult: 1 });
-        enemies.push(boss);
-        ft(BASE_C*CS+CS/2, BASE_R*CS-10, '👾 ADMIN: Spawned ' + bossVariant, '#ff0055');
-        sparks(boss.x, boss.y, '#ff0055', 20, 5);
-      }
-      break;
-    case 'spawn_king':
-      const king = spawnE({ variant: 'boss_king', sizeMult: 1 });
-      enemies.push(king);
-      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '👑 ADMIN: THE KING ARRIVES!', '#ffd700');
-      sparks(king.x, king.y, '#ffd700', 30, 6);
-      break;
-    case 'heal_base':
-      baseHP = baseMaxHP;
-      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '💚 ADMIN: Base Fully Healed!', '#00ff88');
-      sparks(BASE_C*CS+CS/2, BASE_R*CS+CS/2, '#00ff88', 20, 4);
-      break;
-    case 'nuke':
-      for (const e of enemies) {
-        e.hp = 0;
-        sparks(e.x, e.y, '#ff0044', 15, 5);
-      }
-      enemies.length = 0;
-      spawnQ.length = 0;
-      ft(BASE_C*CS+CS/2, BASE_R*CS-10, '☢️ ADMIN: NUKE!', '#ff2200');
-      break;
-    case 'give_drone_pad':
-      // Find empty grid cell near base
-      let placed=false;
-      for(let dr=1;dr<=5&&!placed;dr++){
-        for(let dc=-dr;dc<=dr&&!placed;dc++){
-          for(let dd of[-dr,dr]){
-            const pr=BASE_R+dd,pc=BASE_C+dc;
-            if(pr>=0&&pr<ROWS&&pc>=0&&pc<COLS&&grid[pr][pc]===CT.EMPTY){
-              const cfg=getCfg('admindrone',1,null);
-              grid[pr][pc]=CT.DRONE;bfs();
-              const t={row:pr,col:pc,key:'admindrone',cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,angle:0,level:1,path:null,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[]};
-              towers.push(t);spawnAdminDrones(t);
-              ft(pc*CS+CS/2,pr*CS-10,'🛸 ADMIN DRONE PAD!','#ff88ff');
-              sparks(pc*CS+CS/2,pr*CS+CS/2,'#ff88ff',15,4);
-              placed=true;
-            }
-          }
-        }
-      }
-      if(!placed) ft(BASE_C*CS+CS/2,BASE_R*CS-10,'⚠ No space for drone pad!','#ff4444');
-      break;
-    case 'upgrade_drone':
-      // Upgrade all admin drone pads (path A or B)
-      const upgPath=value||'A';
-      for(const t of towers){
-        if(t.key==='admindrone'){
-          const newLvl=Math.min(5,t.level+1);
-          const newPath=t.path||upgPath;
-          const newCfg=getCfg('admindrone',newLvl,newPath);
-          if(newCfg&&newCfg.t===CT.DRONE){
-            t.cfg=newCfg;t.level=newLvl;t.path=newPath;
-            t.maxHp=newCfg.hp;t.hp=Math.min(t.hp+50,t.maxHp);
-            syncAdminDroneConfig(t);
-            ft(t.col*CS+CS/2,t.row*CS-10,'⬆ DRONE L'+newLvl+(newPath==='A'?' SWARM':' MULTI'),'#ff88ff');
-          }
-        }
-      }
-      break;
-    default:
-      console.warn('[ADMIN] Unknown command:', type);
-  }
-}
-
-// Initialize realtime after auth is ready
-setTimeout(() => {
-  initRealtime();
-}, 1500);
+// Start after a short delay (wait for auth)
+setTimeout(initDbSystem, 1500);
 
 // Re-init when user signs in/out
-const origAuthChange = sb.auth.onAuthStateChange;
 sb.auth.onAuthStateChange((_event, session) => {
   currentUser = session?.user ?? null;
   updateAuthBar();
-  // Reconnect realtime with new identity
-  if (rtChannel) {
-    rtChannel.unsubscribe();
-    rtConnected = false;
-    clearInterval(presenceInterval);
-    setTimeout(initRealtime, 500);
-  }
+  // Sync new identity
+  setTimeout(syncPlayerToDb, 500);
 });
 
 // Cleanup on page close
-window.addEventListener('beforeunload', () => {
-  if (rtChannel) {
-    rtChannel.untrack();
-    rtChannel.unsubscribe();
-  }
+window.addEventListener('beforeunload', async () => {
+  try {
+    await sb.from('live_players').delete().eq('player_id', getPlayerId());
+  } catch(err) {}
 });
 // ================================================================
-// END REALTIME
+// END DB SYSTEM
 // ================================================================
 </script>
 </body>
