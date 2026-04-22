@@ -51,7 +51,23 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 #rt-status .rt-dot{width:7px;height:7px;border-radius:50%;background:#1a3a2a;transition:all .3s;}
 #rt-status.connected .rt-dot{background:#00ff88;box-shadow:0 0 6px #00ff88;}
 #rt-status.connected{color:#00ff88;border-color:#00ff8833;}
-#rt-status .rt-count{color:#ffd700;font-weight:bold;}#start:disabled{opacity:.3;cursor:not-allowed;}
+#rt-status .rt-count{color:#ffd700;font-weight:bold;}
+#chat-box{position:fixed;bottom:10px;left:10px;width:280px;background:rgba(4,8,15,0.92);border:1px solid #1a2a4a;border-radius:6px;font-family:'Share Tech Mono',monospace;z-index:100;display:flex;flex-direction:column;max-height:200px;}
+#chat-msgs{flex:1;overflow-y:auto;padding:6px 8px;font-size:10px;max-height:150px;scrollbar-width:thin;}
+#chat-msgs::-webkit-scrollbar{width:3px;}
+#chat-msgs::-webkit-scrollbar-thumb{background:#1a2a4a;}
+.chat-msg{margin-bottom:3px;line-height:1.3;word-wrap:break-word;}
+.chat-msg .chat-name{color:#ff8844;font-weight:bold;}
+.chat-msg .chat-text{color:#a0c0d0;}
+.chat-msg .chat-time{color:#2a4a6a;font-size:8px;margin-left:4px;}
+.chat-msg.system{color:#00ff88;font-style:italic;font-size:9px;}
+#chat-input-row{display:flex;border-top:1px solid #1a2a4a;}
+#chat-input{flex:1;background:transparent;border:none;color:#e0e0e0;font-family:'Share Tech Mono',monospace;font-size:10px;padding:6px 8px;outline:none;}
+#chat-input::placeholder{color:#2a4a6a;}
+#chat-send{background:#061a0e;border:none;border-left:1px solid #1a2a4a;color:#00ff88;font-family:'Share Tech Mono',monospace;font-size:9px;padding:6px 10px;cursor:pointer;}
+#chat-send:hover{background:#00ff88;color:#04080f;}
+#chat-toggle{position:fixed;bottom:10px;left:10px;background:rgba(4,8,15,0.9);border:1px solid #1a2a4a;color:#4a7a5a;font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 10px;cursor:pointer;border-radius:4px;z-index:99;}
+#chat-toggle:hover{border-color:#00ff88;color:#00ff88;}#start:disabled{opacity:.3;cursor:not-allowed;}
 .spr{display:flex;gap:4px;}.spb{flex:1;background:#04090f;border:1px solid #0e2030;color:#2a5a4a;font-family:'Share Tech Mono',monospace;font-size:11px;padding:6px 2px;cursor:pointer;text-align:center;transition:all .1s;}
 .spb:hover,.spb.on{border-color:#00ff88;color:#00ff88;}
 #up{display:none;background:#060e1a;border:1px solid #1a3a2a;padding:9px;flex-direction:column;gap:6px;}
@@ -1791,6 +1807,104 @@ window.addEventListener('beforeunload', async () => {
 // ================================================================
 // END DB SYSTEM
 // ================================================================
+</script>
+<button id="chat-toggle" onclick="toggleChat()">💬 CHAT</button>
+<div id="chat-box" style="display:none">
+  <div style="display:flex;border-bottom:1px solid #1a2a4a;">
+    <button class="chat-tab on" id="tab-global" onclick="switchTab('global')" style="flex:1;background:transparent;border:none;color:#00ff88;font-family:'Share Tech Mono',monospace;font-size:9px;padding:5px;cursor:pointer;border-bottom:2px solid #00ff88;">🌐 GLOBAL</button>
+    <button class="chat-tab" id="tab-top3" onclick="switchTab('top3')" style="flex:1;background:transparent;border:none;color:#4a6a8a;font-family:'Share Tech Mono',monospace;font-size:9px;padding:5px;cursor:pointer;border-bottom:2px solid transparent;">👑 TOP 3</button>
+  </div>
+  <div id="chat-msgs"></div>
+  <div id="chat-input-row">
+    <input id="chat-input" placeholder="Type message..." maxlength="100" onkeydown="if(event.key==='Enter')sendChat()">
+    <button id="chat-send" onclick="sendChat()">▶</button>
+  </div>
+</div>
+<script>
+let chatOpen=false,chatChannel='global',lastGlobalId=0,lastTop3Id=0,chatPollInterval=null;
+let _chatAllowed=null;
+
+function toggleChat(){
+  chatOpen=!chatOpen;
+  document.getElementById('chat-box').style.display=chatOpen?'flex':'none';
+  document.getElementById('chat-toggle').style.display=chatOpen?'none':'block';
+  if(chatOpen){
+    _chatAllowed=null;checkChatPermission();
+    if(!chatPollInterval){fetchChat();chatPollInterval=setInterval(fetchChat,2000);}
+  }
+}
+
+function switchTab(ch){
+  chatChannel=ch;
+  document.getElementById('tab-global').style.color=ch==='global'?'#00ff88':'#4a6a8a';
+  document.getElementById('tab-global').style.borderBottom=ch==='global'?'2px solid #00ff88':'2px solid transparent';
+  document.getElementById('tab-top3').style.color=ch==='top3'?'#ffd700':'#4a6a8a';
+  document.getElementById('tab-top3').style.borderBottom=ch==='top3'?'2px solid #ffd700':'2px solid transparent';
+  document.getElementById('chat-msgs').innerHTML='';
+  // Reset IDs to reload messages for this channel
+  if(ch==='global') lastGlobalId=0; else lastTop3Id=0;
+  fetchChat();
+}
+
+async function fetchChat(){
+  try{
+    const lastId=chatChannel==='global'?lastGlobalId:lastTop3Id;
+    const{data}=await sb.from('game_chat').select('*').eq('channel',chatChannel).gt('id',lastId).order('id',{ascending:true}).limit(20);
+    if(!data||data.length===0) return;
+    const msgs=document.getElementById('chat-msgs');
+    for(const m of data){
+      if(chatChannel==='global'&&m.id>lastGlobalId) lastGlobalId=m.id;
+      if(chatChannel==='top3'&&m.id>lastTop3Id) lastTop3Id=m.id;
+      const div=document.createElement('div');div.className='chat-msg';
+      const t=new Date(m.created_at);
+      const ts=t.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'});
+      const nameCol=chatChannel==='top3'?'#ffd700':'#ff8844';
+      div.innerHTML='<span class="chat-name" style="color:'+nameCol+'">'+esc(m.player_name)+':</span> <span class="chat-text">'+esc(m.message)+'</span><span class="chat-time">'+ts+'</span>';
+      msgs.appendChild(div);
+    }
+    msgs.scrollTop=msgs.scrollHeight;
+  }catch(e){console.warn('Chat fetch:',e);}
+}
+
+function esc(s){return String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+async function checkChatPermission(){
+  if(!currentUser){_chatAllowed=false;return;}
+  try{
+    const{data}=await sb.from('leaderboard').select('id,score').order('score',{ascending:false}).limit(3);
+    _chatAllowed=data&&data.some(row=>row.id===currentUser.id);
+  }catch(e){_chatAllowed=false;}
+}
+
+async function sendChat(){
+  const input=document.getElementById('chat-input');
+  const msg=input.value.trim();
+  if(!msg) return;
+  const isAdmin=playerName&&playerName.toLowerCase()==='admin';
+  
+  // Top3 chat: only top3 + admin can send
+  if(chatChannel==='top3'){
+    if(_chatAllowed===null) await checkChatPermission();
+    if(!_chatAllowed&&!isAdmin){
+      const msgs=document.getElementById('chat-msgs');
+      const div=document.createElement('div');div.className='chat-msg system';
+      div.textContent='⚠ Only Top 3 leaderboard players can chat here!';
+      msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+      return;
+    }
+  }
+  // Global chat: everyone can send
+  const name=playerName||(currentUser?currentUser.email:'Anonymous');
+  try{
+    await sb.from('game_chat').insert({player_name:name,message:msg,channel:chatChannel});
+    input.value='';fetchChat();
+  }catch(e){console.warn('Chat send:',e);}
+}
+
+(async()=>{try{
+  const{data}=await sb.from('game_chat').select('id').order('id',{ascending:false}).limit(1);
+  if(data&&data[0]){lastGlobalId=data[0].id;lastTop3Id=data[0].id;}
+}catch(e){}})();
 </script>
 </body>
 </html>
