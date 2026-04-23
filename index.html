@@ -67,7 +67,14 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 #chat-send{background:#061a0e;border:none;border-left:1px solid #1a2a4a;color:#00ff88;font-family:'Share Tech Mono',monospace;font-size:9px;padding:6px 10px;cursor:pointer;}
 #chat-send:hover{background:#00ff88;color:#04080f;}
 #chat-toggle{position:fixed;bottom:10px;left:10px;background:rgba(4,8,15,0.9);border:1px solid #1a2a4a;color:#4a7a5a;font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 10px;cursor:pointer;border-radius:4px;z-index:99;}
-#chat-toggle:hover{border-color:#00ff88;color:#00ff88;}#start:disabled{opacity:.3;cursor:not-allowed;}
+#chat-toggle:hover{border-color:#00ff88;color:#00ff88;}
+#chat-toggle .notif{display:none;background:#ff4444;color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;margin-left:5px;animation:notifPulse 1s infinite;}
+#chat-toggle .notif.show{display:inline;}
+@keyframes notifPulse{0%,100%{opacity:1}50%{opacity:.5}}
+#chat-notif-popup{position:fixed;bottom:45px;left:10px;background:rgba(4,8,15,0.95);border:1px solid #00ff88;border-radius:6px;padding:8px 12px;font-family:'Share Tech Mono',monospace;font-size:10px;z-index:100;max-width:250px;display:none;animation:slideUp .3s;}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+#chat-notif-popup .notif-name{color:#ff8844;font-weight:bold;}
+#chat-notif-popup .notif-msg{color:#a0c0d0;}#start:disabled{opacity:.3;cursor:not-allowed;}
 .spr{display:flex;gap:4px;}.spb{flex:1;background:#04090f;border:1px solid #0e2030;color:#2a5a4a;font-family:'Share Tech Mono',monospace;font-size:11px;padding:6px 2px;cursor:pointer;text-align:center;transition:all .1s;}
 .spb:hover,.spb.on{border-color:#00ff88;color:#00ff88;}
 #up{display:none;background:#060e1a;border:1px solid #1a3a2a;padding:9px;flex-direction:column;gap:6px;}
@@ -1700,6 +1707,7 @@ async function syncPlayerToDb() {
       mode: gameMode, game_over: gameOver, speed,
       towers_count: towers.length,
       enemies_count: enemies.length,
+      towers_data: JSON.stringify({t:towers.map(t=>({r:t.row,c:t.col,k:t.key,l:t.level,p:t.path,h:Math.round(t.hp),m:Math.round(t.maxHp)})),b:{p:baseUpgPath||null,l:baseUpgLevel||0},e:enemies.slice(0,50).map(e=>({x:Math.round(e.x),y:Math.round(e.y),v:e.variant||'normal',h:Math.round(e.hp),m:Math.round(e.mhp),bo:e.isBoss?1:0,fl:e.flying?1:0,st:e.stun>0?1:0,md:e.mode||'move'}))}),
       last_seen: new Date().toISOString()
     }, { onConflict: 'player_id' });
     if (error) console.warn('[DB] Sync error:', error.message);
@@ -1808,11 +1816,13 @@ window.addEventListener('beforeunload', async () => {
 // END DB SYSTEM
 // ================================================================
 </script>
-<button id="chat-toggle" onclick="toggleChat()">💬 CHAT</button>
+<div id="chat-notif-popup"></div>
+<button id="chat-toggle" onclick="toggleChat()">💬 CHAT<span class="notif" id="chat-notif-badge">NEW</span></button>
 <div id="chat-box" style="display:none">
   <div style="display:flex;border-bottom:1px solid #1a2a4a;">
     <button class="chat-tab on" id="tab-global" onclick="switchTab('global')" style="flex:1;background:transparent;border:none;color:#00ff88;font-family:'Share Tech Mono',monospace;font-size:9px;padding:5px;cursor:pointer;border-bottom:2px solid #00ff88;">🌐 GLOBAL</button>
     <button class="chat-tab" id="tab-top3" onclick="switchTab('top3')" style="flex:1;background:transparent;border:none;color:#4a6a8a;font-family:'Share Tech Mono',monospace;font-size:9px;padding:5px;cursor:pointer;border-bottom:2px solid transparent;">👑 TOP 3</button>
+    <button onclick="toggleChat()" style="background:transparent;border:none;color:#ff4444;font-size:14px;cursor:pointer;padding:2px 6px;" title="Close">✕</button>
   </div>
   <div id="chat-msgs"></div>
   <div id="chat-input-row">
@@ -1826,6 +1836,11 @@ let _chatAllowed=null;
 
 function toggleChat(){
   chatOpen=!chatOpen;
+  if(chatOpen){
+    const badge=document.getElementById('chat-notif-badge');if(badge) badge.classList.remove('show');
+    const popup=document.getElementById('chat-notif-popup');if(popup) popup.style.display='none';
+    _bgLastId=Math.max(lastGlobalId,lastTop3Id,_bgLastId);
+  }
   document.getElementById('chat-box').style.display=chatOpen?'flex':'none';
   document.getElementById('chat-toggle').style.display=chatOpen?'none':'block';
   if(chatOpen){
@@ -1907,10 +1922,35 @@ async function sendChat(){
   }catch(e){console.warn('Chat send:',e);}
 }
 
+let _bgLastId=0,_bgPollInterval=null;
+
 (async()=>{try{
   const{data}=await sb.from('game_chat').select('id').order('id',{ascending:false}).limit(1);
-  if(data&&data[0]){lastGlobalId=data[0].id;lastTop3Id=data[0].id;}
-}catch(e){}})();
+  if(data&&data[0]){lastGlobalId=data[0].id;lastTop3Id=data[0].id;_bgLastId=data[0].id;}
+}catch(e){}
+  // Start background poll for notifications (even when chat closed)
+  _bgPollInterval=setInterval(bgChatPoll,3000);
+})();
+
+async function bgChatPoll(){
+  if(chatOpen) return; // Don't notify when chat is open
+  try{
+    const{data}=await sb.from('game_chat').select('id,player_name,message').gt('id',_bgLastId).order('id',{ascending:true}).limit(5);
+    if(!data||data.length===0) return;
+    for(const m of data){if(m.id>_bgLastId) _bgLastId=m.id;}
+    // Show notification badge
+    const badge=document.getElementById('chat-notif-badge');
+    if(badge) badge.classList.add('show');
+    // Show popup with latest message
+    const latest=data[data.length-1];
+    const popup=document.getElementById('chat-notif-popup');
+    if(popup){
+      popup.innerHTML='<span class="notif-name">'+esc(latest.player_name)+':</span> <span class="notif-msg">'+esc(latest.message)+'</span>';
+      popup.style.display='block';
+      setTimeout(()=>{popup.style.display='none';},4000);
+    }
+  }catch(e){}
+}
 </script>
 </body>
 </html>
