@@ -1037,7 +1037,7 @@ cv.addEventListener('click',e=>{
   if(upgMode){const t=towers.find(t=>t.row===row&&t.col===col);if(t) showPanel(t);else hidePanel();return;}
   if(baseUpgMode) return;
   if(grid[row][col]!==CT.EMPTY) return;
-  if(selBuild==='heli'&&gameMode==='hardcore'){msg('⚠ Helicopter unavailable in HARDCORE mode!',2500);return;}
+  if(selBuild==='heli'&&gameMode==='hardcore'&&!hcUnlocked.has('heli')){msg('⚠ Unlock Heli Pad first! (10 pts)',2500);return;}
   const cfg=getCfg(selBuild,1,null);const actualCost=getDiscountedCost(selBuild,col,row);
   if(gold<actualCost){msg('⚠ Insufficient gold!');return;}
   grid[row][col]=cfg.t;bfs();const saved=cfg.cost-actualCost;gold-=actualCost;
