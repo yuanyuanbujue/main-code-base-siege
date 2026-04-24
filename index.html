@@ -353,7 +353,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
       <button class="ss-mode on" data-m="easy">EASY<br><span class="ss-mode-desc">+30% gold · 200 HP · Score ×1.0</span></button>
       <button class="ss-mode" data-m="normal">NORMAL<br><span class="ss-mode-desc">Standard · 150 HP · Score ×1.5</span></button>
       <button class="ss-mode" data-m="hard">HARD<br><span class="ss-mode-desc">-15% gold · 120 HP · Score ×2.5</span></button>
-      <button class="ss-mode" data-m="hardcore">HARDCORE<br><span class="ss-mode-desc">-30% gold · 100 HP · Score ×4.0 · 4 towers only</span></button>
+      <button class="ss-mode" data-m="hardcore">HARDCORE<br><span class="ss-mode-desc">-30% gold · 100 HP · Score ×4.0 · Unlock towers with upgrade points!</span></button>
       <button class="ss-mode" data-m="sandbox" style="grid-column:span 2;border-color:#00eeff44;">💰 SANDBOX<br><span class="ss-mode-desc" style="color:#006677;">×10 GOLD · 500 HP · Score ×0 · No leaderboard</span></button>
     </div>
     <div class="ss-save-section">
@@ -434,6 +434,21 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     </div>
     <button id="base-up-btn">UPGRADE BASE</button>
   </div>
+  <div id="hc-panel" style="display:none;background:#0a0008;border:1px solid #ff2244;padding:8px;flex-direction:column;gap:5px;">
+    <div style="font-family:Orbitron,sans-serif;font-size:8px;letter-spacing:3px;color:#ff2244;border-bottom:1px solid #2a0010;padding-bottom:3px;">── UPGRADE POINTS ──</div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;">
+      <span style="color:#ff2244;">AVAILABLE:</span><span id="hc-pts-val" style="color:#ffd700;font-weight:bold;">0</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:9px;">
+      <span style="color:#4a2a2a;">SPENT:</span><span id="hc-spent-val" style="color:#6a3a3a;">0</span>
+    </div>
+    <div style="height:4px;background:#1a0808;border:1px solid #2a0010;overflow:hidden;">
+      <div id="hc-prog-bar" style="height:100%;background:#ff2244;width:0%;transition:width .3s;"></div>
+    </div>
+    <div id="hc-prog-text" style="font-size:8px;color:#4a2a2a;text-align:center;">0% to next point</div>
+    <div style="font-size:8px;color:#6a3a3a;letter-spacing:1px;">10M SCORE = 1 POINT</div>
+    <div id="hc-unlock-grid" style="display:flex;flex-direction:column;gap:3px;"></div>
+  </div>
   <div class="sh">── CONTROL ─────</div>
   <button id="autoskip-btn"><span>⚡ AUTO-SKIP WAVES</span><span class="as-dot"></span></button>
   <div class="sh">── SPEED ───────</div>
@@ -469,7 +484,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     <div class="li"><span class="ld" style="background:#00ddff"></span>Shielder 🔵</div>
     <div class="li"><span class="ld" style="background:#ff0055;box-shadow:0 0 4px #ff0055"></span>★ Boss</div>
     <div class="li"><span class="ld" style="background:#ffdd00;box-shadow:0 0 4px #ffdd00"></span>★ Commander — heals + airstrikes!</div>
-    <div class="li"><span class="ld" style="background:#00ff44;box-shadow:0 0 4px #00ff44"></span>💻 Hacklord — hacks towers & blocks UI!</div>
+    <div class="li"><span class="ld" style="background:#00ff44;box-shadow:0 0 4px #00ff44"></span>💻 Hacklord — hacks towers, blocks UI, domain converts towers!</div>
   </div>
   <div class="msg" id="msg">Build defenses — sign in to save scores to leaderboard!</div>
 </div>
@@ -736,7 +751,7 @@ const MODES={
   easy:{label:'EASY',scaleBonus:0.0,goldBonus:1.3,allowed:null,startHp:200,col:'#00ff88',scoreMult:1.0},
   normal:{label:'NORMAL',scaleBonus:0.15,goldBonus:1.0,allowed:null,startHp:150,col:'#ffcc00',scoreMult:1.5},
   hard:{label:'HARD',scaleBonus:0.35,goldBonus:0.85,allowed:null,startHp:120,col:'#ff8800',scoreMult:2.5},
-  hardcore:{label:'HARDCORE',scaleBonus:0.6,goldBonus:0.7,allowed:new Set(['wall','basic','sniper','cannon']),startHp:100,col:'#ff2244',scoreMult:4.0},
+  hardcore:{label:'HARDCORE',scaleBonus:0.6,goldBonus:0.7,allowed:new Set(['wall','basic','sniper','cannon']),startHp:100,col:'#ff2244',scoreMult:4.0,hcMode:true},
   sandbox:{label:'SANDBOX',scaleBonus:0.0,goldBonus:10.0,allowed:null,startHp:500,col:'#00eeff',isSandbox:true,scoreMult:0}
 };
 let gameMode='easy';
@@ -788,6 +803,19 @@ let hlRedFlash=0;               // Red screen flash timer
 let hlFlickerTowers=[];         // Towers currently flickering [{tower,timer}]
 let hlGroundMarkers=[];         // Ground markers before hack device [{x,y,life}]
 let hlLockedButtons=new Map();  // Map<buttonDataT, clicksRemaining> for build buttons
+let hlDomain=false;             // Domain Expansion active?
+let hlDomainTimer=0;            // Frames remaining for domain
+let hlDomainX=0,hlDomainY=0;    // Domain center (boss pos at activation)
+let hlDomainRadius=220;         // Domain radius
+let hlDomainReverse=true;       // Tower damage heals boss instead
+
+// === HARDCORE UPGRADE POINTS (per-game currency) ===
+let hcPoints=0;              // Upgrade points available to spend
+let hcPointsSpent=0;         // Points already spent
+let hcLastPointScore=0;      // Score at which last point was awarded
+let hcUnlocked=new Set();    // Tower keys unlocked this game
+const HC_TOWER_COSTS={electric:1,healer:3,spike:4,flame:6,buff:15,bhole:8,heli:10,mine:20,laser:11};
+const HC_TOWER_NAMES={electric:'TESLA ⚡',healer:'MEDIC ✚',spike:'SPIKE 🔨',flame:'FLAME 🔥',buff:'BUFF TWR ⬆',bhole:'B.HOLE 🕳️',heli:'HELI PAD 🚁',mine:'MINE 💰',laser:'LASER 💎'};
 
 function init(){
   grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));
@@ -796,6 +824,8 @@ function init(){
   gold=Math.round(200*md.goldBonus);baseHP=md.startHp;baseMaxHP=md.startHp;
   wave=0;score=0;kills=0;gameOver=false;waveOn=false;spawnQ=[];spawnT=0;selTower=null;pathBlocked=false;curWaveType=0;
   baseUpgPath=null;baseUpgLevel=0;baseTurretCd=0;baseTurretAngle=0;
+  // Reset hardcore upgrade points
+  hcPoints=0;hcPointsSpent=0;hcLastPointScore=0;hcUnlocked=new Set();updateHcUI();
   document.getElementById('buff-hint').classList.remove('vis');
   grid[BASE_R][BASE_C]=CT.BASE;grid[SPAWN_R][SPAWN_C]=CT.SPAWN;
   bfs();syncUI();hidePanel();hideBasePanel();
@@ -814,7 +844,13 @@ function findBreakthrough(fr,fc){const vis=new Set(),q=[[fr,fc]],cands=[];vis.ad
 function destroyTower(t){const i=towers.indexOf(t);if(i===-1) return;towers.splice(i,1);grid[t.row][t.col]=CT.EMPTY;for(const e of enemies) if(e.atkTarget===t){e.atkTarget=null;e.mode='move';}if(t.key==='heli'){const hi=helicopters.findIndex(h=>h.towerId===t.id);if(hi!==-1) helicopters.splice(hi,1);}if(t.key==='admindrone'){adminDrones=adminDrones.filter(d=>d.towerId!==t.id);}if(selTower===t) hidePanel();bfs();sparks(t.col*CS+CS/2,t.row*CS+CS/2,t.cfg.col,24,3.5);ft(t.col*CS+CS/2,t.row*CS-4,'DESTROYED!','#ff4444');}
 function getBuffsAt(col,row){let dmgMult=1,cdDiv=1,rngMult=1,costReduce=0,goldBonusMult=0;const tx=col*CS+CS/2,ty=row*CS+CS/2;for(const bt of towers){if(bt.key!=='buff'||!bt.cfg.buffType) continue;const dx=bt.col*CS+CS/2-tx,dy=bt.row*CS+CS/2-ty;if(dx*dx+dy*dy>bt.cfg.rng*bt.cfg.rng) continue;dmgMult+=(bt.cfg.dmgBoost||0);cdDiv+=(bt.cfg.spdBoost||0);rngMult+=(bt.cfg.rngBoost||0);costReduce+=(bt.cfg.costReduce||0);goldBonusMult+=(bt.cfg.goldBonus||0);}return{dmgMult,cdDiv,rngMult,costReduce:Math.min(costReduce,.65),goldBonusMult};}
 function getDiscountedCost(key,col,row){const base=getCfg(key,1,null).cost;if(col===undefined) return base;const{costReduce}=getBuffsAt(col,row);return Math.max(1,Math.round(base*(1-costReduce)));}
-function updateModeUI(){const md=MODES[gameMode];document.querySelectorAll('.bb').forEach(b=>{const tp=b.dataset.t;const ea=md.allowed?new Set([...md.allowed]):null;if(ea&&tp&&!ea.has(tp)){b.style.opacity='.25';b.style.pointerEvents='none';}else{b.style.opacity='';b.style.pointerEvents='';}});if(md.allowed&&!md.allowed.has(selBuild)){selBuild='wall';document.querySelectorAll('.bb').forEach(b=>b.classList.remove('on'));document.querySelector('.bb[data-t="wall"]').classList.add('on');}}
+function getHcAllowed(){
+  if(gameMode!=='hardcore') return null;
+  const base=new Set(['wall','basic','sniper','cannon']);
+  for(const k of hcUnlocked) base.add(k);
+  return base;
+}
+function updateModeUI(){const md=MODES[gameMode];const ea=gameMode==='hardcore'?getHcAllowed():(md.allowed?new Set([...md.allowed]):null);document.querySelectorAll('.bb').forEach(b=>{const tp=b.dataset.t;if(ea&&tp&&!ea.has(tp)){b.style.opacity='.25';b.style.pointerEvents='none';}else{b.style.opacity='';b.style.pointerEvents='';}});if(ea&&!ea.has(selBuild)){selBuild='wall';document.querySelectorAll('.bb').forEach(b=>b.classList.remove('on'));document.querySelector('.bb[data-t="wall"]').classList.add('on');}updateHcUI();}
 function syncUI(){document.getElementById('vw').textContent=wave;document.getElementById('vg').textContent=gold;document.getElementById('vh').textContent=Math.max(0,Math.round(baseHP));document.getElementById('vmh').textContent=Math.round(baseMaxHP);document.getElementById('vs').textContent=score;document.getElementById('vk').textContent=kills;document.getElementById('start').disabled=waveOn||gameOver;if(selTower) showPanel(selTower);updateIOButtons();}
 function msg(t,d=2500){const e=document.getElementById('msg');e.textContent=t;clearTimeout(e._t);e._t=setTimeout(()=>e.textContent='',d);}
 function ft(x,y,t,col='#ffd700'){floats.push({x,y,t,col,life:62,vy:-.6});}
@@ -918,6 +954,47 @@ document.getElementById('ubtn').addEventListener('click',()=>{
   upgMode=!upgMode;sellMode=false;baseUpgMode=false;document.querySelectorAll('.bb').forEach(b=>b.classList.remove('on'));document.getElementById('sbtn').classList.remove('sell-on');document.getElementById('basebtn').classList.remove('base-on');document.getElementById('ubtn').classList.toggle('upg-on',upgMode);if(!upgMode) hidePanel();hideBasePanel();});
 document.getElementById('basebtn').addEventListener('click',()=>{
   baseUpgMode=!baseUpgMode;sellMode=false;upgMode=false;document.querySelectorAll('.bb').forEach(b=>b.classList.remove('on'));document.getElementById('sbtn').classList.remove('sell-on');document.getElementById('ubtn').classList.remove('upg-on');document.getElementById('basebtn').classList.toggle('base-on',baseUpgMode);hidePanel();if(baseUpgMode) showBasePanel();else hideBasePanel();});
+// === HARDCORE UPGRADE POINT UI ===
+function updateHcUI(){
+  const panel=document.getElementById('hc-panel');
+  if(!panel) return;
+  if(gameMode!=='hardcore'||!gameStarted){panel.style.display='none';return;}
+  panel.style.display='flex';
+  document.getElementById('hc-pts-val').textContent=hcPoints;
+  document.getElementById('hc-spent-val').textContent=hcPointsSpent;
+  const nextAt=hcLastPointScore+10000000;
+  const prog=Math.min(1,(score-hcLastPointScore)/10000000);
+  document.getElementById('hc-prog-bar').style.width=Math.round(prog*100)+'%';
+  document.getElementById('hc-prog-text').textContent=Math.round(prog*100)+'% to next point';
+  // Update unlock buttons
+  const grid=document.getElementById('hc-unlock-grid');
+  if(!grid) return;
+  grid.innerHTML='';
+  const sortedKeys=Object.keys(HC_TOWER_COSTS).sort((a,b)=>HC_TOWER_COSTS[a]-HC_TOWER_COSTS[b]);
+  for(const k of sortedKeys){
+    const cost=HC_TOWER_COSTS[k];
+    const name=HC_TOWER_NAMES[k]||k;
+    const unlocked=hcUnlocked.has(k);
+    const canAfford=hcPoints>=cost;
+    const btn=document.createElement('button');
+    btn.style.cssText='background:#04090f;border:1px solid '+(unlocked?'#00ff88':canAfford?'#ff2244':'#1a0808')+';color:'+(unlocked?'#00ff88':canAfford?'#ff2244':'#4a2a2a')+';font-family:Share Tech Mono,monospace;font-size:9px;padding:4px 6px;cursor:'+(unlocked||!canAfford?'default':'pointer')+';transition:all .1s;text-align:left;display:flex;justify-content:space-between;opacity:'+(unlocked?'0.6':canAfford?'1':'0.4');
+    btn.innerHTML=unlocked?'✓ '+name:'<span>'+name+'</span><span style="color:#ffd700">'+cost+'pt</span>';
+    if(!unlocked&&canAfford){
+      btn.onmouseover=function(){this.style.background='#1a0808';};
+      btn.onmouseout=function(){this.style.background='#04090f';};
+      btn.onclick=(function(key,c){return function(){
+        if(hcPoints>=c&&!hcUnlocked.has(key)){
+          hcPoints-=c;hcPointsSpent+=c;hcUnlocked.add(key);
+          updateModeUI();updateHcUI();syncUI();
+          ft(W/2,H/2,'🔓 '+HC_TOWER_NAMES[key]+' UNLOCKED!','#00ff88');
+          sparks(W/2,H/2,'#00ff88',20,4);
+          msg('Tower unlocked: '+HC_TOWER_NAMES[key]+'!',3000);
+        }
+      };})(k,cost);
+    }
+    grid.appendChild(btn);
+  }
+}
 document.getElementById('autoskip-btn').addEventListener('click',()=>{autoSkip=!autoSkip;const btn=document.getElementById('autoskip-btn');btn.classList.toggle('on',autoSkip);const toast=document.getElementById('autoskip-toast');toast.textContent=autoSkip?'⚡ AUTO-SKIP ON':'⏹ AUTO-SKIP OFF';toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1400);msg(autoSkip?'⚡ Auto-skip enabled!':'⏹ Auto-skip disabled.',2200);});
 document.querySelectorAll('#save-slots-row .save-slot').forEach((btn,i)=>{btn.addEventListener('click',()=>{selectedSaveSlot=i;refreshSaveSlotUI();});});
 document.getElementById('save-btn').addEventListener('click',()=>{if(!gameStarted||gameOver){saveStatus('⚠ Cannot save now.','#ff4444');return;}const data=serializeGameState();if(setSaveData(selectedSaveSlot,data)){saveStatus(`✓ Saved to Slot ${selectedSaveSlot+1}`);ft(W/2,H/2,`SAVED → SLOT ${selectedSaveSlot+1}`,'#00ff88');sparks(W/2,H/2,'#00ff88',16,2.5);refreshSaveSlotUI();}else saveStatus('✗ Save failed!','#ff4444');});
@@ -1182,9 +1259,9 @@ function spawnE(entry){const d=EDEFS[entry.variant]||EDEFS.normal;const sm=entry
 function isBlockedByShield(px,py,targetEnemy){if(!targetEnemy.shielded) return false;for(const e of enemies){if(!e.isShielder||e.stun>0) continue;const dx=targetEnemy.x-e.x,dy=targetEnemy.y-e.y;if(Math.sqrt(dx*dx+dy*dy)<=65) return e;}return null;}
 function applyArmor(e,dmg,isElec=false){let d=dmg;const shredMult=e.armorShred>0?1+e.armorShred:1;if(e.heavyArmor&&!isElec) d=Math.max(1,Math.round(d*0.15*shredMult));else if(e.armorShred>0) d=Math.round(d*shredMult);if(e.shielded) d=Math.max(1,Math.round(d*0.35));return d;}
 function elecDmg(e,dmg){let d=dmg;if(e.robot) d=Math.max(1,Math.round(d*.12));if(e.shielded) d=Math.max(1,Math.round(d*.40));return d;}
-function fireElectric(ox,oy,first,dmg,chains){if(!enemies.includes(first)) return;const hit=new Set([first]);const d=elecDmg(first,dmg);first.hp-=d;if(!first.robot) applyStun(first,14);addLx(ox,oy,first.x,first.y);sparks(first.x,first.y,'#aaff00',5,1.5);let prev=first;for(let c=0;c<chains;c++){let nx=null,bd=Infinity;for(const e of enemies){if(hit.has(e)) continue;const dx=e.x-prev.x,dy=e.y-prev.y,dd=dx*dx+dy*dy;if(dd<115*115&&dd<bd){bd=dd;nx=e;}}if(!nx) break;addLx(prev.x,prev.y,nx.x,nx.y);const cd=elecDmg(nx,Math.round(dmg*(.62**(c+1))));nx.hp-=cd;if(!nx.robot) applyStun(nx,9);sparks(nx.x,nx.y,'#aaff00',3,1.2);hit.add(nx);prev=nx;}}
+function fireElectric(ox,oy,first,dmg,chains){if(!enemies.includes(first)) return;const hit=new Set([first]);const d=elecDmg(first,dmg);first.hp-=d;if(!first.robot&&!first.stunImmune) applyStun(first,14);addLx(ox,oy,first.x,first.y);sparks(first.x,first.y,'#aaff00',5,1.5);let prev=first;for(let c=0;c<chains;c++){let nx=null,bd=Infinity;for(const e of enemies){if(hit.has(e)) continue;const dx=e.x-prev.x,dy=e.y-prev.y,dd=dx*dx+dy*dy;if(dd<115*115&&dd<bd){bd=dd;nx=e;}}if(!nx) break;addLx(prev.x,prev.y,nx.x,nx.y);const cd=elecDmg(nx,Math.round(dmg*(.62**(c+1))));nx.hp-=cd;if(!nx.robot) applyStun(nx,9);sparks(nx.x,nx.y,'#aaff00',3,1.2);hit.add(nx);prev=nx;}}
 function explodeElecBall(p){const ix=p.lastX,iy=p.lastY;sparks(ix,iy,'#aaff00',20,3.5);const near=enemies.filter(e=>{const dx=e.x-ix,dy=e.y-iy;return dx*dx+dy*dy<=(p.chainRng||100)**2;});near.sort((a,b)=>(a.x-ix)**2+(a.y-iy)**2-(b.x-ix)**2-(b.y-iy)**2);for(const e of near.slice(0,p.chn||3)){const d=elecDmg(e,p.dmg);e.hp-=d;if(!e.robot) applyStun(e,12);addLx(ix,iy,e.x,e.y);}if(p.aoe>0){for(const e of enemies){const dx=e.x-ix,dy=e.y-iy;if(dx*dx+dy*dy<=p.aoe*p.aoe){e.hp-=elecDmg(e,Math.round(p.dmg*.5));}}}}
-function applyStun(e,baseDur){if(!e.stunCount) e.stunCount=0;e.stunCount++;const resist=Math.pow(0.62,e.stunCount-1);const actualDur=Math.max(2,Math.round(baseDur*resist));e.stun=Math.max(e.stun,actualDur);if(e.stunCount>=5&&!e.unstable){e.unstable=true;e.spdBase=e.spdBase||e.spd;e.spd=e.spdBase*1.22;ft(e.x,e.y-e.sz-10,'UNSTABLE!','#ff8800');sparks(e.x,e.y,'#ff8800',12,2.5);}}
+function applyStun(e,baseDur){if(!e.stunCount) e.stunCount=0;e.stunCount++;if(e.stunImmune) return;const resist=Math.pow(0.62,e.stunCount-1);const actualDur=Math.round(baseDur*resist);if(actualDur<1){e.stunImmune=true;return;}if(e.stunCount>=8){e.stunImmune=true;return;}e.stun=Math.max(e.stun,actualDur);if(e.stunCount>=5&&!e.unstable){e.unstable=true;e.spdBase=e.spdBase||e.spd;e.spd=e.spdBase*1.22;ft(e.x,e.y-e.sz-10,'UNSTABLE!','#ff8800');sparks(e.x,e.y,'#ff8800',12,2.5);}}
 
 let autoSkipTimer=0;const AUTO_SKIP_DELAY=120;
 
@@ -1193,6 +1270,17 @@ function updateHelicopters(){const bx=BASE_C*CS+CS/2,by=BASE_R*CS+CS/2;for(let i
 function update(){
   frame++;const bx=BASE_C*CS+CS/2,by=BASE_R*CS+CS/2;
   if(autoSkip&&!waveOn&&!gameOver&&gameStarted){autoSkipTimer++;if(autoSkipTimer>=AUTO_SKIP_DELAY){autoSkipTimer=0;startWave();}}else if(waveOn) autoSkipTimer=0;
+  // === HARDCORE: Periodic upgrade point check (catches ALL score sources) ===
+  if(gameMode==='hardcore'&&gameStarted&&!gameOver&&score>=hcLastPointScore+10000000){
+    const newPts=Math.floor((score-hcLastPointScore)/10000000);
+    if(newPts>0){
+      hcPoints+=newPts;hcLastPointScore+=newPts*10000000;
+      ft(W/2,H/2-40,'🔓 +'+newPts+' UPGRADE POINT'+(newPts>1?'S':'')+'!','#ff2244');
+      sparks(W/2,H/2,'#ff2244',30,6);sparks(W/2,H/2,'#ffd700',20,5);
+      msg('🔓 Upgrade point'+(newPts>1?'s':'')+' earned! ('+hcPoints+' available)',4000);
+      updateHcUI();syncUI();
+    }
+  }
   if(waveOn&&spawnQ.length>0){spawnT--;if(spawnT<=0){const entry=spawnQ.shift();enemies.push(spawnE(entry));spawnT=Math.max(12,50-wave*2);}}
   for(let i=0;i<enemies.length;i++) enemies[i].shielded=false;
   for(let i=0;i<enemies.length;i++){const e=enemies[i];if(!e.isShielder||e.stun>0) continue;for(let j=0;j<enemies.length;j++){const other=enemies[j];if(other===e||other.isShielder) continue;const dx=other.x-e.x,dy=other.y-e.y;if(dx*dx+dy*dy<=65*65) other.shielded=true;}}
@@ -1265,7 +1353,93 @@ function update(){
       if(e.hlSummonCd===undefined) e.hlSummonCd=300; // 5s delay before first Summon
       if(e.hlDeviceCd===undefined) e.hlDeviceCd=480; // 8s delay before first Device
       if(e.hlStage===undefined) e.hlStage=1;
+      if(e.hlDomainCd===undefined) e.hlDomainCd=0;
       e.hlHackCd--;e.hlBlockCd--;e.hlSummonCd--;e.hlDeviceCd--;
+      // Domain reverse damage: if domain active, track HP and reverse any damage
+      if(hlDomain&&hlDomainReverse){
+        if(e._prevHp===undefined) e._prevHp=e.hp;
+        // Will be checked after all damage is applied this frame
+        e._checkReverse=true;
+      }
+
+      // Stage 3 at 25% of current max HP — DOMAIN OVERLORD
+      if(e.hlStage===2&&e.hp<=e.mhp*0.25){
+        e.hlStage=3;
+        // HP boost (1.5x current max) and full heal
+        e.mhp=Math.round(e.mhp*1.5);
+        e.hp=e.mhp;
+        e.hlDomainCd=120; // Short delay before first domain activation
+        hlRedFlash=60;
+        ft(e.x,e.y-e.sz-60,'💀 STAGE 3 — DOMAIN OVERLORD','#ff0044');
+        ft(e.x,e.y-e.sz-74,'Fatal Error: 404 Reality','#ff4488');
+        ft(e.x,e.y-e.sz-46,'❤ '+e.mhp+' HP!','#ff4444');
+        sparks(e.x,e.y,'#ff0044',50,8);
+        sparks(e.x,e.y,'#aa00ff',40,7);
+        sparks(e.x,e.y,'#00ff44',30,6);
+        // Triple shockwave announcement
+        kingWaves.push({ox:e.x,oy:e.y,r:5,maxR:500,spd:6,baseDmg:0,col:'#ff0044',life:1,hit:new Set()});
+        kingWaves.push({ox:e.x,oy:e.y,r:5,maxR:350,spd:4,baseDmg:0,col:'#aa00ff',life:1,hit:new Set()});
+        kingWaves.push({ox:e.x,oy:e.y,r:5,maxR:250,spd:2,baseDmg:0,col:'#00ff44',life:1,hit:new Set()});
+      }
+
+      // --- STAGE 3 ABILITY: DOMAIN EXPANSION (repeating, very long CD) ---
+      if(e.hlStage===3&&!hlDomain){
+        if(e.hlDomainCd===undefined) e.hlDomainCd=120;
+        e.hlDomainCd--;
+        if(e.hlDomainCd<=0){
+          e.hlDomainCd=2700; // ~45 second cooldown (very long)
+          // Activate domain
+          hlDomain=true;
+          hlDomainTimer=900; // 15 seconds duration
+          hlDomainX=e.x;hlDomainY=e.y;
+          hlDomainRadius=250;
+          hlDomainReverse=true;
+          hlRedFlash=40;
+          ft(e.x,e.y-e.sz-60,'💀 DOMAIN EXPANSION','#ff0044');
+          ft(e.x,e.y-e.sz-74,'TOWERS → BOSSES!','#ff8800');
+          sparks(e.x,e.y,'#ff0044',40,7);
+          sparks(e.x,e.y,'#aa00ff',30,6);
+          // Shockwave VFX
+          kingWaves.push({ox:e.x,oy:e.y,r:5,maxR:hlDomainRadius+50,spd:5,baseDmg:0,col:'#ff0044',life:1,hit:new Set()});
+          kingWaves.push({ox:e.x,oy:e.y,r:5,maxR:hlDomainRadius,spd:3,baseDmg:0,col:'#aa00ff',life:1,hit:new Set()});
+
+          // === TRANSFORM 3-5 WEAKEST TOWERS INTO BOSSES ===
+          const domainTowers=towers.filter(t=>{
+            const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;
+            const ddx=tx-e.x,ddy=ty-e.y;
+            return ddx*ddx+ddy*ddy<=hlDomainRadius*hlDomainRadius;
+          });
+          // Sort by HP ratio (weakest first), then absolute HP
+          domainTowers.sort((a,b)=>(a.hp/a.maxHp)-(b.hp/b.maxHp)||(a.hp-b.hp));
+          const convertCount=Math.min(3+Math.floor(Math.random()*3),domainTowers.length); // 3-5
+          const bossPool=['boss_normal','boss_armor','boss_robot','boss_flying','boss_commander'];
+          let converted=0;
+          for(let ci=0;ci<convertCount;ci++){
+            const t=domainTowers[ci];
+            if(!t||!towers.includes(t)) continue;
+            const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;
+            // VFX: tower conversion
+            ft(tx,ty,'⚡ CONVERTED!','#ff0044');
+            ft(tx,ty-14,'→ BOSS!','#ff8800');
+            sparks(tx,ty,'#ff0044',20,4);
+            sparks(tx,ty,'#00ff44',15,3);
+            addLx(e.x,e.y,tx,ty);addBeam(e.x,e.y,tx,ty);
+            // Spawn a random boss at the tower position
+            const bVariant=bossPool[Math.floor(Math.random()*bossPool.length)];
+            const newBoss=spawnE({variant:bVariant,sizeMult:1});
+            newBoss.x=tx;newBoss.y=ty;
+            enemies.push(newBoss);
+            // Destroy the tower
+            destroyTower(t);
+            converted++;
+          }
+          bfs();
+          if(converted>0){
+            ft(e.x,e.y-e.sz-88,'🗼 '+converted+' TOWERS → BOSSES!','#ff8800');
+            sparks(e.x,e.y,'#ff8800',25,5);
+          }
+        }
+      }
 
       // Stage 2 at 50% HP — gain heavy armor + HP boost
       if(e.hlStage===1&&e.hp<=e.mhp*0.5){
@@ -1392,6 +1566,16 @@ function update(){
         addLx(e.x,e.y,devX,devY);
         addBeam(e.x,e.y,devX,devY);
       }
+      // Domain reverse: undo damage and heal 50% of what was dealt
+      if(e._checkReverse&&hlDomain){
+        const dmgTaken=e._prevHp-e.hp;
+        if(dmgTaken>0){
+          e.hp=e._prevHp+Math.round(dmgTaken*0.5); // Heal 50% of damage back
+          e.hp=Math.min(e.hp,e.mhp);
+        }
+        e._prevHp=e.hp;
+        e._checkReverse=false;
+      }
     } catch(hlErr){ console.warn('[HACKLORD] Error:', hlErr); }
     }
     // === END HACKLORD BOSS ===
@@ -1495,16 +1679,51 @@ function update(){
         const dd=hlGroundMarkers[i].devData;
         hlHackDevices.push(dd);
         ft(dd.x,dd.y,'📡 ONLINE!','#ff8800');
-        sparks(dd.x,dd.y,'#ff4400',20,4);
+        sparks(dd.x,dd.y,'#ff4400',25,5);
+        // King-style shockwave on deploy!
+        kingWaves.push({ox:dd.x,oy:dd.y,r:10,maxR:200,spd:4,baseDmg:40+wave*2,col:'#ff4400',life:1,hit:new Set()});
+        kingWaves.push({ox:dd.x,oy:dd.y,r:10,maxR:120,spd:2,baseDmg:20+wave,col:'#ff8800',life:1,hit:new Set()});
       }
       hlGroundMarkers.splice(i,1);
+    }
+  }
+  // === HACKLORD: DOMAIN EXPANSION UPDATE ===
+  if(hlDomain){
+    hlDomainTimer--;
+    // Domain expires
+    if(hlDomainTimer<=0){
+      hlDomain=false;hlDomainReverse=false;
+      ft(hlDomainX,hlDomainY,'💀 DOMAIN COLLAPSED','#666666');
+      sparks(hlDomainX,hlDomainY,'#444444',20,4);
+    } else {
+      // Heal + buff all enemies inside domain every 30 frames
+      if(frame%30===0){
+        for(const en of enemies){
+          const dx3=en.x-hlDomainX,dy3=en.y-hlDomainY;
+          if(dx3*dx3+dy3*dy3<=hlDomainRadius*hlDomainRadius){
+            en.hp=Math.min(en.mhp,en.hp+en.mhp*0.02); // Heal 2% max HP
+            en.spd=Math.min(en.spdBase*1.5,en.spd*1.02); // Speed buff
+          }
+        }
+      }
+      // Glitch towers inside domain (random stun flicker)
+      if(frame%45===0){
+        for(const t of towers){
+          const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;
+          const dx3=tx-hlDomainX,dy3=ty-hlDomainY;
+          if(dx3*dx3+dy3*dy3<=hlDomainRadius*hlDomainRadius){
+            t.stunned=Math.max(t.stunned||0,15);
+            t.hitFlash=8;
+          }
+        }
+      }
     }
   }
   // === HACKLORD: Red flash decay ===
   if(hlRedFlash>0) hlRedFlash--;
   // === HACKLORD: Auto-clear system block when no hacklord alive ===
-  if(hlSystemBlock&&!enemies.find(e=>e.isBoss&&e.bossType==='hacklord')){
-    hlSystemBlock=false;hlLockedTowers.clear();hlLockedButtons.clear();hlHackDevices=[];hlFlickerTowers=[];hlGroundMarkers=[];
+  if((hlSystemBlock||hlDomain)&&!enemies.find(e=>e.isBoss&&e.bossType==='hacklord')){
+    hlSystemBlock=false;hlLockedTowers.clear();hlLockedButtons.clear();hlHackDevices=[];hlFlickerTowers=[];hlGroundMarkers=[];hlDomain=false;hlDomainTimer=0;hlDomainReverse=false;
     // Remove all button locks visually
     document.querySelectorAll('.hl-locked').forEach(b=>{b.classList.remove('hl-locked');b.removeAttribute('data-lock');});
   }
@@ -1534,6 +1753,43 @@ function update(){
     }
   }
 
+  // === HACKLORD: Draw DOMAIN EXPANSION ===
+  if(hlDomain){
+    ctx.save();
+    const dPulse=Math.sin(frame*0.08)*0.15+0.85;
+    const dFlicker=frame%6<3?1:0.7;
+    // Outer domain circle
+    ctx.globalAlpha=0.2*dFlicker;
+    ctx.beginPath();ctx.arc(hlDomainX,hlDomainY,hlDomainRadius,0,Math.PI*2);
+    ctx.fillStyle='#ff004433';ctx.fill();
+    ctx.strokeStyle='#ff0044';ctx.lineWidth=3;ctx.globalAlpha=0.6*dPulse;ctx.stroke();
+    // Inner rotating rings
+    ctx.globalAlpha=0.3;
+    ctx.beginPath();ctx.arc(hlDomainX,hlDomainY,hlDomainRadius*0.7,frame*0.02,frame*0.02+Math.PI*1.5);
+    ctx.strokeStyle='#aa00ff';ctx.lineWidth=2;ctx.stroke();
+    ctx.beginPath();ctx.arc(hlDomainX,hlDomainY,hlDomainRadius*0.4,-frame*0.03,-frame*0.03+Math.PI);
+    ctx.strokeStyle='#00ff44';ctx.lineWidth=1.5;ctx.stroke();
+    // Glitch scanlines across domain
+    ctx.globalAlpha=0.15*dFlicker;
+    for(let sl=0;sl<6;sl++){
+      const sy=hlDomainY-hlDomainRadius+Math.random()*hlDomainRadius*2;
+      ctx.fillStyle=sl%2===0?'#ff004422':'#00ff4422';
+      ctx.fillRect(hlDomainX-hlDomainRadius,sy,hlDomainRadius*2,2);
+    }
+    // Domain title text
+    ctx.globalAlpha=0.7+Math.sin(frame*0.1)*0.3;
+    ctx.fillStyle='#ff0044';ctx.font='bold 11px Orbitron, monospace';ctx.textAlign='center';
+    ctx.fillText('⚠ FATAL ERROR: 404 REALITY ⚠',hlDomainX,hlDomainY-hlDomainRadius-12);
+    // Timer bar
+    const timerRatio=hlDomainTimer/1200;
+    ctx.globalAlpha=0.8;
+    ctx.fillStyle='#222';ctx.fillRect(hlDomainX-60,hlDomainY-hlDomainRadius-6,120,4);
+    ctx.fillStyle='#ff0044';ctx.fillRect(hlDomainX-60,hlDomainY-hlDomainRadius-6,120*timerRatio,4);
+    // Reverse damage indicator on boss
+    ctx.fillStyle='#00ff44';ctx.font='bold 8px monospace';
+    ctx.fillText('⚡ REVERSE DAMAGE ⚡',hlDomainX,hlDomainY+hlDomainRadius+14);
+    ctx.restore();
+  }
   // === HACKLORD: Draw hack devices (laser beams) ===
   for(const d of hlHackDevices){
     const pulse=Math.sin(frame*0.15)*0.3+0.7;
@@ -1901,9 +2157,9 @@ function draw(){
     }
     // === HACKLORD: Draw stage indicator ===
     if(e.isBoss&&e.bossType==='hacklord'){
-      ctx.fillStyle=e.hlStage===2?'#ff0044':'#00ff44';
+      ctx.fillStyle=e.hlStage===3?'#aa00ff':e.hlStage===2?'#ff0044':'#00ff44';
       ctx.font='bold 7px Share Tech Mono';ctx.textAlign='center';
-      ctx.fillText(e.hlStage===2?'⚠ STAGE 2':'STAGE 1',e.x,drawY+e.sz+22);
+      ctx.fillText(e.hlStage===3?(hlDomain?'💀 DOMAIN ACTIVE':'💀 STAGE 3'):e.hlStage===2?'⚠ STAGE 2':'STAGE 1',e.x,drawY+e.sz+22);
       // Glitch scanlines
       if(e.hlStage===2&&frame%3===0){
         ctx.fillStyle='#00ff4422';
@@ -1975,6 +2231,19 @@ function draw(){
   const md2=MODES[gameMode];ctx.fillStyle='rgba(4,8,15,.85)';ctx.fillRect(W-170,H-22,90,18);ctx.fillStyle=md2.col;ctx.font='9px Share Tech Mono';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(`◈ ${md2.label} ×${md2.scoreMult||1}`,W-167,H-13);
   // Sandbox indicator
   if(gameMode==='sandbox'){ctx.fillStyle='rgba(4,8,15,.9)';ctx.fillRect(W-170,H-44,90,18);ctx.fillStyle='#00eeff';ctx.font='8px Share Tech Mono';ctx.textAlign='left';ctx.fillText('💰 ×10 GOLD',W-167,H-35);}
+  // Hardcore upgrade point HUD
+  if(gameMode==='hardcore'&&gameStarted){
+    const hcProg=Math.min(1,(score-hcLastPointScore)/10000000);
+    const hcNext=hcLastPointScore+10000000;
+    ctx.fillStyle='rgba(4,8,15,.9)';ctx.fillRect(W-175,H-48,135,22);
+    // Progress bar background
+    ctx.fillStyle='#1a0808';ctx.fillRect(W-173,H-36,131,6);
+    // Progress bar fill
+    ctx.fillStyle='#ff2244';ctx.fillRect(W-173,H-36,Math.round(131*hcProg),6);
+    // Text
+    ctx.fillStyle='#ff2244';ctx.font='8px Share Tech Mono';ctx.textAlign='left';
+    ctx.fillText('🔓 PTS:'+hcPoints+' | '+Math.round(hcProg*100)+'% → '+(Math.floor(score/1000000))+'M/'+Math.floor(hcNext/1000000)+'M',W-173,H-40);
+  }
   if(autoSkip){ctx.fillStyle='#00ff88';ctx.font='9px Share Tech Mono';ctx.textAlign='right';ctx.fillText('⚡AUTO',W-85,H-13);}
 
   let mineIncome=0;for(const t of towers){if(t.cfg.t===CT.MINE&&(t.cfg.mineType==='compound'||t.cfg.mineType==='basic')) mineIncome+=t.cfg.goldPerWave||0;}if(baseUpgPath==='B'&&baseUpgLevel>0) mineIncome+=BASE_UPG.B[baseUpgLevel].goldPerWave;
@@ -2022,6 +2291,8 @@ function executeAdminCommand(cmd) {
     case 'set_score':
       score = parseInt(value) || 0;
       ft(BASE_C*CS+CS/2, BASE_R*CS-10, '🏆 Score → ' + score, '#aa88ff');
+      // Recalculate HC points for new score
+      if(gameMode==='hardcore'){hcLastPointScore=Math.floor(score/10000000)*10000000;const totalPts=Math.floor(score/10000000);if(totalPts>hcPoints+hcPointsSpent){const bonus=totalPts-(hcPoints+hcPointsSpent);hcPoints+=bonus;updateHcUI();ft(BASE_C*CS+CS/2,BASE_R*CS+10,'🔓 +'+bonus+' pts','#ff2244');}}
       break;
     case 'set_hp':
       const hpVal = parseInt(value) || 100;
