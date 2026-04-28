@@ -38,6 +38,11 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 #autoskip-btn.on{border-color:#00ff88;color:#00ff88;background:#001a0d;}
 #autoskip-btn .as-dot{width:8px;height:8px;border-radius:50%;background:#1a3a2a;transition:all .2s;}
 #autoskip-btn.on .as-dot{background:#00ff88;box-shadow:0 0 8px #00ff88;}
+.save-slot.cloud-synced{border-color:#00aaff44;position:relative;}
+.save-slot.cloud-synced::after{content:'\2601';position:absolute;top:1px;right:3px;font-size:7px;color:#00aaff;opacity:.7;}
+.ss-slot.cloud-synced{position:relative;}
+.ss-slot.cloud-synced::after{content:'\2601';position:absolute;top:2px;right:4px;font-size:8px;color:#00aaff;opacity:.7;}
+.cloud-status{font-size:8px;color:#00aaff88;letter-spacing:1px;text-align:center;min-height:12px;transition:opacity .3s;}
 .save-row{display:flex;gap:4px;}
 .save-slot{flex:1;background:#04090f;border:1px solid #0e2030;color:#2a4a6a;font-family:'Share Tech Mono',monospace;font-size:9px;padding:6px 3px;cursor:pointer;text-align:center;transition:all .1s;line-height:1.4;}
 .save-slot:hover{border-color:#ffd700;color:#ffd700;background:#0a0800;}
@@ -298,7 +303,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     <div class="lb-table-wrap">
       <div class="lb-loading" id="lb-loading">LOADING INTEL...</div>
       <table class="lb-table" id="lb-table" style="display:none">
-        <thead><tr><th>#</th><th>PLAYER</th><th>SCORE</th><th>WAVE</th><th>MODE</th></tr></thead>
+        <thead><tr><th>#</th><th>PLAYER</th><th>SCORE</th><th>WAVE</th><th>MODE</th><th>TIME</th></tr></thead>
         <tbody id="lb-body"></tbody>
       </table>
       <div class="lb-empty" id="lb-empty" style="display:none">NO RECORDS FOUND</div>
@@ -478,7 +483,8 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     <button class="io-btn" id="load-btn" disabled>📂 LOAD</button>
     <button class="io-btn" id="delete-btn" disabled>🗑 DEL</button>
   </div>
-  <div id="save-status"></div>
+  <div id="cloud-status" class="cloud-status" style="opacity:0"></div>
+<div id="save-status"></div>
   <div class="sh">── ENEMY TYPES ─</div>
   <div class="leg">
     <div class="li"><span class="ld" style="background:#ff3a22"></span>Normal</div>
@@ -508,8 +514,8 @@ let currentUser=null;
 const MODE_MAP={easy:0,normal:1,hard:2,hardcore:3};
 const MODE_LABEL=['EASY','NORMAL','HARD','HCORE'];
 
-sb.auth.onAuthStateChange((_,session)=>{currentUser=session?.user??null;updateAuthBar();});
-(async()=>{const{data:{session}}=await sb.auth.getSession();currentUser=session?.user??null;updateAuthBar();})();
+sb.auth.onAuthStateChange((_,session)=>{const wasNull=!currentUser;currentUser=session?.user??null;updateAuthBar();if(currentUser&&wasNull)syncSavesOnLogin();});
+(async()=>{const{data:{session}}=await sb.auth.getSession();currentUser=session?.user??null;updateAuthBar();if(currentUser)syncSavesOnLogin();})();
 
 // updateAuthBar replaced by name system below
 
@@ -635,7 +641,7 @@ async function submitScore(){
   if(!currentUser){openAuthModal();return;}
   if(gameMode==='sandbox'){msg('⚠ Sandbox scores cannot be submitted!',2500);return;}
   const btn=document.getElementById('lb-submit-btn');btn.disabled=true;btn.textContent='SUBMITTING...';
-  const basePay={wave,score,mode:MODE_MAP[gameMode]??0};const namePay=playerName?{name:playerName}:{};
+  const basePay={wave,score,mode:MODE_MAP[gameMode]??0,play_time:playTimeSeconds};const namePay=playerName?{name:playerName}:{};
   try{
     // Try upsert with name first
     let{data,error}=await sb.from('leaderboard').upsert({id:currentUser.id,...basePay,...namePay},{onConflict:'id'});
@@ -671,7 +677,7 @@ async function submitScore(){
 async function loadLeaderboard(){
   const loading=document.getElementById('lb-loading'),table=document.getElementById('lb-table'),empty=document.getElementById('lb-empty');
   loading.style.display='block';table.style.display='none';empty.style.display='none';
-  try{let q=sb.from('leaderboard').select('id,wave,score,mode,name').order('score',{ascending:false}).limit(50);
+  try{let q=sb.from('leaderboard').select('id,wave,score,mode,name,play_time').order('score',{ascending:false}).limit(50);
   if(lbFilter!=='all') q=q.eq('mode',parseInt(lbFilter));
   const{data,error}=await q;loading.style.display='none';
   if(error){console.warn('Leaderboard query error, retrying without name:',error.message);const r2=await sb.from('leaderboard').select('id,wave,score,mode').order('score',{ascending:false}).limit(50);if(lbFilter!=='all'&&r2.data) {/* refilter */};data=r2.data;error=r2.error;if(error){empty.textContent='⚠ ERROR: '+error.message;empty.style.display='block';return;}}
@@ -679,38 +685,99 @@ async function loadLeaderboard(){
   table.style.display='table';const tbody=document.getElementById('lb-body');tbody.innerHTML='';
   data.forEach((row,i)=>{const isMe=currentUser&&row.id===currentUser.id;const tr=document.createElement('tr');if(isMe) tr.className='me';
   const pid=isMe?(playerName||currentUser.email||row.id?.slice(0,8)+'…'):(row.name||(row.id?row.id.slice(0,8)+'…':'—'));
-  tr.innerHTML=`<td class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</td><td>${pid}</td><td class="lb-score-val">${Number(row.score).toLocaleString()}</td><td class="lb-wave-val">${row.wave}</td><td style="color:${['#00ff88','#ffcc00','#ff8800','#ff2244'][row.mode]??'#aaa'}">${MODE_LABEL[row.mode]??'?'}</td>`;
+  tr.innerHTML=`<td class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</td><td>${pid}</td><td class="lb-score-val">${Number(row.score).toLocaleString()}</td><td class="lb-wave-val">${row.wave}</td><td style="color:${['#00ff88','#ffcc00','#ff8800','#ff2244'][row.mode]??'#aaa'}">${MODE_LABEL[row.mode]??'?'}</td><td style="color:#00aaff;font-size:10px">${formatPlayTime(row.play_time)}</td>`;
   tbody.appendChild(tr);});}catch(e){loading.style.display='none';empty.style.display='block';}
 }
 function showLbToast(msg){const t=document.getElementById('lb-toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 function tryPromptLeaderboard(){if(!currentUser||gameMode==='sandbox') return;setTimeout(()=>{updateSubmitRow();showLbToast('🏆 SUBMIT SCORE TO LEADERBOARD?');},1200);}
 
+
+// ═══════ PLAY TIME TRACKING ═══════
+let playTimeSeconds=0;
+let _playTimeInterval=null;
+function startPlayTimeTracker(){if(!_playTimeInterval)_playTimeInterval=setInterval(()=>{if(gameStarted&&!gameOver)playTimeSeconds++;},1000);}
+function stopPlayTimeTracker(){if(_playTimeInterval){clearInterval(_playTimeInterval);_playTimeInterval=null;}}
+function formatPlayTime(s){if(!s||s<0)return'\u2014';const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;if(h>0)return h+'h '+m+'m';if(m>0)return m+'m '+sec+'s';return sec+'s';}
+
+// ═══════ CLOUD SAVE SYSTEM ═══════
+let _cloudSaveCache=[null,null,null];
+async function cloudSave(slot,data){
+  if(!currentUser)return false;
+  try{
+    const{error}=await sb.from('save_slots').upsert({user_id:currentUser.id,slot,data,updated_at:new Date().toISOString()},{onConflict:'user_id,slot'});
+    if(error){console.warn('Cloud save error:',error.message);return false;}
+    _cloudSaveCache[slot]=data;
+    console.log('Cloud save slot',slot,'OK');
+    return true;
+  }catch(e){console.warn('Cloud save network error:',e);return false;}
+}
+async function cloudLoad(slot){
+  if(!currentUser)return null;
+  try{
+    const{data,error}=await sb.from('save_slots').select('data,updated_at').eq('user_id',currentUser.id).eq('slot',slot).maybeSingle();
+    if(error){console.warn('Cloud load error:',error.message);return null;}
+    if(data&&data.data){_cloudSaveCache[slot]=data.data;return data.data;}
+    return null;
+  }catch(e){console.warn('Cloud load network error:',e);return null;}
+}
+async function cloudDelete(slot){
+  if(!currentUser)return;
+  try{await sb.from('save_slots').delete().eq('user_id',currentUser.id).eq('slot',slot);_cloudSaveCache[slot]=null;}catch(e){}
+}
+async function syncSavesOnLogin(){
+  if(!currentUser)return;
+  console.log('Syncing saves on login...');
+  for(let i=0;i<3;i++){
+    const local=getSaveDataLocal(i);
+    const cloud=await cloudLoad(i);
+    if(cloud&&!local){
+      setSaveDataLocal(i,cloud);
+    } else if(local&&!cloud){
+      await cloudSave(i,local);
+    } else if(local&&cloud){
+      const localTime=local.savedAt||0;
+      const cloudTime=cloud.savedAt||0;
+      if(cloudTime>localTime){setSaveDataLocal(i,cloud);}
+      else if(localTime>cloudTime){await cloudSave(i,local);}
+    }
+  }
+  refreshSaveSlotUI();
+  showCloudStatus('SAVES SYNCED');
+}
+function showCloudStatus(m){
+  const el=document.getElementById('cloud-status');
+  if(el){el.textContent='\u2601 '+m;el.style.opacity='1';clearTimeout(el._t);el._t=setTimeout(()=>{el.style.opacity='0';},3000);}
+}
+
 //saving
 const SAVE_KEY_PREFIX='basesiege_v17_slot_';
 let selectedSaveSlot=0;
 
-function getSaveData(slot){try{const raw=localStorage.getItem(SAVE_KEY_PREFIX+slot);return raw?JSON.parse(raw):null;}catch(e){return null;}}
-function setSaveData(slot,data){try{localStorage.setItem(SAVE_KEY_PREFIX+slot,JSON.stringify(data));return true;}catch(e){return false;}}
-function deleteSaveData(slot){localStorage.removeItem(SAVE_KEY_PREFIX+slot);}
+function getSaveDataLocal(slot){try{const raw=localStorage.getItem(SAVE_KEY_PREFIX+slot);return raw?JSON.parse(raw):null;}catch(e){return null;}}
+function getSaveData(slot){const local=getSaveDataLocal(slot);const cloud=_cloudSaveCache[slot];if(!local&&!cloud)return null;if(!cloud)return local;if(!local)return cloud;return(cloud.savedAt||0)>(local.savedAt||0)?cloud:local;}
+function setSaveDataLocal(slot,data){try{localStorage.setItem(SAVE_KEY_PREFIX+slot,JSON.stringify(data));return true;}catch(e){return false;}}
+function setSaveData(slot,data){const ok=setSaveDataLocal(slot,data);if(currentUser)cloudSave(slot,data).then(s=>{if(s)showCloudStatus('SAVED TO CLOUD');});return ok;}
+function deleteSaveData(slot){localStorage.removeItem(SAVE_KEY_PREFIX+slot);if(currentUser)cloudDelete(slot);_cloudSaveCache[slot]=null;}
 
 function refreshSaveSlotUI(){
-  document.querySelectorAll('#save-slots-row .save-slot').forEach((btn,i)=>{const d=getSaveData(i);if(d){btn.innerHTML=`SLOT ${i+1}<br><span style="color:#ffd700;font-size:11px">W${d.wave}</span><br><span style="color:#4a9a6a;font-size:8px">${(d.score||0).toLocaleString()}</span>`;btn.classList.add('has-data');}else{btn.innerHTML=`SLOT ${i+1}<br>—`;btn.classList.remove('has-data');}btn.classList.toggle('on',i===selectedSaveSlot);});
-  document.querySelectorAll('#ss-save-slots .ss-slot').forEach((btn,i)=>{const d=getSaveData(i);if(d){btn.innerHTML=`SLOT ${i+1}<br><span class="slot-wave">W${d.wave}</span><br><span class="slot-score">${MODES[d.gameMode]?.label||d.gameMode} · ${(d.score||0).toLocaleString()}</span>`;btn.classList.add('has-data');}else{btn.innerHTML=`SLOT ${i+1}<br><span class="slot-wave">—</span><br><span class="slot-score">empty</span>`;btn.classList.remove('has-data');}});
+  document.querySelectorAll('#save-slots-row .save-slot').forEach((btn,i)=>{const d=getSaveData(i);if(d){btn.innerHTML=`SLOT ${i+1}<br><span style="color:#ffd700;font-size:11px">W${d.wave}</span><br><span style="color:#4a9a6a;font-size:8px">${(d.score||0).toLocaleString()}</span>`;btn.classList.add('has-data');}else{btn.innerHTML=`SLOT ${i+1}<br>—`;btn.classList.remove('has-data');}btn.classList.toggle('on',i===selectedSaveSlot);btn.classList.toggle('cloud-synced',!!_cloudSaveCache[i]);});
+  document.querySelectorAll('#ss-save-slots .ss-slot').forEach((btn,i)=>{const d=getSaveData(i);if(d){btn.innerHTML=`SLOT ${i+1}<br><span class="slot-wave">W${d.wave}</span><br><span class="slot-score">${MODES[d.gameMode]?.label||d.gameMode} · ${(d.score||0).toLocaleString()}</span>`;btn.classList.add('has-data');}else{btn.innerHTML=`SLOT ${i+1}<br><span class="slot-wave">—</span><br><span class="slot-score">empty</span>`;btn.classList.remove('has-data');}btn.classList.toggle('cloud-synced',!!_cloudSaveCache[i]);});
   updateIOButtons();
 }
 function updateIOButtons(){document.getElementById('save-btn').disabled=!gameStarted||gameOver;document.getElementById('load-btn').disabled=!getSaveData(selectedSaveSlot);document.getElementById('delete-btn').disabled=!getSaveData(selectedSaveSlot);}
 function saveStatus(msg,col='#00ff88'){const el=document.getElementById('save-status');el.textContent=msg;el.style.color=col;clearTimeout(el._t);el._t=setTimeout(()=>{el.textContent='';},3000);}
-function serializeGameState(){return{version:17,gameMode,wave,gold,baseHP,baseMaxHP,score,kills,baseUpgPath,baseUpgLevel,towers:towers.map(t=>({row:t.row,col:t.col,key:t.key,level:t.level,path:t.path,hp:t.hp,maxHp:t.maxHp})),hcPoints,hcPointsSpent,hcLastPointScore,hcUnlocked:[...hcUnlocked],gfxMode:gfxMode,savedAt:Date.now()};}
+function serializeGameState(){return{version:17,gameMode,wave,gold,baseHP,baseMaxHP,score,kills,baseUpgPath,baseUpgLevel,towers:towers.map(t=>({row:t.row,col:t.col,key:t.key,level:t.level,path:t.path,hp:t.hp,maxHp:t.maxHp})),hcPoints,hcPointsSpent,hcLastPointScore,hcUnlocked:[...hcUnlocked],gfxMode:gfxMode,playTimeSeconds:playTimeSeconds,savedAt:Date.now()};}
 function deserializeGameState(data){
   if(!data||data.version!==17) return false;
   try{gameMode=data.gameMode||'easy';wave=data.wave;gold=data.gold;baseHP=data.baseHP;baseMaxHP=data.baseMaxHP;score=data.score;kills=data.kills;baseUpgPath=data.baseUpgPath;baseUpgLevel=data.baseUpgLevel||0;
   // Restore hardcore upgrade points
   hcPoints=data.hcPoints||0;hcPointsSpent=data.hcPointsSpent||0;hcLastPointScore=data.hcLastPointScore||0;hcUnlocked=new Set(data.hcUnlocked||[]);
+  playTimeSeconds=data.playTimeSeconds||0;
   gfxMode=data.gfxMode||0;document.querySelectorAll('.gfx-btn').forEach(x=>{x.classList.toggle('on',parseInt(x.dataset.gfx)===gfxMode);});
   grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));towers=[];enemies=[];projs=[];shockwaves=[];kingWaves=[],adminDrones=[];parts=[];floats=[];lxfx=[];healBeams=[];helicopters=[];crystals=[];
   grid[BASE_R][BASE_C]=CT.BASE;grid[SPAWN_R][SPAWN_C]=CT.SPAWN;
   for(const td of data.towers){const cfg=getCfg(td.key,td.level,td.path);grid[td.row][td.col]=cfg.t;const t={row:td.row,col:td.col,key:td.key,cfg,hp:td.hp,maxHp:td.maxHp,level:td.level,path:td.path,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[]};towers.push(t);if(td.key==='heli') spawnHelicopter(t);}
-  bfs();waveOn=false;spawnQ=[];spawnT=0;selTower=null;pathBlocked=false;baseTurretCd=0;baseTurretAngle=0;gameOver=false;gameStarted=true;
+  bfs();waveOn=false;spawnQ=[];spawnT=0;selTower=null;pathBlocked=false;baseTurretCd=0;baseTurretAngle=0;gameOver=false;gameStarted=true;startPlayTimeTracker();
   updateModeUI();updateHcUI();document.querySelectorAll('.mb').forEach(b=>{b.classList.toggle('on',b.dataset.m===gameMode);b.style.opacity=b.dataset.m===gameMode?'1':'.25';b.style.pointerEvents='none';});
   syncUI();return true;}catch(e){console.error(e);return false;}
 }
@@ -836,7 +903,7 @@ function init(){
   towers=[];enemies=[];projs=[];shockwaves=[];parts=[];floats=[];lxfx=[];healBeams=[];helicopters=[];crystals=[];
   const md=MODES[gameMode];
   gold=Math.round(200*md.goldBonus);baseHP=md.startHp;baseMaxHP=md.startHp;
-  wave=0;score=0;kills=0;gameOver=false;waveOn=false;spawnQ=[];spawnT=0;selTower=null;pathBlocked=false;curWaveType=0;
+  wave=0;playTimeSeconds=0;score=0;kills=0;gameOver=false;waveOn=false;spawnQ=[];spawnT=0;selTower=null;pathBlocked=false;curWaveType=0;
   baseUpgPath=null;baseUpgLevel=0;baseTurretCd=0;baseTurretAngle=0;
   // Reset hardcore upgrade points
   hcPoints=0;hcPointsSpent=0;hcLastPointScore=0;hcUnlocked=new Set();updateHcUI();
