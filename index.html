@@ -441,6 +441,13 @@ const MP={
     syncUI();
     msg('CO-OP MODE — DEFEND TOGETHER!',3000);
     document.getElementById('show-lb').style.display='block';
+    // Hide auto-skip and change wave button for non-host
+    if(!this.isHost){
+      document.getElementById('autoskip-btn').style.display='none';
+      autoSkip=false;
+      const startBtn=document.getElementById('start');
+      if(startBtn){startBtn.textContent='⏳ WAITING FOR HOST...';startBtn.disabled=true;startBtn.style.opacity='.4';}
+    }
     // Start sync intervals
     this.startSync();
     this.updatePlayerHud();
@@ -758,8 +765,8 @@ document.addEventListener('DOMContentLoaded',function(){
 
 
   // Leaderboard events
-  const lbClose=document.getElementById('lb-close');
-  if(lbClose) lbClose.addEventListener('click',()=>document.getElementById('leaderboard').classList.remove('vis'));
+  const lbCloseCoop=document.getElementById('lb-close-coop');
+  if(lbCloseCoop) lbCloseCoop.addEventListener('click',()=>document.getElementById('leaderboard').classList.remove('vis'));
   const lbRefresh=document.getElementById('lb-refresh');
   if(lbRefresh) lbRefresh.addEventListener('click',()=>MP.refreshLeaderboard());
   // Chat toggle
@@ -1239,7 +1246,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 
 <div id="roomHud"><span>ROOM</span><span class="rh-code" id="rh-code">------</span><span class="rh-count" id="rh-count">0/4</span></div>
 <div id="playerHud"></div>
-<div id="leaderboard"><span class="lb-close" id="lb-close">✕</span><div class="lb-title">LEADERBOARD</div><div id="lb-rows"></div><button class="lb-btn" id="lb-refresh">REFRESH</button></div>
+<div id="leaderboard"><span class="lb-close" id="lb-close-coop">✕</span><div class="lb-title">LEADERBOARD</div><div id="lb-rows"></div><button class="lb-btn" id="lb-refresh">REFRESH</button></div>
 <div id="chatPanel"><div class="chat-header"><span class="chat-title">COMMS</span><span class="chat-close" id="chatClose">✕</span></div>
 <div id="chatMessages"></div>
 <div class="chat-transfer" id="chatTransfer"><select id="transferTarget"></select><input type="number" id="transferAmount" placeholder="Gold" min="1"><button id="transferBtn">SEND 💰</button></div>
@@ -2469,7 +2476,7 @@ function update(){
   frame++;const bx=BASE_C*CS+CS/2,by=BASE_R*CS+CS/2;
   const _mpClientOnly=MP.active&&!MP.isHost;
   if(_mpClientOnly){for(const e of enemies){if(typeof e._targetX==='number'){e.x+=(e._targetX-e.x)*0.25;e.y+=(e._targetY-e.y)*0.25;}}}
-  if(autoSkip&&!waveOn&&!gameOver&&gameStarted){autoSkipTimer++;if(autoSkipTimer>=AUTO_SKIP_DELAY){autoSkipTimer=0;startWave();}}else if(waveOn) autoSkipTimer=0;
+  if(autoSkip&&!waveOn&&!gameOver&&gameStarted&&!(MP.active&&!MP.isHost)){autoSkipTimer++;if(autoSkipTimer>=AUTO_SKIP_DELAY){autoSkipTimer=0;startWave();}}else if(waveOn) autoSkipTimer=0;
   // === HARDCORE: Periodic upgrade point check (catches ALL score sources) ===
   if(gameMode==='hardcore'&&gameStarted&&!gameOver&&score>=hcLastPointScore+10000000){
     const newPts=Math.floor((score-hcLastPointScore)/10000000);
@@ -3443,7 +3450,7 @@ function draw(){
   ctx.fillStyle='rgba(255,255,255,.8)';ctx.font='10px Share Tech Mono';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(`BASE  ${Math.round(baseHP)} / ${Math.round(baseMaxHP)}`,11,14);
   const goldX=hpW+8,goldW=W-goldX-4;ctx.fillStyle='rgba(4,8,15,0.88)';ctx.fillRect(goldX,4,goldW,hudH);ctx.fillStyle='#1a1200';ctx.fillRect(goldX+1,5,goldW-2,hudH-2);const goldBarFill=Math.min(1,gold/1500);ctx.fillStyle='rgba(255,200,0,0.65)';ctx.fillRect(goldX+1,5,Math.round((goldW-2)*goldBarFill),hudH-2);ctx.fillStyle='#ffd700';ctx.font='10px Share Tech Mono';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(`⬡ ${gold}g`,goldX+6,14);
 
-  if(autoSkip&&!waveOn&&!gameOver&&gameStarted){const pct=autoSkipTimer/AUTO_SKIP_DELAY,barW=120,barH=6,bx2=W/2-barW/2,by2=H-30;ctx.fillStyle='rgba(4,8,15,0.85)';ctx.fillRect(bx2-6,by2-10,barW+12,barH+20);ctx.fillStyle='#001a0d';ctx.fillRect(bx2,by2,barW,barH);ctx.fillStyle='#00ff88';ctx.fillRect(bx2,by2,barW*pct,barH);ctx.fillStyle='#00ff8888';ctx.font='8px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`⚡ AUTO-LAUNCH IN ${Math.ceil((AUTO_SKIP_DELAY-autoSkipTimer)/60)}s`,W/2,by2-4);}
+  if(autoSkip&&!waveOn&&!gameOver&&gameStarted&&!(MP.active&&!MP.isHost)){const pct=autoSkipTimer/AUTO_SKIP_DELAY,barW=120,barH=6,bx2=W/2-barW/2,by2=H-30;ctx.fillStyle='rgba(4,8,15,0.85)';ctx.fillRect(bx2-6,by2-10,barW+12,barH+20);ctx.fillStyle='#001a0d';ctx.fillRect(bx2,by2,barW,barH);ctx.fillStyle='#00ff88';ctx.fillRect(bx2,by2,barW*pct,barH);ctx.fillStyle='#00ff8888';ctx.font='8px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`⚡ AUTO-LAUNCH IN ${Math.ceil((AUTO_SKIP_DELAY-autoSkipTimer)/60)}s`,W/2,by2-4);}
 
   ctx.fillStyle='rgba(4,8,15,.85)';ctx.fillRect(W-170,4,166,20);const wt2=WAVE_TYPES[curWaveType];ctx.fillStyle=waveOn?(curWaveType>=14?'#ff0055':wt2.col):'#00ff88';ctx.font='10px Share Tech Mono';ctx.textAlign='right';ctx.fillText(waveOn?`WAVE ${wave} — ${enemies.length+spawnQ.length} left`:`WAVE ${wave} COMPLETE`,W-6,14);
 
@@ -3463,7 +3470,7 @@ function draw(){
     ctx.fillStyle='#ff2244';ctx.font='8px Share Tech Mono';ctx.textAlign='left';
     ctx.fillText('🔓 PTS:'+hcPoints+' | '+Math.round(hcProg*100)+'% → '+(Math.floor(score/1000000))+'M/'+Math.floor(hcNext/1000000)+'M',W-173,H-40);
   }
-  if(autoSkip){ctx.fillStyle='#00ff88';ctx.font='9px Share Tech Mono';ctx.textAlign='right';ctx.fillText('⚡AUTO',W-85,H-13);}
+  if(autoSkip&&!(MP.active&&!MP.isHost)){ctx.fillStyle='#00ff88';ctx.font='9px Share Tech Mono';ctx.textAlign='right';ctx.fillText('⚡AUTO',W-85,H-13);}
 
   let mineIncome=0;for(const t of towers){if(t.cfg.t===CT.MINE&&(t.cfg.mineType==='compound'||t.cfg.mineType==='basic')) mineIncome+=t.cfg.goldPerWave||0;}if(baseUpgPath==='B'&&baseUpgLevel>0) mineIncome+=BASE_UPG.B[baseUpgLevel].goldPerWave;
   if(mineIncome>0){ctx.fillStyle='rgba(4,8,15,.85)';ctx.fillRect(4,H-22,160,18);ctx.fillStyle='#ffe066';ctx.font='9px Share Tech Mono';ctx.textAlign='left';ctx.fillText(`⛏ +${mineIncome}g/wave income`,8,H-13);}
