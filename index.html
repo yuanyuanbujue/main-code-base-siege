@@ -441,12 +441,14 @@ const MP={
     syncUI();
     msg('CO-OP MODE — DEFEND TOGETHER!',3000);
     document.getElementById('show-lb').style.display='block';
-    // Hide auto-skip and change wave button for non-host
+    // Hide auto-skip, wave button, and base upgrade for non-host
     if(!this.isHost){
       document.getElementById('autoskip-btn').style.display='none';
       autoSkip=false;
       const startBtn=document.getElementById('start');
       if(startBtn){startBtn.textContent='⏳ WAITING FOR HOST...';startBtn.disabled=true;startBtn.style.opacity='.4';}
+      const baseBtn=document.getElementById('basebtn');
+      if(baseBtn){baseBtn.style.display='none';}
     }
     // Start sync intervals
     this.startSync();
@@ -600,6 +602,8 @@ const MP={
     const el=document.getElementById('leaderboard');
     el.classList.add('vis');
     document.getElementById('lb-refresh').classList.add('vis');
+    // Add backdrop close on click outside
+    el.onclick=function(e){if(e.target===el) el.classList.remove('vis');};
     await this.refreshLeaderboard();
   },
 
@@ -1246,7 +1250,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 
 <div id="roomHud"><span>ROOM</span><span class="rh-code" id="rh-code">------</span><span class="rh-count" id="rh-count">0/4</span></div>
 <div id="playerHud"></div>
-<div id="leaderboard"><span class="lb-close" id="lb-close-coop">✕</span><div class="lb-title">LEADERBOARD</div><div id="lb-rows"></div><button class="lb-btn" id="lb-refresh">REFRESH</button></div>
+<div id="leaderboard"><span class="lb-close" id="lb-close-coop" onclick="document.getElementById('leaderboard').classList.remove('vis')" style="cursor:pointer;z-index:201">✕</span><div class="lb-title">LEADERBOARD</div><div id="lb-rows"></div><button class="lb-btn" id="lb-refresh">REFRESH</button></div>
 <div id="chatPanel"><div class="chat-header"><span class="chat-title">COMMS</span><span class="chat-close" id="chatClose">✕</span></div>
 <div id="chatMessages"></div>
 <div class="chat-transfer" id="chatTransfer"><select id="transferTarget"></select><input type="number" id="transferAmount" placeholder="Gold" min="1"><button id="transferBtn">SEND 💰</button></div>
@@ -2102,6 +2106,7 @@ function updateBasePanelUI(){
   else{prDiv.style.display='none';if(baseUpgLevel>=BASE_ML){ubtn.style.display='';ubtn.textContent='BASE MAX LEVEL';ubtn.disabled=true;}else{ubtn.style.display='';const nextLvl=baseUpgLevel+1,cost=BASE_UPG[baseUpgPath][nextLvl].cost,upd=BASE_UPG[baseUpgPath][nextLvl];if(baseUpgPath==='A') ubtn.textContent=`UPGRADE (${cost}g)\n→ +${upd.hpBonus}HP, Turret↑`;else ubtn.textContent=`UPGRADE (${cost}g)\n→ +${upd.goldPerWave}g/wave`;ubtn.disabled=gold<cost;}}
 }
 function doBaseUpgrade(path){
+  if(MP.active&&!MP.isHost){msg('Only the HOST can upgrade the base',2000);return;}
   if(baseUpgPath===null){const cost=BASE_UPG[path][1].cost;if(gold<cost){msg('⚠ Not enough gold!');return;}gold-=cost;baseUpgPath=path;baseUpgLevel=1;applyBaseUpgrade();msg(`Base: ${BASE_UPG[path][1].name} unlocked!`,2500);}
   else{if(baseUpgPath!==path) return;if(baseUpgLevel>=BASE_ML) return;const nextLvl=baseUpgLevel+1,cost=BASE_UPG[baseUpgPath][nextLvl].cost;if(gold<cost){msg('⚠ Not enough gold!');return;}gold-=cost;baseUpgLevel=nextLvl;applyBaseUpgrade();msg(`Base upgraded to ${BASE_UPG[baseUpgPath][nextLvl].name}!`,2500);}
   syncUI();updateBasePanelUI();
@@ -2198,8 +2203,8 @@ function updateHcUI(){
 }
 document.getElementById('autoskip-btn').addEventListener('click',()=>{autoSkip=!autoSkip;const btn=document.getElementById('autoskip-btn');btn.classList.toggle('on',autoSkip);const toast=document.getElementById('autoskip-toast');toast.textContent=autoSkip?'⚡ AUTO-SKIP ON':'⏹ AUTO-SKIP OFF';toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1400);msg(autoSkip?'⚡ Auto-skip enabled!':'⏹ Auto-skip disabled.',2200);});
 document.querySelectorAll('#save-slots-row .save-slot').forEach((btn,i)=>{btn.addEventListener('click',()=>{selectedSaveSlot=i;refreshSaveSlotUI();});});
-document.getElementById('save-btn').addEventListener('click',()=>{if(!gameStarted||gameOver){saveStatus('⚠ Cannot save now.','#ff4444');return;}const data=serializeGameState();if(setSaveData(selectedSaveSlot,data)){saveStatus(`✓ Saved to Slot ${selectedSaveSlot+1}`);ft(W/2,H/2,`SAVED → SLOT ${selectedSaveSlot+1}`,'#00ff88');sparks(W/2,H/2,'#00ff88',16,2.5);refreshSaveSlotUI();}else saveStatus('✗ Save failed!','#ff4444');});
-document.getElementById('load-btn').addEventListener('click',()=>{const data=getSaveData(selectedSaveSlot);if(!data){saveStatus('⚠ No data in slot.','#ff4444');return;}if(!confirm(`Load Slot ${selectedSaveSlot+1}? (Wave ${data.wave}, ${MODES[data.gameMode]?.label||data.gameMode})`)) return;if(deserializeGameState(data)){document.getElementById('startScreen').classList.add('gone');gameStarted=true;saveStatus(`✓ Loaded Slot ${selectedSaveSlot+1}  W${data.wave}`);msg(`Loaded from Slot ${selectedSaveSlot+1} — Wave ${data.wave}`,3000);}else saveStatus('✗ Load failed.','#ff4444');});
+document.getElementById('save-btn').addEventListener('click',()=>{if(MP.active){msg('⚠ Cannot save in CO-OP mode',2000);return;}if(!gameStarted||gameOver){saveStatus('⚠ Cannot save now.','#ff4444');return;}const data=serializeGameState();if(setSaveData(selectedSaveSlot,data)){saveStatus(`✓ Saved to Slot ${selectedSaveSlot+1}`);ft(W/2,H/2,`SAVED → SLOT ${selectedSaveSlot+1}`,'#00ff88');sparks(W/2,H/2,'#00ff88',16,2.5);refreshSaveSlotUI();}else saveStatus('✗ Save failed!','#ff4444');});
+document.getElementById('load-btn').addEventListener('click',()=>{if(MP.active){msg('⚠ Cannot load saves in CO-OP mode',2000);return;}const data=getSaveData(selectedSaveSlot);if(!data){saveStatus('⚠ No data in slot.','#ff4444');return;}if(!confirm(`Load Slot ${selectedSaveSlot+1}? (Wave ${data.wave}, ${MODES[data.gameMode]?.label||data.gameMode})`)) return;if(deserializeGameState(data)){document.getElementById('startScreen').classList.add('gone');gameStarted=true;saveStatus(`✓ Loaded Slot ${selectedSaveSlot+1}  W${data.wave}`);msg(`Loaded from Slot ${selectedSaveSlot+1} — Wave ${data.wave}`,3000);}else saveStatus('✗ Load failed.','#ff4444');});
 document.getElementById('delete-btn').addEventListener('click',()=>{const data=getSaveData(selectedSaveSlot);if(!data) return;if(!confirm(`Delete Slot ${selectedSaveSlot+1}?`)) return;deleteSaveData(selectedSaveSlot);saveStatus(`✗ Slot ${selectedSaveSlot+1} deleted.`,'#ff6644');refreshSaveSlotUI();});
 document.querySelectorAll('.mb').forEach(b=>{b.addEventListener('click',()=>{if(gameStarted) return;gameMode=b.dataset.m;document.querySelectorAll('.mb').forEach(x=>x.classList.remove('on'));b.classList.add('on');init();msg(`Mode: ${MODES[gameMode].label}`,2000);});});
 document.querySelectorAll('.spb').forEach(b=>{b.addEventListener('click',()=>{speed=parseInt(b.dataset.spd);document.querySelectorAll('.spb').forEach(x=>x.classList.remove('on'));b.classList.add('on');});});
@@ -2232,7 +2237,7 @@ cv.addEventListener('click',e=>{
   }
   if(col<0||col>=COLS||row<0||row>=ROWS) return;
   if(grid[row][col]===CT.BASE||grid[row][col]===CT.SPAWN){
-    if(grid[row][col]===CT.BASE&&(baseUpgMode||(!sellMode&&!upgMode))){baseUpgMode=true;document.getElementById('basebtn').classList.add('base-on');showBasePanel();}
+    if(grid[row][col]===CT.BASE&&(baseUpgMode||(!sellMode&&!upgMode))){if(MP.active&&!MP.isHost){msg('Only the HOST can upgrade the base',2000);return;}baseUpgMode=true;document.getElementById('basebtn').classList.add('base-on');showBasePanel();}
     return;
   }
   if(sellMode){const ti=towers.findIndex(t=>t.row===row&&t.col===col);if(ti!==-1){if(MP.active&&!MP.canInteractTower(towers[ti])){msg(MP.getTowerOwnerMsg(towers[ti])||'Not your tower',2000);return;}const t=towers[ti],ref=Math.floor(TS[t.key][1].cost*.5);if(t.key==='healer'&&t.path==='A'&&t.level>=2){const bon=t.level===2?25:t.level===3?55:t.level===4?90:140;baseMaxHP=Math.max(150,baseMaxHP-bon);baseHP=Math.min(baseHP,baseMaxHP);}if(t.key==='heli'){const hi=helicopters.findIndex(h=>h.towerId===t.id);if(hi!==-1) helicopters.splice(hi,1);}gold+=ref;towers.splice(ti,1);grid[row][col]=CT.EMPTY;bfs();ft(col*CS+CS/2,row*CS,`+${ref}g`);hidePanel();syncUI();if(MP.active){MP.broadcast('tower:sell',{pid:MP.playerId,row,col});MP.updatePlayerGold();}}return;}
@@ -2264,7 +2269,7 @@ cv.addEventListener('touchmove',function(e){e.preventDefault();const touch=e.tou
   const ssModes=document.querySelectorAll('.ss-mode');
   let ssMode='easy';
   ssModes.forEach(b=>{b.addEventListener('click',()=>{ssMode=b.dataset.m;ssModes.forEach(x=>x.classList.remove('on'));b.classList.add('on');});});
-  document.querySelectorAll('#ss-save-slots .ss-slot').forEach((btn,i)=>{btn.addEventListener('click',()=>{const data=getSaveData(i);if(!data) return;if(!confirm(`Load Slot ${i+1}? (Wave ${data.wave})`)) return;if(deserializeGameState(data)){gameStarted=true;ss.classList.add('gone');document.querySelectorAll('.mb').forEach(b=>{b.classList.toggle('on',b.dataset.m===gameMode);b.style.opacity=b.dataset.m===gameMode?'1':'.25';b.style.pointerEvents='none';});msg(`Loaded Slot ${i+1} — Wave ${data.wave}!`,3000);}else alert('Incompatible save!');});});
+  document.querySelectorAll('#ss-save-slots .ss-slot').forEach((btn,i)=>{btn.addEventListener('click',()=>{if(MP.active){msg('⚠ Cannot load saves in CO-OP mode',2000);return;}const data=getSaveData(i);if(!data) return;if(!confirm(`Load Slot ${i+1}? (Wave ${data.wave})`)) return;if(deserializeGameState(data)){gameStarted=true;ss.classList.add('gone');document.querySelectorAll('.mb').forEach(b=>{b.classList.toggle('on',b.dataset.m===gameMode);b.style.opacity=b.dataset.m===gameMode?'1':'.25';b.style.pointerEvents='none';});msg(`Loaded Slot ${i+1} — Wave ${data.wave}!`,3000);}else alert('Incompatible save!');});});
   document.getElementById('ss-begin').addEventListener('click',()=>{gameMode=ssMode;gameStarted=true;document.querySelectorAll('.mb').forEach(b=>{b.classList.toggle('on',b.dataset.m===gameMode);b.style.opacity=b.dataset.m===gameMode?'1':'.25';b.style.pointerEvents='none';});init();ss.classList.add('gone');
     if(gameMode==='sandbox') msg(`💰 SANDBOX MODE — ×10 GOLD! Go nuts! No leaderboard.`,4000);
     else msg(`${MODES[gameMode].label} mode — BUILD DEFENSES!`,3000);
