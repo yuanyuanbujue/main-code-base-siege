@@ -260,6 +260,10 @@ const MP={
     const t={row:d.row,col:d.col,key:d.key,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,level:d.lvl||1,path:null,id:++_towerIdCounter,owner:d.pid,ownerColor:PLAYER_COLORS[d.colorIdx]||'#888',ownerName:d.name||'?'};
     if(cfg.healAmt){t.healTick=0;}
     towers.push(t);
+    // Spawn helicopter for remote heli pads
+    if(d.key==='heli') spawnHelicopter(t);
+    // Init barracks spawn timer for remote barracks
+    if(d.key==='barracks') t.allySpawnCd=0;
     syncUI();
   },
 
@@ -280,6 +284,11 @@ const MP={
   onRemoteTowerSell(d){
     const ti=towers.findIndex(t=>t.row===d.row&&t.col===d.col);
     if(ti===-1) return;
+    const t=towers[ti];
+    // Clean up helicopter if selling a heli pad
+    if(t.key==='heli'){const hi=helicopters.findIndex(h=>h.towerId===t.id);if(hi!==-1) helicopters.splice(hi,1);}
+    // Clean up allies if selling barracks
+    if(t.key==='barracks'){for(let ai=allies.length-1;ai>=0;ai--){if(allies[ai]&&allies[ai].towerId===t.id){sparks(allies[ai].x,allies[ai].y,'#ff4444',5,2);allies.splice(ai,1);}}}
     grid[d.row][d.col]=CT.EMPTY;
     towers.splice(ti,1);
     bfs();syncUI();
@@ -1091,8 +1100,58 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style id="update-popup-style">
+#update-popup-overlay{position:fixed;inset:0;background:rgba(4,8,15,.92);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+#update-popup-overlay.hidden{display:none;}
+#update-popup{background:#0a1020;border:1px solid #44ffcc44;border-radius:10px;max-width:420px;width:90%;padding:0;box-shadow:0 0 40px #44ffcc11;overflow:hidden;}
+#update-popup .up-header{background:linear-gradient(135deg,#001a1a,#0a1028);padding:18px 22px 14px;border-bottom:1px solid #1a2a4a;}
+#update-popup .up-title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;letter-spacing:4px;color:#44ffcc;margin-bottom:2px;}
+#update-popup .up-ver{font-size:10px;color:#2a5a5a;letter-spacing:2px;}
+#update-popup .up-body{padding:16px 22px;max-height:320px;overflow-y:auto;}
+#update-popup .up-section{margin-bottom:12px;}
+#update-popup .up-section-title{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;color:#ff8844;margin-bottom:6px;}
+#update-popup .up-item{font-family:'Share Tech Mono',monospace;font-size:11px;color:#8aa0b0;padding:3px 0 3px 14px;position:relative;line-height:1.5;}
+#update-popup .up-item::before{content:'\25b8';position:absolute;left:0;color:#44ffcc;}
+#update-popup .up-item.fix::before{content:'\1f527';left:-2px;}
+#update-popup .up-item.new::before{content:'\2726';color:#ffd700;}
+#update-popup .up-footer{padding:12px 22px 16px;text-align:center;}
+#update-popup .up-btn{background:#001a1a;border:1px solid #44ffcc;color:#44ffcc;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;padding:10px 32px;cursor:pointer;transition:all .15s;border-radius:4px;}
+#update-popup .up-btn:hover{background:#44ffcc;color:#04080f;}
+</style>
 </head>
 <body>
+<div id="update-popup-overlay">
+<div id="update-popup">
+<div class="up-header">
+<div class="up-title">PATCH NOTES</div>
+<div class="up-ver">BASE SIEGE v22 — MULTIPLAYER UPDATE</div>
+</div>
+<div class="up-body">
+<div class="up-section">
+<div class="up-section-title">NEW FEATURES</div>
+<div class="up-item new">Co-op Multiplayer — Create or join rooms with up to 4 players</div>
+<div class="up-item new">Barracks Tower — Deploy ally soldiers that fight enemies</div>
+<div class="up-item new">Laser Tower — Focus beam that stacks damage over time</div>
+<div class="up-item new">Ice Tower — Slow and freeze enemies in range</div>
+<div class="up-item new">Admin Drone Pad — Special admin-only tower</div>
+<div class="up-item new">In-game Chat for co-op rooms</div>
+</div>
+<div class="up-section">
+<div class="up-section-title">BUG FIXES</div>
+<div class="up-item fix">Fixed mines earning gold during active waves in co-op</div>
+<div class="up-item fix">Fixed helipad helicopters not appearing for other players</div>
+<div class="up-item fix">Fixed barracks allies not spawning on other players screens</div>
+<div class="up-item fix">Fixed tower sell not cleaning up helicopters/allies remotely</div>
+</div>
+<div class="up-section">
+<div class="up-section-title">BALANCE</div>
+<div class="up-item">Co-op enemies scale with player count</div>
+<div class="up-item">Wave bonus gold adjusted for multiplayer</div>
+</div>
+</div>
+<div class="up-footer"><button class="up-btn" onclick="document.getElementById('update-popup-overlay').classList.add('hidden')">GOT IT</button></div>
+</div>
+</div>
 
 <!-- AUTH BAR -->
 <div id="auth-bar">
@@ -3121,7 +3180,7 @@ function update(){
 
   const bossEnemy=enemies.find(e=>e.isBoss);const bossHud=document.getElementById('boss-hud');
   if(bossEnemy){bossHud.classList.add('vis');const typeLabels={normal:'NORMAL BOSS',armor:'ARMOR BOSS',robot:'ROBOT BOSS',flying:'FLYING BOSS',commander:'⚔ COMMANDER',hacklord:'💻 HACKLORD',king:'👑 KING'};const typeColors={normal:'#ff0055',hacklord:'#00ff44',king:'#ffd700',armor:'#8844ff',robot:'#55aacc',flying:'#00ccff',commander:'#ffdd00'};document.getElementById('boss-hud-type').textContent=typeLabels[bossEnemy.bossType]||'BOSS';document.getElementById('boss-hud-type').style.color=typeColors[bossEnemy.bossType]||'#ffaa00';const bar=document.getElementById('boss-hud-bar');bar.className='';if(bossEnemy.bossType==='armor') bar.classList.add('armor');else if(bossEnemy.bossType==='robot') bar.classList.add('robot');else if(bossEnemy.bossType==='flying') bar.classList.add('flying');bar.style.width=Math.max(0,bossEnemy.hp/bossEnemy.mhp*100)+'%';document.getElementById('boss-hud-hp').textContent=`${Math.max(0,Math.round(bossEnemy.hp))} / ${bossEnemy.mhp}`;}else bossHud.classList.remove('vis');
-  if(waveOn&&enemies.length===0&&spawnQ.length===0){waveOn=false;autoSkipTimer=0;const bon=wave*32;gold+=bon;score+=Math.round(bon*(MODES[gameMode].scoreMult||1));let minePayout=0,bankPayout=0;for(const t of towers){if(t.cfg.t===CT.MINE){if(t.cfg.mineType==='compound'||t.cfg.mineType==='basic'){const g=t.cfg.goldPerWave||20;gold+=g;minePayout+=g;}else if(t.cfg.mineType==='bank'){const interest=Math.round(gold*t.cfg.interestRate);const capped=Math.min(interest,t.cfg.maxInterest||100);gold+=capped;bankPayout+=capped;}}}let treasuryPayout=0;if(baseUpgPath==='B'&&baseUpgLevel>0){const upd=BASE_UPG.B[baseUpgLevel];gold+=upd.goldPerWave;treasuryPayout=upd.goldPerWave;}if(minePayout>0) ft(W/2-50,H/2,'⛏ +'+minePayout+'g MINE','#ffe066');if(bankPayout>0) ft(W/2+50,H/2,'🏦 +'+bankPayout+'g BANK','#ffd700');if(treasuryPayout>0) ft(W/2,H/2+20,'🏛 +'+treasuryPayout+'g TREASURY','#00ff88');for(const t of towers){if(t.cfg.t===CT.WALL) continue;t.hp=Math.min(t.maxHp,t.hp+Math.ceil(t.maxHp*.09));}baseHP=Math.min(baseMaxHP,baseHP+10);msg(`✓ Wave ${wave} cleared! +${bon}g${autoSkip?' · Auto-launching...':''}`,3500);syncUI();refreshSaveSlotUI();}
+  if(waveOn&&enemies.length===0&&spawnQ.length===0&&(!MP.active||MP.isHost)){waveOn=false;autoSkipTimer=0;const bon=wave*32;gold+=bon;score+=Math.round(bon*(MODES[gameMode].scoreMult||1));let minePayout=0,bankPayout=0;for(const t of towers){if(t.cfg.t===CT.MINE){if(t.cfg.mineType==='compound'||t.cfg.mineType==='basic'){const g=t.cfg.goldPerWave||20;gold+=g;minePayout+=g;}else if(t.cfg.mineType==='bank'){const interest=Math.round(gold*t.cfg.interestRate);const capped=Math.min(interest,t.cfg.maxInterest||100);gold+=capped;bankPayout+=capped;}}}let treasuryPayout=0;if(baseUpgPath==='B'&&baseUpgLevel>0){const upd=BASE_UPG.B[baseUpgLevel];gold+=upd.goldPerWave;treasuryPayout=upd.goldPerWave;}if(minePayout>0) ft(W/2-50,H/2,'⛏ +'+minePayout+'g MINE','#ffe066');if(bankPayout>0) ft(W/2+50,H/2,'🏦 +'+bankPayout+'g BANK','#ffd700');if(treasuryPayout>0) ft(W/2,H/2+20,'🏛 +'+treasuryPayout+'g TREASURY','#00ff88');for(const t of towers){if(t.cfg.t===CT.WALL) continue;t.hp=Math.min(t.maxHp,t.hp+Math.ceil(t.maxHp*.09));}baseHP=Math.min(baseMaxHP,baseHP+10);msg(`✓ Wave ${wave} cleared! +${bon}g${autoSkip?' · Auto-launching...':''}`,3500);syncUI();refreshSaveSlotUI();}
 }
 
 // ══════════════════════════════
