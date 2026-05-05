@@ -990,7 +990,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 .ss-begin:hover{background:#00ff88;color:#04080f;box-shadow:0 0 30px #00ff8844;}
 .ss-tip{font-size:9px;color:#1a3a2a;text-align:center;letter-spacing:1px;}
 .ss-save-section{display:flex;flex-direction:column;gap:8px;}
-.ss-save-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.ss-save-slots{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
 .ss-slot{background:#04090f;border:1px solid #0e2030;color:#2a4a6a;font-family:'Share Tech Mono',monospace;font-size:9px;padding:10px 4px;cursor:pointer;text-align:center;transition:all .15px;line-height:1.5;}
 .ss-slot:hover{border-color:#00ff88;color:#00ff88;background:#001a0d;}
 .ss-slot.has-data{border-color:#1a4a2a;color:#00cc66;}
@@ -1098,6 +1098,24 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 .lb-close{position:absolute;top:8px;right:12px;color:#4a6a5a;cursor:pointer;font-size:16px;}.lb-close:hover{color:#ff4444;}
 .lb-btn{display:none;font-size:9px;background:#04090f;border:1px solid #ffd700;color:#ffd700;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-top:8px;text-align:center;width:100%;}.lb-btn:hover{background:#ffd700;color:#04080f;}.lb-btn.vis{display:block;}
 
+
+/* ═══ XP / LEVELING SYSTEM ═══ */
+#xp-hud{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:9999;display:flex;align-items:center;gap:8px;background:linear-gradient(180deg,#060e18ee 0%,#060e18cc 100%);border:1px solid #0e2030;border-top:none;border-radius:0 0 12px 12px;padding:4px 16px 5px;font-family:'Share Tech Mono',monospace;backdrop-filter:blur(6px);}
+#xp-hud .xp-lvl{font-family:'Orbitron',sans-serif;font-size:11px;color:#ffd700;letter-spacing:2px;min-width:52px;text-align:center;}
+#xp-hud .xp-bar-wrap{width:140px;height:8px;background:#0a1520;border:1px solid #1a2a3a;border-radius:4px;overflow:hidden;position:relative;}
+#xp-hud .xp-bar-fill{height:100%;background:linear-gradient(90deg,#00ff88,#44ffcc);border-radius:4px;transition:width .4s ease;box-shadow:0 0 6px #00ff8866;}
+#xp-hud .xp-text{font-size:8px;color:#4a8a6a;letter-spacing:1px;white-space:nowrap;}
+#xp-hud .xp-unlock-hint{font-size:7px;color:#aa8800;letter-spacing:1px;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;}
+.bb.lvl-locked{opacity:0.25;pointer-events:none;position:relative;}
+.bb.lvl-locked::after{content:attr(data-unlock);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:7px;color:#ff4466;letter-spacing:1px;white-space:nowrap;text-shadow:0 0 4px #000;}
+.spb.lvl-locked{opacity:0.25;pointer-events:none;position:relative;}
+.spb.lvl-locked::after{content:attr(data-unlock);position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);font-size:6px;color:#ff4466;white-space:nowrap;}
+.ss-mode.lvl-locked{opacity:0.2;pointer-events:none;position:relative;}
+.ss-mode.lvl-locked::after{content:attr(data-unlock);position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:8px;color:#ff4466;letter-spacing:1px;}
+.save-slot.lvl-locked,.ss-slot.lvl-locked{opacity:0.2;pointer-events:none;}
+#lvl-up-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);z-index:99999;font-family:'Orbitron',sans-serif;font-size:22px;color:#ffd700;text-shadow:0 0 20px #ffd70088,0 0 40px #ffd70044;letter-spacing:6px;pointer-events:none;opacity:0;transition:all .5s cubic-bezier(.17,.67,.4,1.2);}
+#lvl-up-toast.show{transform:translate(-50%,-50%) scale(1);opacity:1;}
+#lvl-up-toast .lvl-sub{font-size:10px;color:#00ff88;letter-spacing:3px;margin-top:4px;text-align:center;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style id="update-popup-style">
@@ -1120,6 +1138,15 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 </style>
 </head>
 <body>
+
+<!-- XP / LEVEL HUD -->
+<div id="xp-hud">
+  <div class="xp-lvl" id="xp-lvl-display">LV 1</div>
+  <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xp-bar-fill" style="width:0%"></div></div>
+  <div class="xp-text" id="xp-text">0 / 100 XP</div>
+  <div class="xp-unlock-hint" id="xp-next-unlock"></div>
+</div>
+<div id="lvl-up-toast">LEVEL UP!<div class="lvl-sub" id="lvl-up-sub"></div></div>
 <div id="update-popup-overlay">
 <div id="update-popup">
 <div class="up-header">
@@ -1280,6 +1307,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
         <div class="ss-slot" data-slot="0">SLOT 1<br><span class="slot-wave">—</span><br><span class="slot-score">empty</span></div>
         <div class="ss-slot" data-slot="1">SLOT 2<br><span class="slot-wave">—</span><br><span class="slot-score">empty</span></div>
         <div class="ss-slot" data-slot="2">SLOT 3<br><span class="slot-wave">—</span><br><span class="slot-score">empty</span></div>
+        <div class="ss-slot" data-slot="3">SLOT 4<br><span class="slot-wave">—</span><br><span class="slot-score">empty</span></div>
       </div>
     </div>
     <button class="ss-begin" id="ss-begin">▶ BEGIN SIEGE</button>
@@ -1405,6 +1433,8 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     <button class="spb on" data-spd="1">1×</button>
     <button class="spb"    data-spd="2">2×</button>
     <button class="spb"    data-spd="3">3×</button>
+    <button class="spb"    data-spd="4">4×</button>
+    <button class="spb"    data-spd="5">5×</button>
   </div>
   <div class="sh">── GRAPHICS ─────</div>
   <div class="gfx-row">
@@ -1420,6 +1450,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     <button class="save-slot" data-slot="0">SLOT 1<br>—</button>
     <button class="save-slot" data-slot="1">SLOT 2<br>—</button>
     <button class="save-slot" data-slot="2">SLOT 3<br>—</button>
+    <button class="save-slot" data-slot="3">SLOT 4<br>—</button>
   </div>
   <div class="io-row">
     <button class="io-btn save-action" id="save-btn" disabled>💾 SAVE</button>
@@ -1706,6 +1737,8 @@ function refreshSaveSlotUI(){
   document.querySelectorAll('#save-slots-row .save-slot').forEach((btn,i)=>{const d=getSaveData(i);if(d){btn.innerHTML=`SLOT ${i+1}<br><span style="color:#ffd700;font-size:11px">W${d.wave}</span><br><span style="color:#4a9a6a;font-size:8px">${(d.score||0).toLocaleString()}</span>`;btn.classList.add('has-data');}else{btn.innerHTML=`SLOT ${i+1}<br>—`;btn.classList.remove('has-data');}btn.classList.toggle('on',i===selectedSaveSlot);btn.classList.toggle('cloud-synced',!!_cloudSaveCache[i]);});
   document.querySelectorAll('#ss-save-slots .ss-slot').forEach((btn,i)=>{const d=getSaveData(i);if(d){btn.innerHTML=`SLOT ${i+1}<br><span class="slot-wave">W${d.wave}</span><br><span class="slot-score">${MODES[d.gameMode]?.label||d.gameMode} · ${(d.score||0).toLocaleString()}</span>`;btn.classList.add('has-data');}else{btn.innerHTML=`SLOT ${i+1}<br><span class="slot-wave">—</span><br><span class="slot-score">empty</span>`;btn.classList.remove('has-data');}btn.classList.toggle('cloud-synced',!!_cloudSaveCache[i]);});
   updateIOButtons();
+  // Re-apply slot locks after refresh
+  if(typeof applyLevelUnlocks==='function') applyLevelUnlocks();
 }
 function updateIOButtons(){document.getElementById('save-btn').disabled=!gameStarted||gameOver;document.getElementById('load-btn').disabled=!getSaveData(selectedSaveSlot);document.getElementById('delete-btn').disabled=!getSaveData(selectedSaveSlot);}
 function saveStatus(msg,col='#00ff88'){const el=document.getElementById('save-status');el.textContent=msg;el.style.color=col;clearTimeout(el._t);el._t=setTimeout(()=>{el.textContent='';},3000);}
@@ -1828,6 +1861,208 @@ let _towerIdCounter=0;
 let baseUpgPath=null,baseUpgLevel=0;
 let baseTurretAngle=0,baseTurretCd=0;
 let autoSkip=false;
+
+// ═══════════════════════════════════════════════
+// XP / LEVELING SYSTEM
+// ═══════════════════════════════════════════════
+const XP_SAVE_KEY = 'bs_player_level';
+let playerLevel = 1, playerXP = 0;
+
+// Unlock map: level → array of {type, key, label}
+const UNLOCK_MAP = {
+  5:  [{type:'tower',key:'electric',label:'TESLA'},{type:'tower',key:'healer',label:'MEDIC'}],
+  15: [{type:'tower',key:'spike',label:'SPIKE'},{type:'tower',key:'buff',label:'BUFF TWR'}],
+  20: [{type:'slot',key:'3',label:'SAVE SLOT 4'}],
+  25: [{type:'speed',key:'3',label:'3× SPEED'}],
+  30: [{type:'tower',key:'mine',label:'MINE'}],
+  35: [{type:'tower',key:'flame',label:'FLAMETHROWER'}],
+  40: [{type:'tower',key:'laser',label:'LASER'}],
+  50: [{type:'mode',key:'hardcore',label:'HARDCORE MODE'},{type:'tower',key:'bhole',label:'BLACK HOLE'}],
+  60: [{type:'tower',key:'ice',label:'ICE TOWER'}],
+  70: [{type:'tower',key:'heli',label:'HELI PAD'}],
+  80: [{type:'tower',key:'barracks',label:'BARRACKS'}],
+  90: [{type:'speed',key:'4',label:'4× SPEED'}],
+  100:[{type:'speed',key:'5',label:'5× SPEED'}]
+};
+
+// FREE items (always unlocked regardless of level)
+const FREE_TOWERS = new Set(['wall','basic','sniper','cannon']);
+const FREE_SPEEDS = new Set(['1','2']);
+const FREE_MODES  = new Set(['easy','normal','hard','sandbox']);
+const FREE_SLOTS  = new Set(['0','1','2']);
+
+function xpForWave(w, mode) {
+  const base = 10 + w * 5 + w * w * 0.3;
+  const mult = {easy:1.0, normal:1.2, hard:1.5, hardcore:2.0, sandbox:0.5}[mode] || 1.0;
+  return Math.round(base * mult);
+}
+
+function xpToNextLevel(lvl) {
+  return Math.round(100 * Math.pow(lvl, 1.3));
+}
+
+function loadPlayerLevel() {
+  try {
+    const raw = localStorage.getItem(XP_SAVE_KEY);
+    if (raw) { const d = JSON.parse(raw); playerLevel = d.level || 1; playerXP = d.xp || 0; }
+  } catch(e) { playerLevel = 1; playerXP = 0; }
+}
+
+function savePlayerLevel() {
+  try { localStorage.setItem(XP_SAVE_KEY, JSON.stringify({level: playerLevel, xp: playerXP})); } catch(e) {}
+}
+
+function grantXP(amount) {
+  playerXP += amount;
+  let leveled = false;
+  let newUnlocks = [];
+  while (playerXP >= xpToNextLevel(playerLevel)) {
+    playerXP -= xpToNextLevel(playerLevel);
+    playerLevel++;
+    leveled = true;
+    // Collect unlocks for this level
+    if (UNLOCK_MAP[playerLevel]) {
+      newUnlocks = newUnlocks.concat(UNLOCK_MAP[playerLevel]);
+    }
+  }
+  savePlayerLevel();
+  updateXPHud();
+  applyLevelUnlocks();
+  if (leveled) {
+    showLevelUpToast(playerLevel, newUnlocks);
+  }
+  return leveled;
+}
+
+function showLevelUpToast(lvl, unlocks) {
+  const toast = document.getElementById('lvl-up-toast');
+  const sub = document.getElementById('lvl-up-sub');
+  toast.querySelector('.xp-lvl-num') || (toast.innerHTML = `LEVEL UP!<div class="lvl-sub" id="lvl-up-sub"></div>`);
+  sub.textContent = unlocks.length > 0 ? 'UNLOCKED: ' + unlocks.map(u => u.label).join(', ') : `LEVEL ${lvl}`;
+  toast.classList.add('show');
+  // Fireworks effect on canvas
+  if (typeof sparks === 'function') {
+    for (let i = 0; i < 5; i++) {
+      setTimeout(() => sparks(Math.random() * W, Math.random() * H, '#ffd700', 20, 3), i * 150);
+    }
+  }
+  if (typeof ft === 'function') {
+    ft(W / 2, H / 2 - 40, `★ LEVEL ${lvl} ★`, '#ffd700');
+  }
+  if (typeof msg === 'function') {
+    const unlockStr = unlocks.length > 0 ? ' → ' + unlocks.map(u => u.label).join(', ') : '';
+    msg(`⬆ LEVEL ${lvl}!${unlockStr}`, 4000);
+  }
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function updateXPHud() {
+  const needed = xpToNextLevel(playerLevel);
+  const pct = Math.min(100, (playerXP / needed) * 100);
+  document.getElementById('xp-lvl-display').textContent = `LV ${playerLevel}`;
+  document.getElementById('xp-bar-fill').style.width = pct + '%';
+  document.getElementById('xp-text').textContent = `${playerXP} / ${needed} XP`;
+  // Show next unlock hint
+  const hint = document.getElementById('xp-next-unlock');
+  let nextLvl = null;
+  for (const l of Object.keys(UNLOCK_MAP).map(Number).sort((a,b)=>a-b)) {
+    if (l > playerLevel) { nextLvl = l; break; }
+  }
+  if (nextLvl) {
+    const items = UNLOCK_MAP[nextLvl].map(u => u.label).join(', ');
+    hint.textContent = `LV${nextLvl}: ${items}`;
+  } else {
+    hint.textContent = 'MAX UNLOCKS';
+  }
+}
+
+function isUnlocked(type, key) {
+  // Check if free
+  if (type === 'tower' && FREE_TOWERS.has(key)) return true;
+  if (type === 'speed' && FREE_SPEEDS.has(key)) return true;
+  if (type === 'mode'  && FREE_MODES.has(key))  return true;
+  if (type === 'slot'  && FREE_SLOTS.has(key))  return true;
+  // Check unlock map
+  for (const [lvl, unlocks] of Object.entries(UNLOCK_MAP)) {
+    for (const u of unlocks) {
+      if (u.type === type && u.key === key) {
+        return playerLevel >= Number(lvl);
+      }
+    }
+  }
+  return true; // unknown items default to unlocked
+}
+
+function getUnlockLevel(type, key) {
+  for (const [lvl, unlocks] of Object.entries(UNLOCK_MAP)) {
+    for (const u of unlocks) {
+      if (u.type === type && u.key === key) return Number(lvl);
+    }
+  }
+  return 0;
+}
+
+function applyLevelUnlocks() {
+  // Tower buttons
+  document.querySelectorAll('.bb[data-t]').forEach(btn => {
+    const key = btn.dataset.t;
+    if (key === 'admindrone') return; // admin-only
+    const unlocked = isUnlocked('tower', key);
+    btn.classList.toggle('lvl-locked', !unlocked);
+    if (!unlocked) {
+      btn.dataset.unlock = `LV${getUnlockLevel('tower', key)}`;
+    } else {
+      delete btn.dataset.unlock;
+    }
+  });
+  // Speed buttons
+  document.querySelectorAll('.spb[data-spd]').forEach(btn => {
+    const key = btn.dataset.spd;
+    const unlocked = isUnlocked('speed', key);
+    btn.classList.toggle('lvl-locked', !unlocked);
+    if (!unlocked) {
+      btn.dataset.unlock = `LV${getUnlockLevel('speed', key)}`;
+    } else {
+      delete btn.dataset.unlock;
+    }
+  });
+  // Start-screen mode buttons (hardcore locked until 50)
+  document.querySelectorAll('.ss-mode[data-m]').forEach(btn => {
+    const key = btn.dataset.m;
+    const unlocked = isUnlocked('mode', key);
+    btn.classList.toggle('lvl-locked', !unlocked);
+    if (!unlocked) {
+      btn.dataset.unlock = `LV${getUnlockLevel('mode', key)}`;
+    } else {
+      delete btn.dataset.unlock;
+    }
+  });
+  // Sidebar mode buttons
+  document.querySelectorAll('.mb[data-m]').forEach(btn => {
+    const key = btn.dataset.m;
+    const unlocked = isUnlocked('mode', key);
+    btn.classList.toggle('lvl-locked', !unlocked);
+    if (!unlocked) {
+      btn.dataset.unlock = `LV${getUnlockLevel('mode', key)}`;
+    } else {
+      delete btn.dataset.unlock;
+    }
+  });
+  // Save slots (slot 4 = index 3 locked until Lv20)
+  document.querySelectorAll('#save-slots-row .save-slot').forEach(btn => {
+    const key = btn.dataset.slot;
+    const unlocked = isUnlocked('slot', key);
+    btn.classList.toggle('lvl-locked', !unlocked);
+  });
+  document.querySelectorAll('#ss-save-slots .ss-slot').forEach(btn => {
+    const key = btn.dataset.slot;
+    const unlocked = isUnlocked('slot', key);
+    btn.classList.toggle('lvl-locked', !unlocked);
+  });
+}
+
+// Initialize on load
+loadPlayerLevel();
 // === HACKLORD BOSS STATE ===
 let hlSystemBlock=false;        // Is System Block active?
 let hlLockedTowers=new Map();   // Map<towerId, clicksRemaining>
@@ -1863,7 +2098,7 @@ function init(){
   grid[BASE_R][BASE_C]=CT.BASE;grid[SPAWN_R][SPAWN_C]=CT.SPAWN;
   bfs();syncUI();hidePanel();hideBasePanel();
   document.getElementById('abar').classList.remove('vis');document.getElementById('wname').classList.remove('vis');
-  updateModeUI();refreshSaveSlotUI();
+  updateModeUI();refreshSaveSlotUI();updateXPHud();applyLevelUnlocks();
 }
 
 function bfs(){
@@ -2261,12 +2496,12 @@ function updateHcUI(){
   }
 }
 document.getElementById('autoskip-btn').addEventListener('click',()=>{autoSkip=!autoSkip;const btn=document.getElementById('autoskip-btn');btn.classList.toggle('on',autoSkip);const toast=document.getElementById('autoskip-toast');toast.textContent=autoSkip?'⚡ AUTO-SKIP ON':'⏹ AUTO-SKIP OFF';toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1400);msg(autoSkip?'⚡ Auto-skip enabled!':'⏹ Auto-skip disabled.',2200);});
-document.querySelectorAll('#save-slots-row .save-slot').forEach((btn,i)=>{btn.addEventListener('click',()=>{selectedSaveSlot=i;refreshSaveSlotUI();});});
+document.querySelectorAll('#save-slots-row .save-slot').forEach((btn,i)=>{btn.addEventListener('click',()=>{if(!isUnlocked('slot',String(i))){msg(`⚠ Slot ${i+1} unlocks at Level ${getUnlockLevel('slot',String(i))}!`,2500);return;}selectedSaveSlot=i;refreshSaveSlotUI();});});
 document.getElementById('save-btn').addEventListener('click',()=>{if(MP.active){msg('⚠ Cannot save in CO-OP mode',2000);return;}if(!gameStarted||gameOver){saveStatus('⚠ Cannot save now.','#ff4444');return;}const data=serializeGameState();if(setSaveData(selectedSaveSlot,data)){saveStatus(`✓ Saved to Slot ${selectedSaveSlot+1}`);ft(W/2,H/2,`SAVED → SLOT ${selectedSaveSlot+1}`,'#00ff88');sparks(W/2,H/2,'#00ff88',16,2.5);refreshSaveSlotUI();}else saveStatus('✗ Save failed!','#ff4444');});
 document.getElementById('load-btn').addEventListener('click',()=>{if(MP.active){msg('⚠ Cannot load saves in CO-OP mode',2000);return;}const data=getSaveData(selectedSaveSlot);if(!data){saveStatus('⚠ No data in slot.','#ff4444');return;}if(!confirm(`Load Slot ${selectedSaveSlot+1}? (Wave ${data.wave}, ${MODES[data.gameMode]?.label||data.gameMode})`)) return;if(deserializeGameState(data)){document.getElementById('startScreen').classList.add('gone');gameStarted=true;saveStatus(`✓ Loaded Slot ${selectedSaveSlot+1}  W${data.wave}`);msg(`Loaded from Slot ${selectedSaveSlot+1} — Wave ${data.wave}`,3000);}else saveStatus('✗ Load failed.','#ff4444');});
 document.getElementById('delete-btn').addEventListener('click',()=>{const data=getSaveData(selectedSaveSlot);if(!data) return;if(!confirm(`Delete Slot ${selectedSaveSlot+1}?`)) return;deleteSaveData(selectedSaveSlot);saveStatus(`✗ Slot ${selectedSaveSlot+1} deleted.`,'#ff6644');refreshSaveSlotUI();});
-document.querySelectorAll('.mb').forEach(b=>{b.addEventListener('click',()=>{if(gameStarted) return;gameMode=b.dataset.m;document.querySelectorAll('.mb').forEach(x=>x.classList.remove('on'));b.classList.add('on');init();msg(`Mode: ${MODES[gameMode].label}`,2000);});});
-document.querySelectorAll('.spb').forEach(b=>{b.addEventListener('click',()=>{speed=parseInt(b.dataset.spd);document.querySelectorAll('.spb').forEach(x=>x.classList.remove('on'));b.classList.add('on');});});
+document.querySelectorAll('.mb').forEach(b=>{b.addEventListener('click',()=>{if(gameStarted) return;if(!isUnlocked('mode',b.dataset.m)){msg(`⚠ ${b.dataset.m.toUpperCase()} unlocks at Level ${getUnlockLevel('mode',b.dataset.m)}!`,2500);return;}gameMode=b.dataset.m;document.querySelectorAll('.mb').forEach(x=>x.classList.remove('on'));b.classList.add('on');init();msg(`Mode: ${MODES[gameMode].label}`,2000);});});
+document.querySelectorAll('.spb').forEach(b=>{b.addEventListener('click',()=>{if(!isUnlocked('speed',b.dataset.spd)){msg(`⚠ ${b.dataset.spd}× speed unlocks at Level ${getUnlockLevel('speed',b.dataset.spd)}!`,2500);return;}speed=parseInt(b.dataset.spd);document.querySelectorAll('.spb').forEach(x=>x.classList.remove('on'));b.classList.add('on');});});
 document.querySelectorAll('.gfx-btn').forEach(b=>{b.addEventListener('click',()=>{gfxMode=parseInt(b.dataset.gfx);document.querySelectorAll('.gfx-btn').forEach(x=>x.classList.remove('on'));b.classList.add('on');msg(['HIGHEST','MEDIUM','LOW','POTATO'][gfxMode]+' graphics',1500);});});
 document.getElementById('start').addEventListener('click',startWave);
 
@@ -2303,6 +2538,7 @@ cv.addEventListener('click',e=>{
   if(upgMode){const t=towers.find(t=>t.row===row&&t.col===col);if(t){if(MP.active&&!MP.canInteractTower(t)){msg(MP.getTowerOwnerMsg(t)||'Not your tower',2000);return;}showPanel(t);}else hidePanel();return;}
   if(baseUpgMode) return;
   if(grid[row][col]!==CT.EMPTY) return;
+  if(!isUnlocked('tower',selBuild)){msg(`⚠ ${selBuild.toUpperCase()} unlocks at Level ${getUnlockLevel('tower',selBuild)}!`,2500);return;}
   if(selBuild==='heli'&&gameMode==='hardcore'&&!hcUnlocked.has('heli')){msg('⚠ Unlock Heli Pad first! (10 pts)',2500);return;}
   if(selBuild==='ice'&&gameMode==='hardcore'&&wave<100){msg('⚠ ICE TOWER unlocks at Wave 100 in Hardcore!',2500);return;}
   if(selBuild==='barracks'&&gameMode==='hardcore'&&!hcUnlocked.has('barracks')){msg('⚠ Unlock Barracks first! (7 pts)',2500);return;}
@@ -2327,13 +2563,14 @@ cv.addEventListener('touchmove',function(e){e.preventDefault();const touch=e.tou
   const ss=document.getElementById('startScreen');
   const ssModes=document.querySelectorAll('.ss-mode');
   let ssMode='easy';
-  ssModes.forEach(b=>{b.addEventListener('click',()=>{ssMode=b.dataset.m;ssModes.forEach(x=>x.classList.remove('on'));b.classList.add('on');});});
-  document.querySelectorAll('#ss-save-slots .ss-slot').forEach((btn,i)=>{btn.addEventListener('click',()=>{if(MP.active){msg('⚠ Cannot load saves in CO-OP mode',2000);return;}const data=getSaveData(i);if(!data) return;if(!confirm(`Load Slot ${i+1}? (Wave ${data.wave})`)) return;if(deserializeGameState(data)){gameStarted=true;ss.classList.add('gone');document.querySelectorAll('.mb').forEach(b=>{b.classList.toggle('on',b.dataset.m===gameMode);b.style.opacity=b.dataset.m===gameMode?'1':'.25';b.style.pointerEvents='none';});msg(`Loaded Slot ${i+1} — Wave ${data.wave}!`,3000);}else alert('Incompatible save!');});});
+  ssModes.forEach(b=>{b.addEventListener('click',()=>{if(!isUnlocked('mode',b.dataset.m)){msg(`⚠ ${b.dataset.m.toUpperCase()} unlocks at Level ${getUnlockLevel('mode',b.dataset.m)}!`,2500);return;}ssMode=b.dataset.m;ssModes.forEach(x=>x.classList.remove('on'));b.classList.add('on');});});
+  document.querySelectorAll('#ss-save-slots .ss-slot').forEach((btn,i)=>{btn.addEventListener('click',()=>{if(!isUnlocked('slot',String(i))){msg(`⚠ Slot ${i+1} unlocks at Level ${getUnlockLevel('slot',String(i))}!`,2500);return;}if(MP.active){msg('⚠ Cannot load saves in CO-OP mode',2000);return;}const data=getSaveData(i);if(!data) return;if(!confirm(`Load Slot ${i+1}? (Wave ${data.wave})`)) return;if(deserializeGameState(data)){gameStarted=true;ss.classList.add('gone');document.querySelectorAll('.mb').forEach(b=>{b.classList.toggle('on',b.dataset.m===gameMode);b.style.opacity=b.dataset.m===gameMode?'1':'.25';b.style.pointerEvents='none';});msg(`Loaded Slot ${i+1} — Wave ${data.wave}!`,3000);}else alert('Incompatible save!');});});
   document.getElementById('ss-begin').addEventListener('click',()=>{gameMode=ssMode;gameStarted=true;document.querySelectorAll('.mb').forEach(b=>{b.classList.toggle('on',b.dataset.m===gameMode);b.style.opacity=b.dataset.m===gameMode?'1':'.25';b.style.pointerEvents='none';});init();ss.classList.add('gone');
     if(gameMode==='sandbox') msg(`💰 SANDBOX MODE — ×10 GOLD! Go nuts! No leaderboard.`,4000);
     else msg(`${MODES[gameMode].label} mode — BUILD DEFENSES!`,3000);
   });
   refreshSaveSlotUI();
+  updateXPHud();applyLevelUnlocks();
 })();
 
 
@@ -3180,7 +3417,7 @@ function update(){
 
   const bossEnemy=enemies.find(e=>e.isBoss);const bossHud=document.getElementById('boss-hud');
   if(bossEnemy){bossHud.classList.add('vis');const typeLabels={normal:'NORMAL BOSS',armor:'ARMOR BOSS',robot:'ROBOT BOSS',flying:'FLYING BOSS',commander:'⚔ COMMANDER',hacklord:'💻 HACKLORD',king:'👑 KING'};const typeColors={normal:'#ff0055',hacklord:'#00ff44',king:'#ffd700',armor:'#8844ff',robot:'#55aacc',flying:'#00ccff',commander:'#ffdd00'};document.getElementById('boss-hud-type').textContent=typeLabels[bossEnemy.bossType]||'BOSS';document.getElementById('boss-hud-type').style.color=typeColors[bossEnemy.bossType]||'#ffaa00';const bar=document.getElementById('boss-hud-bar');bar.className='';if(bossEnemy.bossType==='armor') bar.classList.add('armor');else if(bossEnemy.bossType==='robot') bar.classList.add('robot');else if(bossEnemy.bossType==='flying') bar.classList.add('flying');bar.style.width=Math.max(0,bossEnemy.hp/bossEnemy.mhp*100)+'%';document.getElementById('boss-hud-hp').textContent=`${Math.max(0,Math.round(bossEnemy.hp))} / ${bossEnemy.mhp}`;}else bossHud.classList.remove('vis');
-  if(waveOn&&enemies.length===0&&spawnQ.length===0&&(!MP.active||MP.isHost)){waveOn=false;autoSkipTimer=0;const bon=wave*32;gold+=bon;score+=Math.round(bon*(MODES[gameMode].scoreMult||1));let minePayout=0,bankPayout=0;for(const t of towers){if(t.cfg.t===CT.MINE){if(t.cfg.mineType==='compound'||t.cfg.mineType==='basic'){const g=t.cfg.goldPerWave||20;gold+=g;minePayout+=g;}else if(t.cfg.mineType==='bank'){const interest=Math.round(gold*t.cfg.interestRate);const capped=Math.min(interest,t.cfg.maxInterest||100);gold+=capped;bankPayout+=capped;}}}let treasuryPayout=0;if(baseUpgPath==='B'&&baseUpgLevel>0){const upd=BASE_UPG.B[baseUpgLevel];gold+=upd.goldPerWave;treasuryPayout=upd.goldPerWave;}if(minePayout>0) ft(W/2-50,H/2,'⛏ +'+minePayout+'g MINE','#ffe066');if(bankPayout>0) ft(W/2+50,H/2,'🏦 +'+bankPayout+'g BANK','#ffd700');if(treasuryPayout>0) ft(W/2,H/2+20,'🏛 +'+treasuryPayout+'g TREASURY','#00ff88');for(const t of towers){if(t.cfg.t===CT.WALL) continue;t.hp=Math.min(t.maxHp,t.hp+Math.ceil(t.maxHp*.09));}baseHP=Math.min(baseMaxHP,baseHP+10);msg(`✓ Wave ${wave} cleared! +${bon}g${autoSkip?' · Auto-launching...':''}`,3500);syncUI();refreshSaveSlotUI();}
+  if(waveOn&&enemies.length===0&&spawnQ.length===0&&(!MP.active||MP.isHost)){waveOn=false;autoSkipTimer=0;const bon=wave*32;gold+=bon;score+=Math.round(bon*(MODES[gameMode].scoreMult||1));let minePayout=0,bankPayout=0;for(const t of towers){if(t.cfg.t===CT.MINE){if(t.cfg.mineType==='compound'||t.cfg.mineType==='basic'){const g=t.cfg.goldPerWave||20;gold+=g;minePayout+=g;}else if(t.cfg.mineType==='bank'){const interest=Math.round(gold*t.cfg.interestRate);const capped=Math.min(interest,t.cfg.maxInterest||100);gold+=capped;bankPayout+=capped;}}}let treasuryPayout=0;if(baseUpgPath==='B'&&baseUpgLevel>0){const upd=BASE_UPG.B[baseUpgLevel];gold+=upd.goldPerWave;treasuryPayout=upd.goldPerWave;}if(minePayout>0) ft(W/2-50,H/2,'⛏ +'+minePayout+'g MINE','#ffe066');if(bankPayout>0) ft(W/2+50,H/2,'🏦 +'+bankPayout+'g BANK','#ffd700');if(treasuryPayout>0) ft(W/2,H/2+20,'🏛 +'+treasuryPayout+'g TREASURY','#00ff88');for(const t of towers){if(t.cfg.t===CT.WALL) continue;t.hp=Math.min(t.maxHp,t.hp+Math.ceil(t.maxHp*.09));}baseHP=Math.min(baseMaxHP,baseHP+10);msg(`✓ Wave ${wave} cleared! +${bon}g${autoSkip?' · Auto-launching...':''}`,3500);syncUI();refreshSaveSlotUI();const _xpGained=xpForWave(wave,gameMode);grantXP(_xpGained);ft(W/2,H/2+40,`+${_xpGained} XP`,'#44ffcc');}
 }
 
 // ══════════════════════════════
