@@ -1099,6 +1099,59 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 .lb-btn{display:none;font-size:9px;background:#04090f;border:1px solid #ffd700;color:#ffd700;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-top:8px;text-align:center;width:100%;}.lb-btn:hover{background:#ffd700;color:#04080f;}.lb-btn.vis{display:block;}
 
 
+
+
+/* ═══ MINI-GAME SYSTEM ═══ */
+#mg-toggle{position:fixed;top:40px;left:14px;z-index:9998;background:#060e18;border:1px solid #00eeff;color:#00eeff;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;padding:8px 14px;cursor:pointer;transition:all .15s;border-radius:4px;}
+#mg-toggle:hover{background:#00eeff;color:#04080f;box-shadow:0 0 14px #00eeff44;}
+#mg-panel{display:none;position:fixed;top:72px;left:14px;z-index:9997;background:#060c18ee;border:1px solid #0e2030;border-radius:8px;width:260px;backdrop-filter:blur(8px);box-shadow:0 4px 20px #00000066;}
+#mg-panel.vis{display:block;}
+.mg-header{font-family:'Orbitron',sans-serif;font-size:10px;color:#00eeff;letter-spacing:3px;padding:10px 14px 6px;display:flex;justify-content:space-between;align-items:center;}
+.mg-tabs{display:flex;gap:4px;padding:0 10px 8px;}
+.mg-tab{flex:1;background:#04090f;border:1px solid #0e2030;color:#2a4a6a;font-family:'Share Tech Mono',monospace;font-size:9px;padding:5px;cursor:pointer;text-align:center;transition:all .1s;letter-spacing:1px;}
+.mg-tab:hover,.mg-tab.on{border-color:#00eeff;color:#00eeff;background:#061420;}
+.mg-body{padding:8px 12px 12px;min-height:180px;}
+.mg-score{font-size:9px;color:#4a8a6a;text-align:center;margin-bottom:8px;letter-spacing:1px;}
+/* Generator Puzzle */
+.gen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px auto;max-width:180px;}
+.gen-cell{aspect-ratio:1;background:#0a1520;border:2px solid #1a2a3a;border-radius:4px;cursor:pointer;transition:all .2s;position:relative;}
+.gen-cell.flash{background:#00eeff;border-color:#00eeff;box-shadow:0 0 12px #00eeff88;}
+.gen-cell.correct{background:#00ff88;border-color:#00ff88;box-shadow:0 0 10px #00ff8866;}
+.gen-cell.wrong{background:#ff2244;border-color:#ff2244;box-shadow:0 0 10px #ff224466;}
+.gen-cell:hover{border-color:#00eeff66;}
+.gen-msg{text-align:center;font-size:10px;color:#00eeff;margin-top:8px;letter-spacing:1px;min-height:16px;}
+.gen-btn{display:block;margin:8px auto 0;background:#061a1a;border:1px solid #00eeff;color:#00eeff;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:6px 16px;cursor:pointer;transition:all .15s;}
+.gen-btn:hover{background:#00eeff;color:#04080f;}
+/* Math Challenge */
+.math-q{font-family:'Orbitron',sans-serif;font-size:18px;color:#ffd700;text-align:center;padding:12px 0;letter-spacing:2px;}
+.math-opts{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.math-opt{background:#04090f;border:1px solid #1a2a3a;color:#88aacc;font-family:'Share Tech Mono',monospace;font-size:13px;padding:10px;cursor:pointer;text-align:center;transition:all .15s;border-radius:3px;}
+.math-opt:hover{border-color:#ffd700;color:#ffd700;}
+.math-opt.correct{background:#0a2a0a;border-color:#00ff88;color:#00ff88;}
+.math-opt.wrong{background:#2a0a0a;border-color:#ff2244;color:#ff2244;}
+.math-streak{font-size:9px;color:#ffaa00;text-align:center;margin-top:6px;letter-spacing:1px;}
+/* ═══ ACHIEVEMENT SYSTEM ═══ */
+#ach-popup{position:fixed;bottom:20px;right:20px;z-index:99999;background:linear-gradient(135deg,#0a0e1a 0%,#061a10 100%);border:1px solid #ffd700;border-radius:8px;padding:12px 18px;max-width:280px;transform:translateY(120%);opacity:0;transition:all .5s cubic-bezier(.17,.67,.4,1.2);box-shadow:0 0 20px #ffd70033,0 4px 16px #00000066;pointer-events:none;}
+#ach-popup.show{transform:translateY(0);opacity:1;}
+#ach-popup .ach-header{font-family:'Orbitron',sans-serif;font-size:9px;color:#ffd700;letter-spacing:3px;margin-bottom:4px;}
+#ach-popup .ach-title{font-family:'Share Tech Mono',monospace;font-size:13px;color:#00ff88;letter-spacing:1px;}
+#ach-popup .ach-desc{font-size:9px;color:#4a8a6a;margin-top:3px;letter-spacing:.5px;}
+#ach-popup .ach-icon{font-size:20px;float:left;margin-right:10px;line-height:1;}
+#ach-modal{display:none;position:fixed;inset:0;background:#04080fee;z-index:10001;align-items:center;justify-content:center;}
+#ach-modal.vis{display:flex;}
+.ach-box{background:#060c18;border:1px solid #ffd700;padding:20px 24px;min-width:320px;max-width:400px;max-height:70vh;overflow-y:auto;}
+.ach-modal-title{font-family:'Orbitron',sans-serif;font-size:14px;letter-spacing:4px;color:#ffd700;text-align:center;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;}
+.ach-item{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #0e2030;margin-bottom:4px;background:#04090f;transition:all .15s;}
+.ach-item.earned{border-color:#1a4a2a;background:#061a0e;}
+.ach-item.locked{opacity:.4;}
+.ach-item .ach-i{font-size:22px;min-width:30px;text-align:center;}
+.ach-item .ach-info{flex:1;}
+.ach-item .ach-n{font-family:'Share Tech Mono',monospace;font-size:11px;color:#00ff88;letter-spacing:1px;}
+.ach-item.locked .ach-n{color:#2a4a6a;}
+.ach-item .ach-d{font-size:8px;color:#4a6a5a;margin-top:2px;}
+.ach-item .ach-check{font-size:14px;color:#ffd700;}
+.ach-item.locked .ach-check{color:#1a2a3a;}
+.ach-count{font-size:9px;color:#4a8a6a;text-align:center;margin-top:8px;letter-spacing:1px;}
 /* ═══ XP / LEVELING SYSTEM ═══ */
 #xp-hud{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:9999;display:flex;align-items:center;gap:8px;background:linear-gradient(180deg,#060e18ee 0%,#060e18cc 100%);border:1px solid #0e2030;border-top:none;border-radius:0 0 12px 12px;padding:4px 16px 5px;font-family:'Share Tech Mono',monospace;backdrop-filter:blur(6px);}
 #xp-hud .xp-lvl{font-family:'Orbitron',sans-serif;font-size:11px;color:#ffd700;letter-spacing:2px;min-width:52px;text-align:center;}
@@ -1146,6 +1199,36 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
   <div class="xp-text" id="xp-text">0 / 100 XP</div>
   <div class="xp-unlock-hint" id="xp-next-unlock"></div>
 </div>
+
+<!-- ACHIEVEMENT SYSTEM -->
+
+<!-- MINI-GAME SYSTEM -->
+<button id="mg-toggle">🎮 MINI-GAME</button>
+<div id="mg-panel">
+  <div class="mg-header"><span>🎮 MINI-GAMES</span><span style="color:#2a4a6a;cursor:pointer;font-size:14px" id="mg-close">✕</span></div>
+  <div class="mg-tabs">
+    <button class="mg-tab on" data-mg="puzzle">GENERATOR</button>
+    <button class="mg-tab" data-mg="math">MATH</button>
+  </div>
+  <div class="mg-body" id="mg-body">
+    <!-- Dynamic content -->
+  </div>
+</div>
+<div id="ach-popup">
+  <div class="ach-header">ACHIEVEMENT UNLOCKED</div>
+  <div><span class="ach-icon" id="ach-pop-icon"></span><span class="ach-title" id="ach-pop-title"></span></div>
+  <div class="ach-desc" id="ach-pop-desc"></div>
+</div>
+<div id="ach-modal">
+  <div class="ach-box">
+    <div class="ach-modal-title">
+      <span>🏅 ACHIEVEMENTS</span>
+      <span style="color:#4a6a5a;cursor:pointer;font-size:16px" id="ach-close">✕</span>
+    </div>
+    <div id="ach-list"></div>
+    <div class="ach-count" id="ach-count">0 / 0 UNLOCKED</div>
+  </div>
+</div>
 <div id="lvl-up-toast">LEVEL UP!<div class="lvl-sub" id="lvl-up-sub"></div></div>
 <div id="update-popup-overlay">
 <div id="update-popup">
@@ -1184,6 +1267,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 <div id="auth-bar">
   <span id="auth-user">NOT SIGNED IN — scores won't be saved to leaderboard</span>
   <button id="name-btn" style="background:#04090f;border:1px solid #0e2030;color:#ffaa33;font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 10px;cursor:pointer;transition:all .1s;letter-spacing:1px;white-space:nowrap;display:none">✏ NAME</button>
+  <button id="ach-btn" style="display:none;font-size:9px;background:#04090f;border:1px solid #ffd700;color:#ffd700;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-right:4px;transition:all .1s;">🏅 ACHIEVEMENTS</button>
   <button id="lb-btn">🏆 LEADERBOARD</button>
   <button id="auth-sign-btn">SIGN IN</button>
 </div>
@@ -1594,18 +1678,21 @@ document.getElementById('auth-submit-btn').addEventListener('click',async()=>{
 });
 ['auth-email','auth-pass'].forEach(id=>{document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter') document.getElementById('auth-submit-btn').click();});});
 
-let lbFilter='all';
+// lbFilter removed — level leaderboard has no mode filter
 document.getElementById('lb-btn').addEventListener('click',openLeaderboard);
+document.getElementById('ach-btn').addEventListener('click',openAchievementModal);document.getElementById('ach-btn').style.display='inline-block';
+document.getElementById('ach-close').addEventListener('click',()=>document.getElementById('ach-modal').classList.remove('vis'));
+document.getElementById('ach-modal').addEventListener('click',e=>{if(e.target===document.getElementById('ach-modal'))document.getElementById('ach-modal').classList.remove('vis');});
 document.getElementById('lb-close').addEventListener('click',()=>document.getElementById('lb-modal').classList.remove('vis'));
 document.getElementById('lb-modal').addEventListener('click',e=>{if(e.target===document.getElementById('lb-modal'))document.getElementById('lb-modal').classList.remove('vis');});
+let lbFilter='all';
 document.querySelectorAll('.lb-f').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.lb-f').forEach(b=>b.classList.remove('on'));btn.classList.add('on');lbFilter=btn.dataset.m;loadLeaderboard();});});
 
 async function openLeaderboard(){document.getElementById('lb-modal').classList.add('vis');updateSubmitRow();loadLeaderboard();}
 function updateSubmitRow(){
   const row=document.getElementById('lb-submit-row'),info=document.getElementById('lb-submit-info');
-  // Sandbox scores are not submitted
   if(gameMode==='sandbox'){row.style.display='flex';info.textContent='Sandbox mode — scores not submitted';document.getElementById('lb-submit-btn').disabled=true;return;}
-  if(currentUser&&gameStarted&&(gameOver||wave>0)){row.style.display='flex';info.textContent=`Submit as ${playerName||'anon'}: Wave ${wave} · ${score.toLocaleString()} pts · ${gameMode.toUpperCase()}`;}
+  if(currentUser&&gameStarted&&(gameOver||wave>0)){row.style.display='flex';info.textContent=`Submit as ${playerName||'anon'}: Wave ${wave} · ${score.toLocaleString()} pts · ${gameMode.toUpperCase()}`;document.getElementById('lb-submit-btn').disabled=false;}
   else if(!currentUser){row.style.display='flex';info.textContent='Sign in to submit scores';document.getElementById('lb-submit-btn').disabled=true;}
   else{row.style.display='none';}
   if(currentUser&&gameMode!=='sandbox') document.getElementById('lb-submit-btn').disabled=false;
@@ -1615,7 +1702,7 @@ async function submitScore(){
   if(!currentUser){openAuthModal();return;}
   if(gameMode==='sandbox'){msg('⚠ Sandbox scores cannot be submitted!',2500);return;}
   const btn=document.getElementById('lb-submit-btn');btn.disabled=true;btn.textContent='SUBMITTING...';
-  const basePay={wave,score,mode:MODE_MAP[gameMode]??0,play_time:playTimeSeconds};const namePay=playerName?{name:playerName}:{};
+  const basePay={wave,score,mode:MODE_MAP[gameMode]??0,play_time:playTimeSeconds};saveTotalPlayTime();const namePay=playerName?{name:playerName}:{};
   try{
     // Try upsert with name first
     let{data,error}=await sb.from('leaderboard').upsert({id:currentUser.id,...basePay,...namePay},{onConflict:'id'});
@@ -1654,8 +1741,14 @@ async function loadLeaderboard(){
   try{let q=sb.from('leaderboard').select('id,wave,score,mode,name,play_time').order('score',{ascending:false}).limit(50);
   if(lbFilter!=='all') q=q.eq('mode',parseInt(lbFilter));
   const{data,error}=await q;loading.style.display='none';
-  if(error){console.warn('Leaderboard query error, retrying without name:',error.message);const r2=await sb.from('leaderboard').select('id,wave,score,mode').order('score',{ascending:false}).limit(50);if(lbFilter!=='all'&&r2.data) {/* refilter */};data=r2.data;error=r2.error;if(error){empty.textContent='⚠ ERROR: '+error.message;empty.style.display='block';return;}}
+  if(error){console.warn('Leaderboard query error, retrying without name:',error.message);const r2=await sb.from('leaderboard').select('id,wave,score,mode').order('score',{ascending:false}).limit(50);if(lbFilter!=='all'&&r2.data){/* refilter */};data=r2.data;error=r2.error;if(error){empty.textContent='⚠ ERROR: '+error.message;empty.style.display='block';return;}}
   if(!data||data.length===0){empty.textContent='NO RECORDS FOUND';empty.style.display='block';return;}
+  // Fallen King achievement check
+  if(currentUser&&data.length>=2){
+    const myIdx=data.findIndex(r=>r.id===currentUser.id);// Fallen King uses score-sorted position
+    if(myIdx===0){achStats.wasLbFirst=true;saveAchStats();}
+    else if(myIdx>0&&achStats.wasLbFirst){unlockAchievement('fallen_king');}
+  }
   table.style.display='table';const tbody=document.getElementById('lb-body');tbody.innerHTML='';
   data.forEach((row,i)=>{const isMe=currentUser&&row.id===currentUser.id;const tr=document.createElement('tr');if(isMe) tr.className='me';
   const pid=isMe?(playerName||currentUser.email||row.id?.slice(0,8)+'…'):(row.name||(row.id?row.id.slice(0,8)+'…':'—'));
@@ -1671,6 +1764,34 @@ let playTimeSeconds=0;
 let _playTimeInterval=null;
 function startPlayTimeTracker(){if(!_playTimeInterval)_playTimeInterval=setInterval(()=>{if(gameStarted&&!gameOver)playTimeSeconds++;},1000);}
 function stopPlayTimeTracker(){if(_playTimeInterval){clearInterval(_playTimeInterval);_playTimeInterval=null;}}
+
+// ═══════ TOTAL PLAY TIME (persistent across sessions) ═══════
+const TOTAL_PT_KEY = 'bs_total_playtime';
+let totalPlayTimeSeconds = 0;
+let _lastPlayTimeSave = 0;
+
+function loadTotalPlayTime() {
+  try { totalPlayTimeSeconds = parseInt(localStorage.getItem(TOTAL_PT_KEY)) || 0; } catch(e) { totalPlayTimeSeconds = 0; }
+}
+function saveTotalPlayTime() {
+  try { localStorage.setItem(TOTAL_PT_KEY, String(totalPlayTimeSeconds)); } catch(e) {}
+}
+// Patch startPlayTimeTracker to also accumulate total
+const _origStartPTT = startPlayTimeTracker;
+startPlayTimeTracker = function() {
+  if(!_playTimeInterval) {
+    _playTimeInterval = setInterval(() => {
+      if(gameStarted && !gameOver) {
+        playTimeSeconds++;
+        totalPlayTimeSeconds++;
+        // Auto-save total every 30s
+        if(++_lastPlayTimeSave >= 30) { _lastPlayTimeSave = 0; saveTotalPlayTime(); }
+      }
+    }, 1000);
+  }
+};
+loadTotalPlayTime();
+
 function formatPlayTime(s){if(!s||s<0)return'\u2014';const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;if(h>0)return h+'h '+m+'m';if(m>0)return m+'m '+sec+'s';return sec+'s';}
 
 // ═══════ CLOUD SAVE SYSTEM ═══════
@@ -1910,6 +2031,7 @@ function loadPlayerLevel() {
 
 function savePlayerLevel() {
   try { localStorage.setItem(XP_SAVE_KEY, JSON.stringify({level: playerLevel, xp: playerXP})); } catch(e) {}
+  if(typeof saveTotalPlayTime==='function') saveTotalPlayTime();
 }
 
 function grantXP(amount) {
@@ -2063,6 +2185,264 @@ function applyLevelUnlocks() {
 
 // Initialize on load
 loadPlayerLevel();
+
+// ═══════════════════════════════════════════════
+// ACHIEVEMENT SYSTEM
+// ═══════════════════════════════════════════════
+const ACH_SAVE_KEY = 'bs_achievements';
+const ACHIEVEMENTS = [
+  {id:'drone_operator', icon:'🛸', name:'DRONE OPERATOR', desc:'Place your first Drone Pad tower', secret:false},
+  {id:'hardcore_100', icon:'💀', name:'HARDCORE SURVIVOR', desc:'Reach Wave 100 in Hardcore mode', secret:false},
+  {id:'gold_10m', icon:'💰', name:'GOLD HOARDER', desc:'Accumulate 10,000,000 gold in a single game', secret:false},
+  {id:'builder_1', icon:'🔧', name:'BUILDER I', desc:'Build your first tower', secret:false},
+  {id:'builder_2', icon:'🔧', name:'BUILDER II', desc:'Build 10 towers (lifetime)', secret:false},
+  {id:'builder_3', icon:'🏗', name:'BUILDER III', desc:'Build 100 towers (lifetime)', secret:false},
+  {id:'builder_4', icon:'🏗', name:'BUILDER IV', desc:'Build 1,000 towers (lifetime)', secret:false},
+  {id:'builder_5', icon:'🏭', name:'BUILDER V', desc:'Build 10,000 towers (lifetime)', secret:false},
+  {id:'doom_1', icon:'💥', name:'DOOMSLAYER I', desc:'Kill 100 enemies (lifetime)', secret:false},
+  {id:'doom_2', icon:'💥', name:'DOOMSLAYER II', desc:'Kill 1,000 enemies (lifetime)', secret:false},
+  {id:'doom_3', icon:'☠', name:'DOOMSLAYER III', desc:'Kill 10,000 enemies (lifetime)', secret:false},
+  {id:'doom_4', icon:'☠', name:'DOOMSLAYER IV', desc:'Kill 100,000 enemies (lifetime)', secret:false},
+  {id:'doom_5', icon:'👹', name:'DOOMSLAYER V', desc:'Kill 1,000,000 enemies (lifetime)', secret:false},
+  {id:'hacklord_killer', icon:'💻', name:'I\'M THE HACK LORD', desc:'Defeat the Hacklord boss', secret:false},
+  {id:'fallen_king', icon:'👑', name:'FALLEN KING', desc:'Hold #1 on leaderboard then drop to #2 or lower', secret:true},
+];
+
+let earnedAchievements = new Set();
+
+function loadAchievements() {
+  try {
+    const raw = localStorage.getItem(ACH_SAVE_KEY);
+    if (raw) { earnedAchievements = new Set(JSON.parse(raw)); }
+  } catch(e) { earnedAchievements = new Set(); }
+}
+
+function saveAchievements() {
+  try { localStorage.setItem(ACH_SAVE_KEY, JSON.stringify([...earnedAchievements])); } catch(e) {}
+}
+
+function unlockAchievement(id) {
+  if (earnedAchievements.has(id)) return false;
+  const ach = ACHIEVEMENTS.find(a => a.id === id);
+  if (!ach) return false;
+  earnedAchievements.add(id);
+  saveAchievements();
+  showAchievementPopup(ach);
+  return true;
+}
+
+function showAchievementPopup(ach) {
+  const popup = document.getElementById('ach-popup');
+  document.getElementById('ach-pop-icon').textContent = ach.icon;
+  document.getElementById('ach-pop-title').textContent = ach.name;
+  document.getElementById('ach-pop-desc').textContent = ach.desc;
+  popup.classList.add('show');
+  // Sound effect via canvas sparks
+  if (typeof sparks === 'function') {
+    sparks(W - 80, H - 40, '#ffd700', 20, 3);
+  }
+  if (typeof msg === 'function') {
+    msg(`🏅 ACHIEVEMENT: ${ach.name}`, 4000);
+  }
+  setTimeout(() => popup.classList.remove('show'), 4500);
+}
+
+function checkAchievements_towerPlaced(towerKey) {
+  if (towerKey === 'admindrone') {
+    unlockAchievement('drone_operator');
+  }
+  // Builder progression
+  achStats.totalBuilt++;
+  saveAchStats();
+  if (achStats.totalBuilt >= 1) unlockAchievement('builder_1');
+  if (achStats.totalBuilt >= 10) unlockAchievement('builder_2');
+  if (achStats.totalBuilt >= 100) unlockAchievement('builder_3');
+  if (achStats.totalBuilt >= 1000) unlockAchievement('builder_4');
+  if (achStats.totalBuilt >= 10000) unlockAchievement('builder_5');
+}
+
+function checkAchievements_waveEnd() {
+  if (gameMode === 'hardcore' && wave >= 100) {
+    unlockAchievement('hardcore_100');
+  }
+  // Gold hoarder (10M gold in a single game)
+  if (gold >= 10000000) {
+    unlockAchievement('gold_10m');
+  }
+}
+
+function renderAchievementList() {
+  const list = document.getElementById('ach-list');
+  list.innerHTML = ACHIEVEMENTS.map(ach => {
+    const earned = earnedAchievements.has(ach.id);
+    return '<div class="ach-item ' + (earned ? 'earned' : 'locked') + '">' +
+      '<span class="ach-i">' + ach.icon + '</span>' +
+      '<div class="ach-info"><div class="ach-n">' + ach.name + '</div>' +
+      '<div class="ach-d">' + ach.desc + '</div></div>' +
+      '<span class="ach-check">' + (earned ? '★' : '☆') + '</span></div>';
+  }).join('');
+  document.getElementById('ach-count').textContent = earnedAchievements.size + ' / ' + ACHIEVEMENTS.length + ' UNLOCKED';
+}
+
+function openAchievementModal() {
+  renderAchievementList();
+  document.getElementById('ach-modal').classList.add('vis');
+}
+
+loadAchievements();
+
+// Persistent stat counters for achievements
+const STAT_KEY = 'bs_ach_stats';
+let achStats = {totalBuilt:0, totalKills:0, wasLbFirst:false};
+
+function loadAchStats() {
+  try { const r=localStorage.getItem(STAT_KEY); if(r) achStats={totalBuilt:0,totalKills:0,wasLbFirst:false,...JSON.parse(r)}; } catch(e) {}
+}
+function saveAchStats() {
+  try { localStorage.setItem(STAT_KEY, JSON.stringify(achStats)); } catch(e) {}
+}
+loadAchStats();
+
+
+
+// ═══════════════════════════════════════════════
+// MINI-GAME SYSTEM
+// ═══════════════════════════════════════════════
+let mgActive='puzzle', mgPuzSeq=[], mgPuzInput=[], mgPuzRound=0, mgPuzBusy=false;
+let mgMathScore=0, mgMathStreak=0, mgMathAnswer=null;
+
+// Toggle panel
+document.getElementById('mg-toggle').addEventListener('click',()=>{
+  const p=document.getElementById('mg-panel');
+  p.classList.toggle('vis');
+  if(p.classList.contains('vis')) mgLoadGame();
+});
+document.getElementById('mg-close').addEventListener('click',()=>{
+  document.getElementById('mg-panel').classList.remove('vis');
+});
+
+// Tab switching
+document.querySelectorAll('.mg-tab').forEach(t=>{t.addEventListener('click',()=>{
+  document.querySelectorAll('.mg-tab').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');mgActive=t.dataset.mg;mgLoadGame();
+});});
+
+function mgLoadGame(){
+  if(mgActive==='puzzle') mgStartPuzzle();
+  else mgStartMath();
+}
+
+// ── GENERATOR PUZZLE (Simon-says sequence) ──
+function mgStartPuzzle(){
+  mgPuzSeq=[];mgPuzInput=[];mgPuzRound=0;mgPuzBusy=false;
+  const body=document.getElementById('mg-body');
+  body.innerHTML=`
+    <div class="mg-score">GENERATOR PUZZLE — Repeat the sequence!</div>
+    <div class="gen-grid" id="gen-grid">${[0,1,2,3,4,5,6,7,8].map(i=>`<div class="gen-cell" data-i="${i}"></div>`).join('')}</div>
+    <div class="gen-msg" id="gen-msg">Press START to begin</div>
+    <button class="gen-btn" id="gen-start">▶ START</button>
+  `;
+  document.getElementById('gen-start').addEventListener('click',mgPuzNextRound);
+  document.querySelectorAll('.gen-cell').forEach(c=>{c.addEventListener('click',()=>{
+    if(mgPuzBusy) return;
+    const idx=parseInt(c.dataset.i);
+    mgPuzHandleInput(idx);
+  });});
+}
+
+function mgPuzNextRound(){
+  mgPuzBusy=true;mgPuzInput=[];
+  mgPuzSeq.push(Math.floor(Math.random()*9));
+  mgPuzRound++;
+  document.getElementById('gen-msg').textContent='Watch carefully...';
+  document.getElementById('gen-start').style.display='none';
+  // Flash sequence
+  let i=0;
+  const iv=setInterval(()=>{
+    if(i>0){document.querySelectorAll('.gen-cell')[mgPuzSeq[i-1]].classList.remove('flash');}
+    if(i>=mgPuzSeq.length){clearInterval(iv);mgPuzBusy=false;
+      document.getElementById('gen-msg').textContent=`Round ${mgPuzRound} — Your turn! (${mgPuzSeq.length} cells)`;
+      return;
+    }
+    document.querySelectorAll('.gen-cell')[mgPuzSeq[i]].classList.add('flash');
+    i++;
+  },500);
+}
+
+function mgPuzHandleInput(idx){
+  const cells=document.querySelectorAll('.gen-cell');
+  mgPuzInput.push(idx);
+  const pos=mgPuzInput.length-1;
+  if(idx===mgPuzSeq[pos]){
+    cells[idx].classList.add('correct');
+    setTimeout(()=>cells[idx].classList.remove('correct'),300);
+    if(mgPuzInput.length===mgPuzSeq.length){
+      document.getElementById('gen-msg').textContent=`✓ Round ${mgPuzRound} complete!`;
+      mgPuzBusy=true;
+      setTimeout(mgPuzNextRound,1000);
+    }
+  } else {
+    cells[idx].classList.add('wrong');
+    setTimeout(()=>cells[idx].classList.remove('wrong'),500);
+    document.getElementById('gen-msg').textContent=`✗ Failed at Round ${mgPuzRound}! Sequence was ${mgPuzSeq.length} long.`;
+    document.getElementById('gen-start').style.display='block';
+    document.getElementById('gen-start').textContent='↻ RETRY';
+    mgPuzSeq=[];mgPuzRound=0;
+  }
+}
+
+// ── MATH CHALLENGE ──
+function mgStartMath(){
+  mgMathScore=0;mgMathStreak=0;
+  const body=document.getElementById('mg-body');
+  body.innerHTML=`
+    <div class="mg-score" id="math-score">Score: 0 · Streak: 0</div>
+    <div class="math-q" id="math-q">...</div>
+    <div class="math-opts" id="math-opts"></div>
+    <div class="math-streak" id="math-msg"></div>
+  `;
+  mgNextMath();
+}
+
+function mgNextMath(){
+  const ops=['+','-','×'];
+  const op=ops[Math.floor(Math.random()*3)];
+  let a,b,ans;
+  if(op==='+'){a=Math.floor(Math.random()*50)+1;b=Math.floor(Math.random()*50)+1;ans=a+b;}
+  else if(op==='-'){a=Math.floor(Math.random()*50)+20;b=Math.floor(Math.random()*a)+1;ans=a-b;}
+  else{a=Math.floor(Math.random()*12)+2;b=Math.floor(Math.random()*12)+2;ans=a*b;}
+  mgMathAnswer=ans;
+  document.getElementById('math-q').textContent=`${a} ${op} ${b} = ?`;
+  // Generate 4 options (1 correct + 3 wrong)
+  const options=new Set([ans]);
+  while(options.size<4){
+    const off=Math.floor(Math.random()*20)-10;
+    if(off!==0) options.add(ans+off);
+  }
+  const shuffled=[...options].sort(()=>Math.random()-.5);
+  const opts=document.getElementById('math-opts');
+  opts.innerHTML=shuffled.map(v=>`<button class="math-opt" data-v="${v}">${v}</button>`).join('');
+  document.querySelectorAll('.math-opt').forEach(b=>{b.addEventListener('click',()=>mgCheckMath(parseInt(b.dataset.v),b));});
+  document.getElementById('math-msg').textContent='';
+}
+
+function mgCheckMath(val,btn){
+  document.querySelectorAll('.math-opt').forEach(b=>b.style.pointerEvents='none');
+  if(val===mgMathAnswer){
+    btn.classList.add('correct');
+    mgMathScore++;mgMathStreak++;
+    document.getElementById('math-msg').textContent=mgMathStreak>=3?`🔥 ${mgMathStreak} STREAK!`:'✓ Correct!';
+  } else {
+    btn.classList.add('wrong');
+    // Highlight correct one
+    document.querySelectorAll('.math-opt').forEach(b=>{if(parseInt(b.dataset.v)===mgMathAnswer) b.classList.add('correct');});
+    mgMathStreak=0;
+    document.getElementById('math-msg').textContent='✗ Wrong!';
+  }
+  document.getElementById('math-score').textContent=`Score: ${mgMathScore} · Streak: ${mgMathStreak}`;
+  setTimeout(mgNextMath,1200);
+}
+
 // === HACKLORD BOSS STATE ===
 let hlSystemBlock=false;        // Is System Block active?
 let hlLockedTowers=new Map();   // Map<towerId, clicksRemaining>
@@ -2547,6 +2927,7 @@ cv.addEventListener('click',e=>{
   grid[row][col]=cfg.t;bfs();const saved=cfg.cost-actualCost;gold-=actualCost;
   const newTower={row,col,key:selBuild,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,angle:0,level:1,path:null,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],owner:MP.active?MP.playerId:null,ownerColor:MP.active?PLAYER_COLORS[MP.colorIndex]:'#00ff88',ownerName:MP.active?MP.playerName:'YOU'};
   towers.push(newTower);
+  if(typeof checkAchievements_towerPlaced==='function') checkAchievements_towerPlaced(selBuild);
   if(MP.active){MP.broadcast('tower:place',{pid:MP.playerId,row,col,key:selBuild,lvl:1,colorIdx:MP.colorIndex,name:MP.playerName});MP.updatePlayerGold();}if(selBuild==='heli') spawnHelicopter(newTower);if(selBuild==='admindrone') spawnAdminDrones(newTower);if(selBuild==='barracks'){newTower.allySpawnCd=0;}
   sparks(col*CS+CS/2,row*CS+CS/2,cfg.col,7,1.5);if(saved>0) ft(col*CS+CS/2,row*CS-14,`DISCOUNT -${saved}g!`,'#ffd700');
   if(pathBlocked) msg('⚠ Path sealed! Enemies will breach!',2500);syncUI();
@@ -3122,7 +3503,7 @@ function update(){
   }
   for(let i=shockwaves.length-1;i>=0;i--){const sw=shockwaves[i];if(!sw.hit)sw.hit=new Set();const prevR=sw.r;sw.r+=sw.spd;for(const e of enemies){if(sw.hit.has(e)) continue;const dx=e.x-sw.ox,dy=e.y-sw.oy,d=Math.sqrt(dx*dx+dy*dy);if(d>=prevR-e.sz*0.5&&d<=sw.r+e.sz*0.5){e.hp-=applyArmor(e,sw.dmg);sw.hit.add(e);sparks(e.x,e.y,sw.col,4,1.5);if(sw.isIce){const sf=sw.slowFactor||.40;const sd=sw.slowDur||120;if(sf>e.slowFactor){e.slowFactor=sf;e.slowDur=Math.max(e.slowDur,sd);e.spd=e.spdBase*(1-e.slowFactor);if(e.flying&&sf>=.5){e.spd=Math.min(e.spd,e.spdBase*.20);}ft(e.x,e.y-e.sz-6,'❄','#88ddff');}}else{if(!e.robot) applyStun(e,6);}}}if(sw.r>=sw.maxR) shockwaves.splice(i,1);}
   for(let i=projs.length-1;i>=0;i--){const p=projs[i];if(p.tgt&&enemies.includes(p.tgt)){p.lastX=p.tgt.x;p.lastY=p.tgt.y;}const dx=p.lastX-p.x,dy=p.lastY-p.y,d=Math.sqrt(dx*dx+dy*dy);if(d<p.spd*1.5){if(p.type==='iceBullet'){const te=p.tgt;if(te&&enemies.includes(te)){te.hp-=applyArmor(te,p.dmg);if(p.armorShred>te.armorShred){te.armorShred=p.armorShred;te.shredDur=Math.max(te.shredDur,p.shredDur);}if(p.slowFactor>te.slowFactor){te.slowFactor=p.slowFactor;te.slowDur=Math.max(te.slowDur,p.slowDur);te.spd=te.spdBase*(1-te.slowFactor);}if(te.flying){const ff=p.flyFreeze||.80;te.slowFactor=Math.max(te.slowFactor,ff);te.slowDur=Math.max(te.slowDur,p.slowDur+60);te.spd=Math.min(te.spdBase*(1-ff),te.spdBase*(p.flySpdCap||.25));ft(te.x,te.y-te.sz-10,'❄ FROZEN','#4488ff');}else{ft(te.x,te.y-te.sz-6,'❄','#88ddff');}sparks(te.x,te.y,'#88ddff',8,2);}}else if(p.type==='elecBall') explodeElecBall(p);else if(p.type==='towershot'){const tw=p.stunTwr;if(tw&&towers.includes(tw)){const wallBonus=tw.cfg.t===CT.WALL?2.5:1;tw.hp-=Math.round(p.dmg*wallBonus);tw.hitFlash=12;if(tw.cfg.t!==CT.WALL) tw.stunned=(tw.stunned||0)+p.stunDur;sparks(p.lastX,p.lastY,'#ff8800',10,2.5);if(tw.cfg.t===CT.WALL) ft(tw.col*CS+CS/2,tw.row*CS,'HIT!','#ff6600');if(tw.hp<=0) destroyTower(tw);}}else if(p.type==='missile'){sparks(p.lastX,p.lastY,'#00ffaa',20,4);if(p.aoe>0){for(const e of enemies){const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe) e.hp-=e.shielded?Math.round(p.dmg*0.4):p.dmg;}}else if(p.tgt&&enemies.includes(p.tgt)) p.tgt.hp-=applyArmor(p.tgt,p.dmg);}else if(p.type==='hammer'){if(p.aoe>0){for(const e of enemies){const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){e.hp-=applyArmor(e,p.dmg);applyStun(e,p.stunDur||45);sparks(e.x,e.y,p.col,4,1.5);}}}sparks(p.lastX,p.lastY,'#ff2255',16,3.5);ft(p.lastX,p.lastY-8,'STUN!','#ff2255');}else{if(p.aoe>0){for(const e of enemies){const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){e.hp-=applyArmor(e,p.dmg);sparks(e.x,e.y,p.col,3,1);}}}else{if(p.tgt&&enemies.includes(p.tgt)){const blocker=isBlockedByShield(p.x,p.y,p.tgt);if(blocker){blocker.hp-=Math.max(1,Math.round(p.dmg*0.25));sparks(blocker.x,blocker.y,'#00ddff',8,2.5);ft(blocker.x,blocker.y-blocker.sz-6,'BLOCKED!','#00ddff');}else p.tgt.hp-=applyArmor(p.tgt,p.dmg);}}}projs.splice(i,1);}else{p.x+=dx/d*p.spd;p.y+=dy/d*p.spd;}}
-  for(let i=enemies.length-1;i>=0;i--){if(enemies[i].hp<=0){const e=enemies[i];const bfx=getBuffsAt(Math.floor(e.x/CS),Math.floor(e.y/CS));const rw=Math.round(e.rw*(1+bfx.goldBonusMult));gold+=rw;const sm=MODES[gameMode].scoreMult||1;score+=Math.round(rw*10*sm);kills++;ft(e.x,e.y-e.sz,`+${rw}g`);sparks(e.x,e.y,e.col,14,2.2);enemies.splice(i,1);syncUI();}}
+  for(let i=enemies.length-1;i>=0;i--){if(enemies[i].hp<=0){const e=enemies[i];const bfx=getBuffsAt(Math.floor(e.x/CS),Math.floor(e.y/CS));const rw=Math.round(e.rw*(1+bfx.goldBonusMult));gold+=rw;const sm=MODES[gameMode].scoreMult||1;score+=Math.round(rw*10*sm);kills++;achStats.totalKills++;if(achStats.totalKills%100===0)saveAchStats();if(achStats.totalKills>=100)unlockAchievement('doom_1');if(achStats.totalKills>=1000)unlockAchievement('doom_2');if(achStats.totalKills>=10000)unlockAchievement('doom_3');if(achStats.totalKills>=100000)unlockAchievement('doom_4');if(achStats.totalKills>=1000000)unlockAchievement('doom_5');if(e.isBoss&&e.bossType==='hacklord')unlockAchievement('hacklord_killer');ft(e.x,e.y-e.sz,`+${rw}g`);sparks(e.x,e.y,e.col,14,2.2);enemies.splice(i,1);syncUI();}}
   if(gfxMode===3){parts.length=0;}for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.05;p.life--;if(p.life<=0)parts.splice(i,1);}
   if(gfxMode===3){floats.length=0;}for(let i=floats.length-1;i>=0;i--){floats[i].y+=floats[i].vy;floats[i].life--;if(floats[i].life<=0)floats.splice(i,1);}
   if(gfxMode>=2){lxfx.length=0;}else{for(let i=lxfx.length-1;i>=0;i--){lxfx[i].life--;if(lxfx[i].life<=0)lxfx.splice(i,1);}}
@@ -3417,7 +3798,7 @@ function update(){
 
   const bossEnemy=enemies.find(e=>e.isBoss);const bossHud=document.getElementById('boss-hud');
   if(bossEnemy){bossHud.classList.add('vis');const typeLabels={normal:'NORMAL BOSS',armor:'ARMOR BOSS',robot:'ROBOT BOSS',flying:'FLYING BOSS',commander:'⚔ COMMANDER',hacklord:'💻 HACKLORD',king:'👑 KING'};const typeColors={normal:'#ff0055',hacklord:'#00ff44',king:'#ffd700',armor:'#8844ff',robot:'#55aacc',flying:'#00ccff',commander:'#ffdd00'};document.getElementById('boss-hud-type').textContent=typeLabels[bossEnemy.bossType]||'BOSS';document.getElementById('boss-hud-type').style.color=typeColors[bossEnemy.bossType]||'#ffaa00';const bar=document.getElementById('boss-hud-bar');bar.className='';if(bossEnemy.bossType==='armor') bar.classList.add('armor');else if(bossEnemy.bossType==='robot') bar.classList.add('robot');else if(bossEnemy.bossType==='flying') bar.classList.add('flying');bar.style.width=Math.max(0,bossEnemy.hp/bossEnemy.mhp*100)+'%';document.getElementById('boss-hud-hp').textContent=`${Math.max(0,Math.round(bossEnemy.hp))} / ${bossEnemy.mhp}`;}else bossHud.classList.remove('vis');
-  if(waveOn&&enemies.length===0&&spawnQ.length===0&&(!MP.active||MP.isHost)){waveOn=false;autoSkipTimer=0;const bon=wave*32;gold+=bon;score+=Math.round(bon*(MODES[gameMode].scoreMult||1));let minePayout=0,bankPayout=0;for(const t of towers){if(t.cfg.t===CT.MINE){if(t.cfg.mineType==='compound'||t.cfg.mineType==='basic'){const g=t.cfg.goldPerWave||20;gold+=g;minePayout+=g;}else if(t.cfg.mineType==='bank'){const interest=Math.round(gold*t.cfg.interestRate);const capped=Math.min(interest,t.cfg.maxInterest||100);gold+=capped;bankPayout+=capped;}}}let treasuryPayout=0;if(baseUpgPath==='B'&&baseUpgLevel>0){const upd=BASE_UPG.B[baseUpgLevel];gold+=upd.goldPerWave;treasuryPayout=upd.goldPerWave;}if(minePayout>0) ft(W/2-50,H/2,'⛏ +'+minePayout+'g MINE','#ffe066');if(bankPayout>0) ft(W/2+50,H/2,'🏦 +'+bankPayout+'g BANK','#ffd700');if(treasuryPayout>0) ft(W/2,H/2+20,'🏛 +'+treasuryPayout+'g TREASURY','#00ff88');for(const t of towers){if(t.cfg.t===CT.WALL) continue;t.hp=Math.min(t.maxHp,t.hp+Math.ceil(t.maxHp*.09));}baseHP=Math.min(baseMaxHP,baseHP+10);msg(`✓ Wave ${wave} cleared! +${bon}g${autoSkip?' · Auto-launching...':''}`,3500);syncUI();refreshSaveSlotUI();const _xpGained=xpForWave(wave,gameMode);grantXP(_xpGained);ft(W/2,H/2+40,`+${_xpGained} XP`,'#44ffcc');}
+  if(waveOn&&enemies.length===0&&spawnQ.length===0&&(!MP.active||MP.isHost)){waveOn=false;autoSkipTimer=0;const bon=wave*32;gold+=bon;score+=Math.round(bon*(MODES[gameMode].scoreMult||1));let minePayout=0,bankPayout=0;for(const t of towers){if(t.cfg.t===CT.MINE){if(t.cfg.mineType==='compound'||t.cfg.mineType==='basic'){const g=t.cfg.goldPerWave||20;gold+=g;minePayout+=g;}else if(t.cfg.mineType==='bank'){const interest=Math.round(gold*t.cfg.interestRate);const capped=Math.min(interest,t.cfg.maxInterest||100);gold+=capped;bankPayout+=capped;}}}let treasuryPayout=0;if(baseUpgPath==='B'&&baseUpgLevel>0){const upd=BASE_UPG.B[baseUpgLevel];gold+=upd.goldPerWave;treasuryPayout=upd.goldPerWave;}if(minePayout>0) ft(W/2-50,H/2,'⛏ +'+minePayout+'g MINE','#ffe066');if(bankPayout>0) ft(W/2+50,H/2,'🏦 +'+bankPayout+'g BANK','#ffd700');if(treasuryPayout>0) ft(W/2,H/2+20,'🏛 +'+treasuryPayout+'g TREASURY','#00ff88');for(const t of towers){if(t.cfg.t===CT.WALL) continue;t.hp=Math.min(t.maxHp,t.hp+Math.ceil(t.maxHp*.09));}baseHP=Math.min(baseMaxHP,baseHP+10);msg(`✓ Wave ${wave} cleared! +${bon}g${autoSkip?' · Auto-launching...':''}`,3500);syncUI();refreshSaveSlotUI();const _xpGained=xpForWave(wave,gameMode);grantXP(_xpGained);if(typeof checkAchievements_waveEnd==='function') checkAchievements_waveEnd();ft(W/2,H/2+40,`+${_xpGained} XP`,'#44ffcc');}
 }
 
 // ══════════════════════════════
@@ -3869,6 +4250,7 @@ function executeAdminCommand(cmd) {
           const cfg2=getCfg('admindrone',1,null);grid[pr][pc]=CT.DRONE;bfs();
           const t2={row:pr,col:pc,key:'admindrone',cfg:cfg2,hp:cfg2.hp,maxHp:cfg2.hp,cd:0,angle:0,level:1,path:null,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[]};
           towers.push(t2);spawnAdminDrones(t2);
+          if(typeof checkAchievements_towerPlaced==='function') checkAchievements_towerPlaced('admindrone');
           ft(pc*CS+CS/2,pr*CS-10,'🛸 DRONE PAD!','#ff88ff');sparks(pc*CS+CS/2,pr*CS+CS/2,'#ff88ff',15,4);placed=true;
         }}}}
       if(!placed) ft(BASE_C*CS+CS/2,BASE_R*CS-10,'⚠ No space!','#ff4444');
