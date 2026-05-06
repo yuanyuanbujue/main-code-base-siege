@@ -257,7 +257,7 @@ const MP={
     const cfg=TS[d.key]?TS[d.key][d.lvl||1]:null;
     if(!cfg) return;
     grid[d.row][d.col]=cfg.t;bfs();
-    const t={row:d.row,col:d.col,key:d.key,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,level:d.lvl||1,path:null,id:++_towerIdCounter,owner:d.pid,ownerColor:PLAYER_COLORS[d.colorIdx]||'#888',ownerName:d.name||'?'};
+    const t={row:d.row,col:d.col,key:d.key,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,level:d.lvl||1,path:null,id:++_towerIdCounter,owner:d.pid,ownerColor:PLAYER_COLORS[d.colorIdx]||'#888',ownerName:d.name||'?',totalDmgDealt:0,totalKills:0,totalGoldSpent:0};
     if(cfg.healAmt){t.healTick=0;}
     towers.push(t);
     // Spawn helicopter for remote heli pads
@@ -364,6 +364,18 @@ const MP={
     const bon=Math.round((40+wave*6)*MODES[gameMode].goldBonus);
     gold+=bon;
     ft(W/2,H/2-16,'+'+bon+'g WAVE BONUS','#ffd700');
+    if(wave>achStats.maxWave){achStats.maxWave=wave;saveAchStats();}
+    if(gold>achStats.maxSingleGameGold){achStats.maxSingleGameGold=gold;if(gold>=10000000)unlockAchievement('gold_10m');}
+    if(gameMode==='hardcore'&&wave>achStats.maxWaveHardcore){achStats.maxWaveHardcore=wave;saveAchStats();}
+    if(wave>=100)unlockAchievement('inf_guard_1');
+    if(wave>=200)unlockAchievement('inf_guard_2');
+    if(wave>=300)unlockAchievement('inf_guard_3');
+    if(wave>=600)unlockAchievement('inf_guard_4');
+    if(wave>=1000)unlockAchievement('inf_guard_5');
+    
+    if(wave>=50&&_sessionTowerTypes.size===1)unlockAchievement('why_this_tower');
+    if(_sessionAllTypes.size>=14)unlockAchievement('full_arsenal');
+    if(_sessionWallCount>=50)unlockAchievement('wall_street');
     syncUI();
     this.updatePlayerGold();
   },
@@ -885,6 +897,16 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 #up.vis{display:flex;}
 #up-title{font-size:11px;color:#00ff88;letter-spacing:2px;font-weight:bold;}
 #up-stats{font-size:9px;color:#2a7a5a;line-height:1.7;white-space:pre;}
+#up-tower-stats{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:6px 0;padding:6px;background:#040a14;border:1px solid #0e2030;border-radius:3px;}
+.up-ts{text-align:center;padding:4px 2px;}
+.up-ts .ts-val{font-size:13px;font-weight:bold;color:#ffd700;display:block;}
+.up-ts .ts-lbl{font-size:7px;color:#4a6a8a;letter-spacing:1.5px;}
+.up-ts.ts-spent .ts-val{color:#ffaa33;}
+.up-ts.ts-sell .ts-val{color:#88ddff;}
+#up-sell-btn{width:100%;background:#1a0808;border:1px solid #ff4444;color:#ff4444;font-family:'Share Tech Mono',monospace;font-size:11px;padding:8px;cursor:pointer;transition:all .12s;letter-spacing:1px;margin-top:4px;}
+#up-sell-btn:hover{background:#ff4444;color:#04080f;}
+#up-close-btn{width:100%;background:#04090f;border:1px solid #2a4a6a;color:#4a8aaa;font-family:'Share Tech Mono',monospace;font-size:10px;padding:6px;cursor:pointer;transition:all .12s;letter-spacing:2px;margin-top:4px;}
+#up-close-btn:hover{border-color:#88ddff;color:#88ddff;}
 .pr{display:flex;gap:5px;}
 .pb{flex:1;background:#04090f;border:1px solid #0e2030;color:#3a5a4a;font-family:'Share Tech Mono',monospace;font-size:10px;padding:7px 4px;cursor:pointer;text-align:center;transition:all .1s;line-height:1.4;}
 .pb:hover:not(:disabled){border-color:var(--pc);color:var(--pc);}.pb:disabled{opacity:.3;cursor:not-allowed;}
@@ -1152,6 +1174,39 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 .ach-item .ach-check{font-size:14px;color:#ffd700;}
 .ach-item.locked .ach-check{color:#1a2a3a;}
 .ach-count{font-size:9px;color:#4a8a6a;text-align:center;margin-top:8px;letter-spacing:1px;}
+.ach-prog{position:relative;height:12px;background:#0a1020;border:1px solid #0e2030;border-radius:2px;margin-top:4px;overflow:hidden;}
+.ach-prog-bar{height:100%;background:linear-gradient(90deg,#00ff8833,#00ff8866);transition:width .3s;}
+.ach-prog.done .ach-prog-bar{background:linear-gradient(90deg,#ffd70044,#ffd70088);}
+.ach-prog-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:7px;color:#4a8a6a;letter-spacing:1px;}
+.ach-prog.done .ach-prog-txt{color:#ffd700;}
+/* ═══ SUGGESTION / VOTING SYSTEM ═══ */
+#sug-modal{position:fixed;inset:0;background:#04080fee;z-index:999;display:none;align-items:center;justify-content:center;}
+#sug-modal.vis{display:flex;}
+.sug-box{background:#060c18;border:1px solid #0e2030;padding:20px;width:480px;max-height:80vh;display:flex;flex-direction:column;border-radius:6px;}
+.sug-title{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:3px;color:#ffaa33;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #1a2a3a;}
+.sug-title .sug-close{color:#4a6a5a;cursor:pointer;font-size:16px;}
+
+.sug-list{flex:1;overflow-y:auto;max-height:400px;}
+.sug-item{background:#04090f;border:1px solid #0e2030;padding:10px;margin-bottom:6px;border-radius:3px;transition:all .12s;}
+.sug-item:hover{border-color:#1a3a5a;}
+.sug-item .sug-text{font-size:11px;color:#c8d8e8;margin-bottom:4px;}
+.sug-item .sug-meta{font-size:8px;color:#4a6a5a;display:flex;justify-content:space-between;align-items:center;}
+.sug-item .sug-votes{display:flex;align-items:center;gap:6px;}
+.sug-vote-btn{background:#0a1020;border:1px solid #0e2030;color:#4a8a6a;font-family:'Share Tech Mono',monospace;font-size:9px;padding:3px 8px;cursor:pointer;transition:all .12s;border-radius:2px;}
+.sug-vote-btn:hover{border-color:#00ff88;color:#00ff88;}
+.sug-vote-btn.voted{border-color:#00ff88;color:#00ff88;background:#001a0d;}
+.sug-vote-count{font-size:11px;color:#00ff88;font-weight:bold;min-width:20px;text-align:center;}
+.sug-status{font-size:8px;padding:2px 6px;border-radius:2px;letter-spacing:1px;}
+.sug-status.pending{color:#ffaa33;border:1px solid #ffaa3344;background:#1a0a0011;}
+.sug-status.voting{color:#00ff88;border:1px solid #00ff8844;background:#001a0d11;}
+.sug-status.accepted{color:#4488ff;border:1px solid #4488ff44;background:#001a3a11;}
+.sug-status.rejected{color:#ff4444;border:1px solid #ff444444;background:#1a000011;}
+.sug-input-area{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
+.sug-input{background:#04090f;border:1px solid #0e2030;color:#c8d8e8;font-family:'Share Tech Mono',monospace;font-size:11px;padding:10px;outline:none;resize:vertical;min-height:60px;border-radius:3px;}
+.sug-input:focus{border-color:#ffaa33;}
+.sug-submit{background:#1a0a00;border:1px solid #ffaa33;color:#ffaa33;font-family:'Share Tech Mono',monospace;font-size:11px;padding:8px;cursor:pointer;letter-spacing:2px;transition:all .12s;}
+.sug-submit:hover{background:#ffaa33;color:#04080f;}
+.sug-empty{text-align:center;color:#2a3a4a;font-size:11px;padding:30px;}
 /* ═══ XP / LEVELING SYSTEM ═══ */
 #xp-hud{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:9999;display:flex;align-items:center;gap:8px;background:linear-gradient(180deg,#060e18ee 0%,#060e18cc 100%);border:1px solid #0e2030;border-top:none;border-radius:0 0 12px 12px;padding:4px 16px 5px;font-family:'Share Tech Mono',monospace;backdrop-filter:blur(6px);}
 #xp-hud .xp-lvl{font-family:'Orbitron',sans-serif;font-size:11px;color:#ffd700;letter-spacing:2px;min-width:52px;text-align:center;}
@@ -1234,39 +1289,74 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 <div id="update-popup">
 <div class="up-header">
 <div class="up-title">PATCH NOTES</div>
-<div class="up-ver">BASE SIEGE v22 — MULTIPLAYER UPDATE</div>
+<div class="up-ver">BASE SIEGE v24 — UI & ACHIEVEMENTS UPDATE</div>
 </div>
 <div class="up-body">
 <div class="up-section">
 <div class="up-section-title">NEW FEATURES</div>
-<div class="up-item new">Co-op Multiplayer — Create or join rooms with up to 4 players</div>
-<div class="up-item new">Barracks Tower — Deploy ally soldiers that fight enemies</div>
-<div class="up-item new">Laser Tower — Focus beam that stacks damage over time</div>
-<div class="up-item new">Ice Tower — Slow and freeze enemies in range</div>
-<div class="up-item new">Admin Drone Pad — Special admin-only tower</div>
-<div class="up-item new">In-game Chat for co-op rooms</div>
+<div class="up-item new">Focused Tower Selection — click a tower to see only its info panel</div>
+<div class="up-item new">Tower Stats — see gold invested and sell value per tower</div>
+<div class="up-item new">Sell Button — sell towers directly from the info panel</div>
+<div class="up-item new">Smart Sell — refund is now 50% of ALL gold invested (base + upgrades)</div>
+<div class="up-item new">Achievement Progress Bars — track your progress on all achievements</div>
+<div class="up-item new">16 New Achievements with progress tracking</div>
 </div>
 <div class="up-section">
-<div class="up-section-title">BUG FIXES</div>
-<div class="up-item fix">Fixed mines earning gold during active waves in co-op</div>
-<div class="up-item fix">Fixed helipad helicopters not appearing for other players</div>
-<div class="up-item fix">Fixed barracks allies not spawning on other players screens</div>
-<div class="up-item fix">Fixed tower sell not cleaning up helicopters/allies remotely</div>
+<div class="up-section-title">NEW ACHIEVEMENTS</div>
+<div class="up-item new">🛡 Infinity Guardian I–V — Reach wave 100/200/300/600/1000</div>
+<div class="up-item new">🎰 Gambler — Spend 50,000 gold total</div>
+<div class="up-item new">👊 I'M THE BOSS — Kill a boss within 5 seconds of spawning</div>
+<div class="up-item new">🤔 Why This Tower? — Reach wave 50 with only one tower type</div>
+<div class="up-item new">🏟 Full Arsenal — Build every tower type in one game</div>
+<div class="up-item new">🧱 Wall Street — Build 50 walls in one game</div>
+<div class="up-item new">⏰ Life is a Game — Play for 24 hours and submit to leaderboard</div>
+<div class="up-item new">🤔 Why This Tower? — Reach wave 50 with only one tower type</div>
+<div class="up-item new">🏟 Full Arsenal — Build every tower type in one game</div>
+<div class="up-item new">🧱 Wall Street — Build 50 walls in one game</div>
 </div>
 <div class="up-section">
-<div class="up-section-title">BALANCE</div>
-<div class="up-item">Co-op enemies scale with player count</div>
-<div class="up-item">Wave bonus gold adjusted for multiplayer</div>
+<div class="up-section-title">SUGGESTION SYSTEM</div>
+<div class="up-item new">💡 Player Suggestions — submit ideas for new features</div>
+<div class="up-item new">🗳 Voting System — vote on suggestions the creator puts up</div>
+<div class="up-item new">📋 Browse all submitted ideas</div>
+</div>
+<div class="up-section">
+<div class="up-section-title">UI IMPROVEMENTS</div>
+<div class="up-item">Tower panel shows invested gold and sell value</div>
+<div class="up-item">Build buttons hide when tower is selected for cleaner view</div>
+<div class="up-item">Close button returns to build mode</div>
 </div>
 </div>
 <div class="up-footer"><button class="up-btn" onclick="document.getElementById('update-popup-overlay').classList.add('hidden')">GOT IT</button></div>
 </div>
 </div>
 
+<!-- SUGGESTION SYSTEM -->
+<div id="sug-modal">
+  <div class="sug-box">
+    <div class="sug-title">
+      <span>💡 SUGGESTIONS</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span id="sug-admin-badge" style="display:none;font-size:7px;color:#ff4444;border:1px solid #ff444444;padding:1px 5px;letter-spacing:1px;">ADMIN</span>
+        <span class="sug-close" onclick="document.getElementById('sug-modal').classList.remove('vis')">✕</span>
+      </div>
+    </div>
+    <div id="sug-list" class="sug-list"></div>
+    <div class="sug-input-area">
+      <textarea class="sug-input" id="sug-text" placeholder="Got an idea? Describe it here... (new tower, game mode, etc.)" maxlength="300"></textarea>
+      <div style="display:flex;gap:6px;">
+        <button class="sug-submit" style="flex:1" onclick="sugSubmit()">SUBMIT IDEA</button>
+        <button class="sug-submit" id="sug-admin-toggle" style="flex:0;padding:8px 12px;background:#0a0008;border-color:#ff4444;color:#ff4444;font-size:9px;display:none;" onclick="sugToggleAdmin()">🔑</button>
+      </div>
+      <div id="sug-submit-msg" style="font-size:9px;color:#4a8a6a;text-align:center;min-height:14px;"></div>
+    </div>
+  </div>
+</div>
 <!-- AUTH BAR -->
 <div id="auth-bar">
   <span id="auth-user">NOT SIGNED IN — scores won't be saved to leaderboard</span>
   <button id="name-btn" style="background:#04090f;border:1px solid #0e2030;color:#ffaa33;font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 10px;cursor:pointer;transition:all .1s;letter-spacing:1px;white-space:nowrap;display:none">✏ NAME</button>
+  <button id="sug-btn" style="font-size:9px;background:#04090f;border:1px solid #ffaa33;color:#ffaa33;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-right:4px;transition:all .1s;" onclick="openSugModal()">💡 IDEAS</button>
   <button id="ach-btn" style="display:none;font-size:9px;background:#04090f;border:1px solid #ffd700;color:#ffd700;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-right:4px;transition:all .1s;">🏅 ACHIEVEMENTS</button>
   <button id="lb-btn">🏆 LEADERBOARD</button>
   <button id="auth-sign-btn">SIGN IN</button>
@@ -1480,11 +1570,17 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
   <div id="up">
     <div id="up-title">SELECT TOWER</div>
     <div id="up-stats"></div>
+    <div id="up-tower-stats" style="grid-template-columns:1fr 1fr;">
+      <div class="up-ts ts-spent"><span class="ts-val" id="ts-spent">0g</span><span class="ts-lbl">INVESTED</span></div>
+      <div class="up-ts ts-sell"><span class="ts-val" id="ts-sell">0g</span><span class="ts-lbl">SELL VALUE</span></div>
+    </div>
     <div class="pr" id="pr" style="display:none">
       <button class="pb" id="pA" style="--pc:#33aaff">PATH A</button>
       <button class="pb" id="pB" style="--pc:#ff8844">PATH B</button>
     </div>
     <button id="up-btn" style="display:none">UPGRADE</button>
+    <button id="up-sell-btn">SELL TOWER</button>
+    <button id="up-close-btn">✕ CLOSE</button>
   </div>
   <div id="base-up">
     <div id="base-up-title">🏛 BASE UPGRADE</div>
@@ -1702,7 +1798,7 @@ async function submitScore(){
   if(!currentUser){openAuthModal();return;}
   if(gameMode==='sandbox'){msg('⚠ Sandbox scores cannot be submitted!',2500);return;}
   const btn=document.getElementById('lb-submit-btn');btn.disabled=true;btn.textContent='SUBMITTING...';
-  const basePay={wave,score,mode:MODE_MAP[gameMode]??0,play_time:playTimeSeconds};saveTotalPlayTime();const namePay=playerName?{name:playerName}:{};
+  const basePay={wave,score,mode:MODE_MAP[gameMode]??0,play_time:playTimeSeconds};saveTotalPlayTime();if(playTimeSeconds>=86400)unlockAchievement('life_is_game');const namePay=playerName?{name:playerName}:{};
   try{
     // Try upsert with name first
     let{data,error}=await sb.from('leaderboard').upsert({id:currentUser.id,...basePay,...namePay},{onConflict:'id'});
@@ -1874,7 +1970,7 @@ function deserializeGameState(data){
   grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));towers=[];enemies=[];projs=[];shockwaves=[];kingWaves=[],adminDrones=[];parts=[];floats=[];lxfx=[];healBeams=[];helicopters=[];crystals=[],allies=[];
   grid[BASE_R][BASE_C]=CT.BASE;grid[SPAWN_R][SPAWN_C]=CT.SPAWN;
   for(const td of data.towers){const cfg=getCfg(td.key,td.level,td.path);grid[td.row][td.col]=cfg.t;const t={row:td.row,col:td.col,key:td.key,cfg,hp:td.hp,maxHp:td.maxHp,level:td.level,path:td.path,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[]};towers.push(t);if(td.key==='heli') spawnHelicopter(t);}
-  bfs();waveOn=false;spawnQ=[];spawnT=0;selTower=null;pathBlocked=false;baseTurretCd=0;baseTurretAngle=0;gameOver=false;gameStarted=true;startPlayTimeTracker();
+  bfs();waveOn=false;spawnQ=[];spawnT=0;selTower=null;pathBlocked=false;_sessionTowerTypes=new Set();_sessionWallCount=0;_sessionAllTypes=new Set();_sessionNoDmgStreak=0;_sessionBaseHpAtWaveStart=0;baseTurretCd=0;baseTurretAngle=0;gameOver=false;gameStarted=true;startPlayTimeTracker();
   updateModeUI();updateHcUI();document.querySelectorAll('.mb').forEach(b=>{b.classList.toggle('on',b.dataset.m===gameMode);b.style.opacity=b.dataset.m===gameMode?'1':'.25';b.style.pointerEvents='none';});
   syncUI();return true;}catch(e){console.error(e);return false;}
 }
@@ -1975,6 +2071,7 @@ let towers=[],enemies=[],projs=[],shockwaves=[],kingWaves=[],adminDrones=[],part
 let gold=200,baseHP=150,baseMaxHP=150,wave=0,score=0,kills=0;
 let gameOver=false,waveOn=false,spawnQ=[],spawnT=0,curWaveType=0;
 let selBuild='wall',sellMode=false,upgMode=false,baseUpgMode=false;
+let _sessionTowerTypes=new Set();let _sessionWallCount=0;let _sessionAllTypes=new Set();let _sessionNoDmgStreak=0;let _sessionBaseHpAtWaveStart=0;
 let gfxMode=0;
 let hov=null,selTower=null,speed=1,frame=0;
 let pathBlocked=false,gameStarted=false;
@@ -2192,20 +2289,31 @@ loadPlayerLevel();
 const ACH_SAVE_KEY = 'bs_achievements';
 const ACHIEVEMENTS = [
   {id:'drone_operator', icon:'🛸', name:'DRONE OPERATOR', desc:'Place your first Drone Pad tower', secret:false},
-  {id:'hardcore_100', icon:'💀', name:'HARDCORE SURVIVOR', desc:'Reach Wave 100 in Hardcore mode', secret:false},
-  {id:'gold_10m', icon:'💰', name:'GOLD HOARDER', desc:'Accumulate 10,000,000 gold in a single game', secret:false},
-  {id:'builder_1', icon:'🔧', name:'BUILDER I', desc:'Build your first tower', secret:false},
-  {id:'builder_2', icon:'🔧', name:'BUILDER II', desc:'Build 10 towers (lifetime)', secret:false},
-  {id:'builder_3', icon:'🏗', name:'BUILDER III', desc:'Build 100 towers (lifetime)', secret:false},
-  {id:'builder_4', icon:'🏗', name:'BUILDER IV', desc:'Build 1,000 towers (lifetime)', secret:false},
-  {id:'builder_5', icon:'🏭', name:'BUILDER V', desc:'Build 10,000 towers (lifetime)', secret:false},
-  {id:'doom_1', icon:'💥', name:'DOOMSLAYER I', desc:'Kill 100 enemies (lifetime)', secret:false},
-  {id:'doom_2', icon:'💥', name:'DOOMSLAYER II', desc:'Kill 1,000 enemies (lifetime)', secret:false},
-  {id:'doom_3', icon:'☠', name:'DOOMSLAYER III', desc:'Kill 10,000 enemies (lifetime)', secret:false},
-  {id:'doom_4', icon:'☠', name:'DOOMSLAYER IV', desc:'Kill 100,000 enemies (lifetime)', secret:false},
-  {id:'doom_5', icon:'👹', name:'DOOMSLAYER V', desc:'Kill 1,000,000 enemies (lifetime)', secret:false},
+  {id:'hardcore_100', icon:'💀', name:'HARDCORE SURVIVOR', desc:'Reach Wave 100 in Hardcore mode', secret:false, progress:{stat:'maxWaveHardcore',target:100}},
+  {id:'gold_10m', icon:'💰', name:'GOLD HOARDER', desc:'Accumulate 10,000,000 gold in a single game', secret:false, progress:{stat:'maxSingleGameGold',target:10000000}},
+  {id:'builder_1', icon:'🔧', name:'BUILDER I', desc:'Build your first tower', secret:false, progress:{stat:'totalBuilt',target:1}},
+  {id:'builder_2', icon:'🔧', name:'BUILDER II', desc:'Build 10 towers (lifetime)', secret:false, progress:{stat:'totalBuilt',target:10}},
+  {id:'builder_3', icon:'🏗', name:'BUILDER III', desc:'Build 100 towers (lifetime)', secret:false, progress:{stat:'totalBuilt',target:100}},
+  {id:'builder_4', icon:'🏗', name:'BUILDER IV', desc:'Build 1,000 towers (lifetime)', secret:false, progress:{stat:'totalBuilt',target:1000}},
+  {id:'builder_5', icon:'🏭', name:'BUILDER V', desc:'Build 10,000 towers (lifetime)', secret:false, progress:{stat:'totalBuilt',target:10000}},
+  {id:'doom_1', icon:'💥', name:'DOOMSLAYER I', desc:'Kill 100 enemies (lifetime)', secret:false, progress:{stat:'totalKills',target:100}},
+  {id:'doom_2', icon:'💥', name:'DOOMSLAYER II', desc:'Kill 1,000 enemies (lifetime)', secret:false, progress:{stat:'totalKills',target:1000}},
+  {id:'doom_3', icon:'☠', name:'DOOMSLAYER III', desc:'Kill 10,000 enemies (lifetime)', secret:false, progress:{stat:'totalKills',target:10000}},
+  {id:'doom_4', icon:'☠', name:'DOOMSLAYER IV', desc:'Kill 100,000 enemies (lifetime)', secret:false, progress:{stat:'totalKills',target:100000}},
+  {id:'doom_5', icon:'👹', name:'DOOMSLAYER V', desc:'Kill 1,000,000 enemies (lifetime)', secret:false, progress:{stat:'totalKills',target:1000000}},
   {id:'hacklord_killer', icon:'💻', name:'I\'M THE HACK LORD', desc:'Defeat the Hacklord boss', secret:false},
   {id:'fallen_king', icon:'👑', name:'FALLEN KING', desc:'Hold #1 on leaderboard then drop to #2 or lower', secret:true},
+  {id:'inf_guard_1', icon:'🛡', name:'INFINITY GUARDIAN I', desc:'Reach Wave 100', secret:false, progress:{stat:'maxWave',target:100}},
+  {id:'inf_guard_2', icon:'🛡', name:'INFINITY GUARDIAN II', desc:'Reach Wave 200', secret:false, progress:{stat:'maxWave',target:200}},
+  {id:'inf_guard_3', icon:'⚔', name:'INFINITY GUARDIAN III', desc:'Reach Wave 300', secret:false, progress:{stat:'maxWave',target:300}},
+  {id:'inf_guard_4', icon:'⚔', name:'INFINITY GUARDIAN IV', desc:'Reach Wave 600', secret:false, progress:{stat:'maxWave',target:600}},
+  {id:'inf_guard_5', icon:'🔥', name:'INFINITY GUARDIAN V', desc:'Reach Wave 1000', secret:false, progress:{stat:'maxWave',target:1000}},
+  {id:'gambler', icon:'🎰', name:'GAMBLER', desc:'Spend 50,000 gold total (lifetime)', secret:false, progress:{stat:'totalGoldSpent',target:50000}},
+  {id:'boss_speed', icon:'👊', name:'I\'M THE BOSS', desc:'Kill a boss within 5 seconds of it spawning', secret:false},
+  {id:'why_this_tower', icon:'🤔', name:'WHY THIS TOWER?', desc:'Reach Wave 50 using only one tower type (walls don\'t count)', secret:false},
+  {id:'full_arsenal', icon:'🏟', name:'FULL ARSENAL', desc:'Build every tower type in a single game', secret:false},
+  {id:'wall_street', icon:'🧱', name:'WALL STREET', desc:'Build 50 walls in a single game', secret:false, progress:{stat:'_sessionWallCount',target:50}},
+  {id:'life_is_game', icon:'⏰', name:'LIFE IS A GAME', desc:'Submit a game record with 24+ hours of play time to the leaderboard', secret:false},
 ];
 
 let earnedAchievements = new Set();
@@ -2275,10 +2383,19 @@ function renderAchievementList() {
   const list = document.getElementById('ach-list');
   list.innerHTML = ACHIEVEMENTS.map(ach => {
     const earned = earnedAchievements.has(ach.id);
+    let progHtml = '';
+    if (ach.progress && !earned) {
+      const cur = achStats[ach.progress.stat] || 0;
+      const tgt = ach.progress.target;
+      const pct = Math.min(100, Math.round(cur / tgt * 100));
+      progHtml = '<div class="ach-prog"><div class="ach-prog-bar" style="width:' + pct + '%"></div><span class="ach-prog-txt">' + cur.toLocaleString() + ' / ' + tgt.toLocaleString() + ' (' + pct + '%)</span></div>';
+    } else if (ach.progress && earned) {
+      progHtml = '<div class="ach-prog done"><div class="ach-prog-bar" style="width:100%"></div><span class="ach-prog-txt">COMPLETE</span></div>';
+    }
     return '<div class="ach-item ' + (earned ? 'earned' : 'locked') + '">' +
       '<span class="ach-i">' + ach.icon + '</span>' +
       '<div class="ach-info"><div class="ach-n">' + ach.name + '</div>' +
-      '<div class="ach-d">' + ach.desc + '</div></div>' +
+      '<div class="ach-d">' + ach.desc + '</div>' + progHtml + '</div>' +
       '<span class="ach-check">' + (earned ? '★' : '☆') + '</span></div>';
   }).join('');
   document.getElementById('ach-count').textContent = earnedAchievements.size + ' / ' + ACHIEVEMENTS.length + ' UNLOCKED';
@@ -2291,12 +2408,103 @@ function openAchievementModal() {
 
 loadAchievements();
 
+// ═══════════════════════════════════════════════
+// SUGGESTION SYSTEM (Like + Admin)
+// ═══════════════════════════════════════════════
+const SUG={
+  _sb:null,_myVotes:new Set(),_admin:false,
+  _adminEmail:'limziyuan87788790@gmail.com',
+  getSb(){if(!this._sb)this._sb=supabase.createClient(MP_SUPABASE_URL,MP_SUPABASE_ANON);return this._sb;},
+  getMyId(){return currentUser?currentUser.id:(MP.playerId||localStorage.getItem('sug_anon_id')||(()=>{const id='anon_'+Math.random().toString(36).slice(2);localStorage.setItem('sug_anon_id',id);return id;})());},
+
+  async load(){
+    const{data}=await this.getSb().from('suggestions').select('*').neq('status','deleted').order('vote_count',{ascending:false});
+    await this._loadMyVotes(data||[]);
+    const el=document.getElementById('sug-list');
+    if(!data||data.length===0){el.innerHTML='<div class="sug-empty">No suggestions yet. Be the first to submit an idea!</div>';return;}
+    el.innerHTML=data.map(s=>this._renderItem(s)).join('');
+  },
+
+  async _loadMyVotes(suggestions){
+    if(suggestions.length===0){this._myVotes=new Set();return;}
+    const ids=suggestions.map(s=>s.id);
+    const{data}=await this.getSb().from('suggestion_votes').select('suggestion_id').eq('voter_id',this.getMyId()).in('suggestion_id',ids);
+    this._myVotes=new Set((data||[]).map(v=>v.suggestion_id));
+  },
+
+  _renderItem(s){
+    const liked=this._myVotes.has(s.id);
+    const st=s.status||'pending';
+    const stLbl=st.toUpperCase();
+    const adminBtns=this._admin?`<div style="display:flex;gap:3px;margin-top:4px;"><button class="sug-vote-btn" style="border-color:#00ff88;color:#00ff88;" onclick="SUG.setStatus('${s.id}','accepted')">✓ ACCEPT</button><button class="sug-vote-btn" style="border-color:#ff4444;color:#ff4444;" onclick="SUG.setStatus('${s.id}','rejected')">✗ REJECT</button><button class="sug-vote-btn" style="border-color:#ff8800;color:#ff8800;" onclick="SUG.remove('${s.id}')">🗑 DEL</button></div>`:'';
+    const ago=this._timeAgo(s.created_at);
+    return '<div class="sug-item"><div class="sug-text">'+this._esc(s.text)+'</div><div class="sug-meta"><span>'+s.author+' · '+ago+' <span class="sug-status '+st+'">'+stLbl+'</span></span><div class="sug-votes"><button class="sug-vote-btn '+(liked?'voted':'')+'" onclick="SUG.like(\''+s.id+'\')" '+(liked?'disabled':'')+'>♥ '+(liked?'LIKED':'LIKE')+'</button><span class="sug-vote-count">'+( s.vote_count||0)+'</span></div></div>'+adminBtns+'</div>';
+  },
+
+  _esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');},
+  _timeAgo(d){const s=Math.floor((Date.now()-new Date(d))/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';},
+
+  async like(id){
+    const vid=this.getMyId();
+    if(this._myVotes.has(id)){
+      await this.getSb().from('suggestion_votes').delete().eq('suggestion_id',id).eq('voter_id',vid);
+      this._myVotes.delete(id);
+      await this.getSb().from('suggestions').update({vote_count:Math.max(0,(await this.getSb().from('suggestion_votes').select('id',{count:'exact'}).eq('suggestion_id',id)).count||0)}).eq('id',id);
+      this.load();msg('Unliked',1000);return;
+    }
+    const{error}=await this.getSb().from('suggestion_votes').insert({suggestion_id:id,voter_id:vid});
+    if(error){if(error.code==='23505')msg('Already liked!',1500);else msg('Error',1500);return;}
+    this._myVotes.add(id);this.load();msg('Liked!',1000);
+  },
+
+  async submit(text){
+    const author=playerName||currentUser?.email?.split('@')[0]||'Anonymous';
+    const{error}=await this.getSb().from('suggestions').insert({text,author,author_id:this.getMyId()});
+    if(error){msg('Failed: '+error.message,3000);return false;}
+    msg('Idea submitted!',2000);return true;
+  },
+
+  async setStatus(id,status){
+    await this.getSb().from('suggestions').update({status}).eq('id',id);
+    this.load();msg('Status: '+status,1500);
+  },
+
+  async remove(id){
+    const{error}=await this.getSb().from('suggestions').update({status:'deleted'}).eq('id',id);
+    if(error){msg('Delete failed',2000);return;}
+    this.load();msg('Deleted',1500);
+  },
+
+  toggleAdmin(){
+    if(!currentUser||currentUser.email!==this._adminEmail){msg('Admin: sign in with admin account',2000);return;}
+    this._admin=!this._admin;
+    document.getElementById('sug-admin-badge').style.display=this._admin?'':'none';
+    this.load();
+    msg(this._admin?'Admin mode ON':'Admin mode OFF',1500);
+  }
+};
+
+function openSugModal(){
+  document.getElementById('sug-modal').classList.add('vis');
+  if(currentUser&&currentUser.email===SUG._adminEmail){if(!SUG._admin){SUG._admin=true;document.getElementById('sug-admin-badge').style.display='';}document.getElementById('sug-admin-toggle').style.display='';}
+  SUG.load();
+}
+function sugToggleAdmin(){SUG.toggleAdmin();}
+async function sugSubmit(){
+  const el=document.getElementById('sug-text');
+  const text=el.value.trim();
+  if(!text||text.length<5){document.getElementById('sug-submit-msg').textContent='Write at least 5 characters.';return;}
+  const ok=await SUG.submit(text);
+  if(ok){el.value='';document.getElementById('sug-submit-msg').textContent='Submitted!';SUG.load();setTimeout(()=>{document.getElementById('sug-submit-msg').textContent='';},3000);}
+}
+
+
 // Persistent stat counters for achievements
 const STAT_KEY = 'bs_ach_stats';
-let achStats = {totalBuilt:0, totalKills:0, wasLbFirst:false};
+let achStats = {totalBuilt:0, totalKills:0, wasLbFirst:false, maxWave:0, totalGoldSpent:0, maxSingleGameGold:0, maxWaveHardcore:0};
 
 function loadAchStats() {
-  try { const r=localStorage.getItem(STAT_KEY); if(r) achStats={totalBuilt:0,totalKills:0,wasLbFirst:false,...JSON.parse(r)}; } catch(e) {}
+  try { const r=localStorage.getItem(STAT_KEY); if(r) achStats={totalBuilt:0,totalKills:0,wasLbFirst:false,maxWave:0,totalGoldSpent:0,maxSingleGameGold:0,maxWaveHardcore:0,...JSON.parse(r)}; } catch(e) {}
 }
 function saveAchStats() {
   try { localStorage.setItem(STAT_KEY, JSON.stringify(achStats)); } catch(e) {}
@@ -2724,6 +2932,7 @@ function getHcAllowed(){
   return base;
 }
 function updateModeUI(){const md=MODES[gameMode];const ea=gameMode==='hardcore'?getHcAllowed():(md.allowed?new Set([...md.allowed]):null);document.querySelectorAll('.bb').forEach(b=>{const tp=b.dataset.t;if(ea&&tp&&!ea.has(tp)){b.style.opacity='.25';b.style.pointerEvents='none';}else{b.style.opacity='';b.style.pointerEvents='';}});if(ea&&!ea.has(selBuild)){selBuild='wall';document.querySelectorAll('.bb').forEach(b=>b.classList.remove('on'));document.querySelector('.bb[data-t="wall"]').classList.add('on');}updateHcUI();}
+function formatNum(n){if(n>=1e6) return (n/1e6).toFixed(1)+'M';if(n>=1e3) return (n/1e3).toFixed(1)+'K';return Math.round(n);}
 function syncUI(){document.getElementById('vw').textContent=wave;document.getElementById('vg').textContent=gold;document.getElementById('vh').textContent=Math.max(0,Math.round(baseHP));document.getElementById('vmh').textContent=Math.round(baseMaxHP);document.getElementById('vs').textContent=score;document.getElementById('vk').textContent=kills;document.getElementById('start').disabled=waveOn||gameOver;if(selTower) showPanel(selTower);updateIOButtons();}
 function msg(t,d=2500){const e=document.getElementById('msg');e.textContent=t;clearTimeout(e._t);e._t=setTimeout(()=>e.textContent='',d);}
 function ft(x,y,t,col='#ffd700'){if(gfxMode===3) return;if(gfxMode===2&&Math.random()>.4) return;floats.push({x,y,t,col,life:gfxMode>=1?40:62,vy:-.6});}
@@ -2733,6 +2942,8 @@ function addBeam(x1,y1,x2,y2){if(gfxMode>=2) return;healBeams.push({x1,y1,x2,y2,
 
 function showPanel(t){
   selTower=t;hideBasePanel();document.getElementById('up').classList.add('vis');
+  document.querySelectorAll('.bb,.ab').forEach(b=>{if(b.style.display!=='none'){b.dataset.hiddenByPanel='1';b.style.display='none';}});
+  document.querySelectorAll('.sh').forEach(h=>{if(h.textContent.includes('BUILD')){h.dataset.hiddenByPanel='1';h.style.display='none';}});
   const c=getCfg(t.key,t.level,t.path);const isChoice=t.key!=='wall'&&t.level===1;
   const pr=document.getElementById('pr'),ub=document.getElementById('up-btn');
   let title=`${c.name}  LVL ${t.level}`;if(t.level===ML) title+=' [MAX]';
@@ -2749,6 +2960,10 @@ function showPanel(t){
   if(c.barracksTower){s+=`\nALLY HP: ${c.allyHp}  SPD: ${c.allySpd}\nMELEE DMG: ${c.allyDmg}  MAX: ${c.allyMax}`;if(c.allyExplode) s+=`\n💥 EXPLODE: ${c.allyExplodeDmg} AOE:${c.allyExplodeAoe}`;if(c.allyGun) s+=`\n🔫 GUN: ${c.allyGunDmg} RNG:${c.allyGunRng}`;}
   if(c.buffType){s+=`\nAURA RANGE: ${c.rng}`;if(c.costReduce) s+=`\n★ Cost reduce: ${Math.round(c.costReduce*100)}%`;if(c.dmgBoost) s+=`\n★ DMG boost: +${Math.round(c.dmgBoost*100)}%`;if(c.spdBoost) s+=`\n★ Fire speed: +${Math.round(c.spdBoost*100)}%`;if(c.rngBoost) s+=`\n★ Range boost: +${Math.round(c.rngBoost*100)}%`;}
   document.getElementById('up-stats').textContent=s;
+  document.getElementById('ts-spent').textContent=(t.totalGoldSpent||0)+'g';
+  const sellVal=Math.floor((t.totalGoldSpent||TS[t.key][1].cost)*.5);
+  document.getElementById('ts-sell').textContent=sellVal+'g';
+  document.getElementById('up-sell-btn').textContent='SELL TOWER ('+sellVal+'g)';
   if(isChoice){
     pr.style.display='flex';ub.style.display='none';
     const pN=PATH_NAMES[t.key]||{A:'A',B:'B'},pC=PATH_COLORS[t.key]||{A:'#33aaff',B:'#ff8844'};
@@ -2763,7 +2978,9 @@ function showPanel(t){
     else{ub.style.display='';const uc=upgCost(t.key,t.level+1,t.path);ub.textContent=`UPGRADE (${uc}g)`;ub.disabled=gold<uc;}
   }
 }
-function hidePanel(){selTower=null;document.getElementById('up').classList.remove('vis');}
+function hidePanel(){selTower=null;document.getElementById('up').classList.remove('vis');
+  document.querySelectorAll('.bb,.ab').forEach(b=>{if(b.dataset.hiddenByPanel){delete b.dataset.hiddenByPanel;b.style.display='';}});
+  document.querySelectorAll('.sh').forEach(h=>{if(h.dataset.hiddenByPanel){delete h.dataset.hiddenByPanel;h.style.display='';}});}
 function showBasePanel(){hidePanel();document.getElementById('base-up').classList.add('vis');updateBasePanelUI();}
 function hideBasePanel(){document.getElementById('base-up').classList.remove('vis');}
 function updateBasePanelUI(){
@@ -2794,7 +3011,7 @@ function doUpgrade(path){
   if(MP.active&&!MP.canInteractTower(selTower)){msg(MP.getTowerOwnerMsg(selTower)||'Not your tower',2000);return;}
   const uc=upgCost(selTower.key,selTower.level+1,path||selTower.path);
   if(gold<uc){msg('⚠ Not enough gold!');return;}
-  gold-=uc;if(path) selTower.path=path;selTower.level++;selTower.cfg=getCfg(selTower.key,selTower.level,selTower.path);
+  gold-=uc;selTower.totalGoldSpent=(selTower.totalGoldSpent||0)+uc;achStats.totalGoldSpent=(achStats.totalGoldSpent||0)+uc;if(achStats.totalGoldSpent>=50000)unlockAchievement('gambler');if(achStats.totalGoldSpent%5000<uc)saveAchStats();if(path) selTower.path=path;selTower.level++;selTower.cfg=getCfg(selTower.key,selTower.level,selTower.path);
   if(MP.active){const lk=selTower.path?selTower.level+''+selTower.path:selTower.level;MP.broadcast('tower:upgrade',{pid:MP.playerId,row:selTower.row,col:selTower.col,newKey:lk});MP.updatePlayerGold();}selTower.maxHp=selTower.cfg.hp;
   if(selTower.key==='healer'&&selTower.path==='A'&&selTower.cfg.baseMaxBonus){baseMaxHP+=selTower.cfg.baseMaxBonus;baseHP=Math.min(baseHP+selTower.cfg.baseMaxBonus,baseMaxHP);ft(BASE_C*CS+CS/2,BASE_R*CS,`MAX HP +${selTower.cfg.baseMaxBonus}`,'#00ccff');}
   if(selTower.key==='heli'){const h=helicopters.find(h=>h.towerId===selTower.id);if(h) syncHelicopterConfig(h,selTower);}
@@ -2828,6 +3045,8 @@ document.querySelectorAll('.bb').forEach(b=>{b.addEventListener('click',()=>{
     return;
   }
   sellMode=false;upgMode=false;baseUpgMode=false;selBuild=b.dataset.t;document.querySelectorAll('.bb').forEach(x=>x.classList.remove('on'));document.getElementById('sbtn').classList.remove('sell-on');document.getElementById('ubtn').classList.remove('upg-on');document.getElementById('basebtn').classList.remove('base-on');b.classList.add('on');hidePanel();hideBasePanel();if(selBuild==='buff') document.getElementById('buff-hint').classList.add('vis');else document.getElementById('buff-hint').classList.remove('vis');});});
+document.getElementById('up-close-btn').addEventListener('click',()=>{hidePanel();sellMode=false;upgMode=false;baseUpgMode=false;document.querySelectorAll('.bb').forEach(b=>b.classList.remove('on'));document.getElementById('sbtn').classList.remove('sell-on');document.getElementById('ubtn').classList.remove('upg-on');document.getElementById('basebtn').classList.remove('base-on');});
+document.getElementById('up-sell-btn').addEventListener('click',()=>{if(!selTower) return;const t=selTower;const ti=towers.indexOf(t);if(ti===-1) return;if(MP.active&&!MP.canInteractTower(t)){msg(MP.getTowerOwnerMsg(t)||'Not your tower',2000);return;}const ref=Math.floor((t.totalGoldSpent||TS[t.key][1].cost)*.5);if(t.key==='healer'&&t.path==='A'&&t.level>=2){const bon=t.level===2?25:t.level===3?55:t.level===4?90:140;baseMaxHP=Math.max(150,baseMaxHP-bon);baseHP=Math.min(baseHP,baseMaxHP);}if(t.key==='heli'){const hi=helicopters.findIndex(h=>h.towerId===t.id);if(hi!==-1) helicopters.splice(hi,1);}if(t.key==='barracks'){for(let ai=allies.length-1;ai>=0;ai--){if(allies[ai]&&allies[ai].towerId===t.id){sparks(allies[ai].x,allies[ai].y,'#ff4444',5,2);allies.splice(ai,1);}}}gold+=ref;const row=t.row,col=t.col;towers.splice(ti,1);grid[row][col]=CT.EMPTY;bfs();ft(col*CS+CS/2,row*CS,'+'+ref+'g');hidePanel();syncUI();if(MP.active){MP.broadcast('tower:sell',{pid:MP.playerId,row,col});MP.updatePlayerGold();}});
 document.getElementById('sbtn').addEventListener('click',()=>{
   sellMode=!sellMode;upgMode=false;baseUpgMode=false;document.querySelectorAll('.bb').forEach(b=>b.classList.remove('on'));document.getElementById('ubtn').classList.remove('upg-on');document.getElementById('basebtn').classList.remove('base-on');document.getElementById('sbtn').classList.toggle('sell-on',sellMode);if(sellMode){hidePanel();hideBasePanel();}});
 document.getElementById('ubtn').addEventListener('click',()=>{
@@ -2914,7 +3133,7 @@ cv.addEventListener('click',e=>{
     if(grid[row][col]===CT.BASE&&(baseUpgMode||(!sellMode&&!upgMode))){if(MP.active&&!MP.isHost){msg('Only the HOST can upgrade the base',2000);return;}baseUpgMode=true;document.getElementById('basebtn').classList.add('base-on');showBasePanel();}
     return;
   }
-  if(sellMode){const ti=towers.findIndex(t=>t.row===row&&t.col===col);if(ti!==-1){if(MP.active&&!MP.canInteractTower(towers[ti])){msg(MP.getTowerOwnerMsg(towers[ti])||'Not your tower',2000);return;}const t=towers[ti],ref=Math.floor(TS[t.key][1].cost*.5);if(t.key==='healer'&&t.path==='A'&&t.level>=2){const bon=t.level===2?25:t.level===3?55:t.level===4?90:140;baseMaxHP=Math.max(150,baseMaxHP-bon);baseHP=Math.min(baseHP,baseMaxHP);}if(t.key==='heli'){const hi=helicopters.findIndex(h=>h.towerId===t.id);if(hi!==-1) helicopters.splice(hi,1);}gold+=ref;towers.splice(ti,1);grid[row][col]=CT.EMPTY;bfs();ft(col*CS+CS/2,row*CS,`+${ref}g`);hidePanel();syncUI();if(MP.active){MP.broadcast('tower:sell',{pid:MP.playerId,row,col});MP.updatePlayerGold();}}return;}
+  if(sellMode){const ti=towers.findIndex(t=>t.row===row&&t.col===col);if(ti!==-1){if(MP.active&&!MP.canInteractTower(towers[ti])){msg(MP.getTowerOwnerMsg(towers[ti])||'Not your tower',2000);return;}const t=towers[ti],ref=Math.floor((t.totalGoldSpent||TS[t.key][1].cost)*.5);if(t.key==='healer'&&t.path==='A'&&t.level>=2){const bon=t.level===2?25:t.level===3?55:t.level===4?90:140;baseMaxHP=Math.max(150,baseMaxHP-bon);baseHP=Math.min(baseHP,baseMaxHP);}if(t.key==='heli'){const hi=helicopters.findIndex(h=>h.towerId===t.id);if(hi!==-1) helicopters.splice(hi,1);}gold+=ref;towers.splice(ti,1);grid[row][col]=CT.EMPTY;bfs();ft(col*CS+CS/2,row*CS,`+${ref}g`);hidePanel();syncUI();if(MP.active){MP.broadcast('tower:sell',{pid:MP.playerId,row,col});MP.updatePlayerGold();}}return;}
   if(upgMode){const t=towers.find(t=>t.row===row&&t.col===col);if(t){if(MP.active&&!MP.canInteractTower(t)){msg(MP.getTowerOwnerMsg(t)||'Not your tower',2000);return;}showPanel(t);}else hidePanel();return;}
   if(baseUpgMode) return;
   if(grid[row][col]!==CT.EMPTY) return;
@@ -2924,9 +3143,9 @@ cv.addEventListener('click',e=>{
   if(selBuild==='barracks'&&gameMode==='hardcore'&&!hcUnlocked.has('barracks')){msg('⚠ Unlock Barracks first! (7 pts)',2500);return;}
   const cfg=getCfg(selBuild,1,null);const actualCost=getDiscountedCost(selBuild,col,row);
   if(gold<actualCost){msg('⚠ Insufficient gold!');return;}
-  grid[row][col]=cfg.t;bfs();const saved=cfg.cost-actualCost;gold-=actualCost;
-  const newTower={row,col,key:selBuild,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,angle:0,level:1,path:null,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],owner:MP.active?MP.playerId:null,ownerColor:MP.active?PLAYER_COLORS[MP.colorIndex]:'#00ff88',ownerName:MP.active?MP.playerName:'YOU'};
-  towers.push(newTower);
+  grid[row][col]=cfg.t;bfs();const saved=cfg.cost-actualCost;gold-=actualCost;achStats.totalGoldSpent=(achStats.totalGoldSpent||0)+actualCost;if(achStats.totalGoldSpent>=50000)unlockAchievement('gambler');if(achStats.totalGoldSpent%5000<actualCost)saveAchStats();
+  const newTower={row,col,key:selBuild,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,angle:0,level:1,path:null,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],owner:MP.active?MP.playerId:null,ownerColor:MP.active?PLAYER_COLORS[MP.colorIndex]:'#00ff88',ownerName:MP.active?MP.playerName:'YOU',totalDmgDealt:0,totalKills:0,totalGoldSpent:actualCost};
+  towers.push(newTower);if(selBuild!=='wall'){_sessionTowerTypes.add(selBuild);}_sessionAllTypes.add(selBuild);if(selBuild==='wall')_sessionWallCount++;
   if(typeof checkAchievements_towerPlaced==='function') checkAchievements_towerPlaced(selBuild);
   if(MP.active){MP.broadcast('tower:place',{pid:MP.playerId,row,col,key:selBuild,lvl:1,colorIdx:MP.colorIndex,name:MP.playerName});MP.updatePlayerGold();}if(selBuild==='heli') spawnHelicopter(newTower);if(selBuild==='admindrone') spawnAdminDrones(newTower);if(selBuild==='barracks'){newTower.allySpawnCd=0;}
   sparks(col*CS+CS/2,row*CS+CS/2,cfg.col,7,1.5);if(saved>0) ft(col*CS+CS/2,row*CS-14,`DISCOUNT -${saved}g!`,'#ffd700');
@@ -3117,7 +3336,11 @@ function drawAdminDrone(d){
 }
 function waveScale(){const mb=MODES[gameMode].scaleBonus;return 1+(wave-1)*(.22+mb)+Math.max(0,wave-5)*(.20+mb*.6)+Math.max(0,wave-9)*(.25+mb*.4)+Math.max(0,wave-14)*.35+Math.max(0,wave-50)*.65+Math.max(0,wave-75)*1.2;}
 
-function startWave(){if(waveOn||gameOver) return;if(MP.active&&!MP.isHost){msg('Only the HOST can start waves',2000);return;}wave++;waveOn=true;if(gameMode==='hardcore'&&wave===100){updateModeUI();ft(W/2,H/2-60,'❄ ICE TOWER UNLOCKED!','#88ddff');sparks(W/2,H/2,'#88ddff',25,5);msg('❄ ICE TOWER is now available! (Wave 100+)',4000);}const wt=pickWaveType(wave);curWaveType=wt;const wdef=WAVE_TYPES[wt];const bon=Math.round((40+wave*6)*MODES[gameMode].goldBonus);gold+=bon;ft(W/2,H/2-16,`+${bon}g WAVE BONUS`,'#ffd700');ft(W/2,H/2+10,wdef.name,wdef.col);const sc=waveScale();ft(W/2,H/2+28,`ENEMY HP ×${sc.toFixed(1)}`,'#ff6644');const wn=document.getElementById('wname');wn.textContent=`⚔ ${wdef.name} ⚔`;wn.style.color=wdef.col;wn.style.borderColor=wdef.col+'66';wn.classList.add('vis');setTimeout(()=>wn.classList.remove('vis'),3000);msg(wdef.desc,3000);spawnQ=wdef.comp(wave);spawnT=0;syncUI();}
+function startWave(){if(waveOn||gameOver) return;if(MP.active&&!MP.isHost){msg('Only the HOST can start waves',2000);return;}wave++;waveOn=true;if(gameMode==='hardcore'&&wave===100){updateModeUI();ft(W/2,H/2-60,'❄ ICE TOWER UNLOCKED!','#88ddff');sparks(W/2,H/2,'#88ddff',25,5);msg('❄ ICE TOWER is now available! (Wave 100+)',4000);}const wt=pickWaveType(wave);curWaveType=wt;const wdef=WAVE_TYPES[wt];const bon=Math.round((40+wave*6)*MODES[gameMode].goldBonus);gold+=bon;ft(W/2,H/2-16,`+${bon}g WAVE BONUS`,'#ffd700');if(wave>achStats.maxWave){achStats.maxWave=wave;saveAchStats();}if(gold>(achStats.maxSingleGameGold||0)){achStats.maxSingleGameGold=gold;}if(gameMode==='hardcore'&&wave>(achStats.maxWaveHardcore||0)){achStats.maxWaveHardcore=wave;saveAchStats();}if(wave>=100)unlockAchievement('inf_guard_1');if(wave>=200)unlockAchievement('inf_guard_2');if(wave>=300)unlockAchievement('inf_guard_3');if(wave>=600)unlockAchievement('inf_guard_4');if(wave>=1000)unlockAchievement('inf_guard_5');
+    
+    if(wave>=50&&_sessionTowerTypes.size===1)unlockAchievement('why_this_tower');
+    if(_sessionAllTypes.size>=14)unlockAchievement('full_arsenal');
+    if(_sessionWallCount>=50)unlockAchievement('wall_street');ft(W/2,H/2+10,wdef.name,wdef.col);const sc=waveScale();ft(W/2,H/2+28,`ENEMY HP ×${sc.toFixed(1)}`,'#ff6644');const wn=document.getElementById('wname');wn.textContent=`⚔ ${wdef.name} ⚔`;wn.style.color=wdef.col;wn.style.borderColor=wdef.col+'66';wn.classList.add('vis');setTimeout(()=>wn.classList.remove('vis'),3000);msg(wdef.desc,3000);spawnQ=wdef.comp(wave);spawnT=0;syncUI();}
 
 function doGameOver(){gameOver=true;if(MP.active&&MP.isHost)MP.broadcast('game:over',{wave,score});msg(`SIEGE FAILED — Wave ${wave} — Score: ${score}`,99999);document.getElementById('start').disabled=true;tryPromptLeaderboard();}
 
@@ -3125,7 +3348,7 @@ const EDEFS={
   normal:{hpM:1.0,spdM:1.0,spdCap:6.0,rw:8,sz:9,col:'#ff3a22',glow:'#ff3a22',lbl:'',atkD:10,atkCdB:42,flying:false,robot:false},
   fast:{hpM:.55,spdM:1.75,spdCap:9.0,rw:14,sz:7,col:'#ffaa00',glow:'#ffcc00',lbl:'F',atkD:7,atkCdB:30,flying:false,robot:false},
   tank:{hpM:2.6,spdM:.56,spdCap:3.5,rw:28,sz:13,col:'#cc2200',glow:'#ff2200',lbl:'T',atkD:32,atkCdB:46,flying:false,robot:false},
-  boss:{hpM:5.5,spdM:.46,spdCap:3.0,rw:65,sz:17,col:'#ff0055',glow:'#ff0099',lbl:'B',atkD:72,atkCdB:52,flying:false,robot:false,isBoss:true,bossType:'normal'},
+  boss:{hpM:5.5,spdM:.46,spdCap:3.0,rw:65,sz:17,col:'#ff0055',glow:'#ff0099',lbl:'B',atkD:72,atkCdB:52,flying:false,robot:false,isBoss:true,_bossSpawnTime:Date.now(),bossType:'normal'},
   flyer:{hpM:.8,spdM:1.3,spdCap:7.0,rw:18,sz:8,col:'#00aaff',glow:'#44ccff',lbl:'✈',atkD:20,atkCdB:35,flying:true,robot:false,altitude:22},
   robot:{hpM:1.8,spdM:.78,spdCap:4.5,rw:22,sz:10,col:'#888888',glow:'#aaaaaa',lbl:'🤖',atkD:18,atkCdB:40,flying:false,robot:true},
   armored:{hpM:4.0,spdM:.42,spdCap:2.8,rw:90,sz:14,col:'#8844ff',glow:'#aa66ff',lbl:'A',atkD:45,atkCdB:44,flying:false,robot:false},
@@ -3133,13 +3356,13 @@ const EDEFS={
   heavyarmor:{hpM:1.5,spdM:.20,spdCap:1.5,rw:55,sz:13,col:'#cc9944',glow:'#ddbb55',lbl:'🛡',atkD:38,atkCdB:42,flying:false,robot:false,heavyArmor:true},
   gunner:{hpM:1.2,spdM:.85,spdCap:5.0,rw:18,sz:9,col:'#ff6600',glow:'#ff9944',lbl:'🔫',atkD:6,atkCdB:38,flying:false,robot:false,isGunner:true},
   shielder:{hpM:2.8,spdM:.50,spdCap:3.2,rw:30,sz:12,col:'#00ddff',glow:'#44eeff',lbl:'🔵',atkD:15,atkCdB:55,flying:false,robot:false,isShielder:true},
-  boss_normal:{hpM:12,spdM:.40,spdCap:2.5,rw:180,sz:20,col:'#ff0055',glow:'#ff0099',lbl:'★',atkD:90,atkCdB:48,flying:false,robot:false,isBoss:true,bossType:'normal'},
-  boss_armor:{hpM:18,spdM:.34,spdCap:2.2,rw:250,sz:20,col:'#8844ff',glow:'#bb55ff',lbl:'★',atkD:80,atkCdB:50,flying:false,robot:false,isBoss:true,bossType:'armor',heavyArmor:true},
-  boss_robot:{hpM:15,spdM:.38,spdCap:2.4,rw:220,sz:20,col:'#55aacc',glow:'#77ccee',lbl:'★',atkD:85,atkCdB:48,flying:false,robot:true,isBoss:true,bossType:'robot'},
-  boss_flying:{hpM:8,spdM:.70,spdCap:4.0,rw:200,sz:18,col:'#00ccff',glow:'#44eeff',lbl:'★',atkD:75,atkCdB:44,flying:true,robot:false,isBoss:true,bossType:'flying',altitude:28},
-  boss_commander:{hpM:25,spdM:.30,spdCap:2.0,rw:300,sz:22,col:'#ffdd00',glow:'#ffff44',lbl:'★',atkD:60,atkCdB:55,flying:false,robot:false,isBoss:true,bossType:'commander',healCd:0,healCdMax:180,healAmt:0,strikeCd:0,strikeCdMax:360},
-  boss_king:{hpM:150,spdM:.10,spdCap:1.0,rw:1200,sz:34,col:'#ffd700',glow:'#ffff44',lbl:'👑',atkD:200,atkCdB:55,flying:false,robot:false,isBoss:true,bossType:'king',heavyArmor:true},
-  boss_hacklord:{hpM:200,spdM:.28,spdCap:2.0,rw:3000,sz:28,col:'#00ff44',glow:'#44ff88',lbl:'💻',atkD:65,atkCdB:50,flying:false,robot:false,isBoss:true,bossType:'hacklord'},
+  boss_normal:{hpM:12,spdM:.40,spdCap:2.5,rw:180,sz:20,col:'#ff0055',glow:'#ff0099',lbl:'★',atkD:90,atkCdB:48,flying:false,robot:false,isBoss:true,_bossSpawnTime:Date.now(),bossType:'normal'},
+  boss_armor:{hpM:18,spdM:.34,spdCap:2.2,rw:250,sz:20,col:'#8844ff',glow:'#bb55ff',lbl:'★',atkD:80,atkCdB:50,flying:false,robot:false,isBoss:true,_bossSpawnTime:Date.now(),bossType:'armor',heavyArmor:true},
+  boss_robot:{hpM:15,spdM:.38,spdCap:2.4,rw:220,sz:20,col:'#55aacc',glow:'#77ccee',lbl:'★',atkD:85,atkCdB:48,flying:false,robot:true,isBoss:true,_bossSpawnTime:Date.now(),bossType:'robot'},
+  boss_flying:{hpM:8,spdM:.70,spdCap:4.0,rw:200,sz:18,col:'#00ccff',glow:'#44eeff',lbl:'★',atkD:75,atkCdB:44,flying:true,robot:false,isBoss:true,_bossSpawnTime:Date.now(),bossType:'flying',altitude:28},
+  boss_commander:{hpM:25,spdM:.30,spdCap:2.0,rw:300,sz:22,col:'#ffdd00',glow:'#ffff44',lbl:'★',atkD:60,atkCdB:55,flying:false,robot:false,isBoss:true,_bossSpawnTime:Date.now(),bossType:'commander',healCd:0,healCdMax:180,healAmt:0,strikeCd:0,strikeCdMax:360},
+  boss_king:{hpM:150,spdM:.10,spdCap:1.0,rw:1200,sz:34,col:'#ffd700',glow:'#ffff44',lbl:'👑',atkD:200,atkCdB:55,flying:false,robot:false,isBoss:true,_bossSpawnTime:Date.now(),bossType:'king',heavyArmor:true},
+  boss_hacklord:{hpM:200,spdM:.28,spdCap:2.0,rw:3000,sz:28,col:'#00ff44',glow:'#44ff88',lbl:'💻',atkD:65,atkCdB:50,flying:false,robot:false,isBoss:true,_bossSpawnTime:Date.now(),bossType:'hacklord'},
 };
 function spawnE(entry){const d=EDEFS[entry.variant]||EDEFS.normal;const sm=entry.sizeMult||1;const sc=waveScale();const baseHp=48*sc*d.hpM*sm,baseSpd=(.82+wave*.035+Math.max(0,wave-50)*.015)*d.spdM;const spdCap=d.spdCap||999;const cappedSpd=Math.min(baseSpd,spdCap);const e={x:SPAWN_C*CS+CS*.5,y:SPAWN_R*CS+CS*.5,hp:Math.round(baseHp),mhp:Math.round(baseHp),spd:cappedSpd,spdCap:spdCap,rw:d.rw,sz:d.sz,col:d.col,glow:d.glow,lbl:d.lbl,wob:Math.random()*Math.PI*2,stun:0,mode:'move',atkTarget:null,atkCd:0,atkDmg:d.atkD,atkCdB:d.atkCdB,flying:d.flying,robot:d.robot,heavyArmor:d.heavyArmor||false,altitude:d.flying?(d.altitude||20):0,flyWob:Math.random()*Math.PI*2,variant:entry.variant,isBoss:d.isBoss||false,bossType:d.bossType||null,stunCount:0,unstable:false,spdBase:cappedSpd,isGunner:d.isGunner||false,isShielder:d.isShielder||false,gunCd:0,shielded:false,cmdHealCd:0,cmdStrikeCd:0,burnDmg:0,burnDur:0,armorShred:0,shredDur:0,bhExposure:0,bhImmune:false,slowFactor:0,slowDur:0};if(d.flying) e.y=SPAWN_R*CS+CS*.5-e.altitude;return e;}
 
@@ -3478,7 +3701,7 @@ function update(){
   t.angle=Math.atan2(closest.y-ty,closest.x-tx);
   shockwaves.push({ox:tx,oy:ty,r:CS*.3,maxR:cfg.shockMaxR||200,spd:cfg.shockSpd||3.2,dmg:effDmg,col:cfg.col,life:1,hit:new Set(),width:3});sparks(tx,ty,cfg.col,6,1);continue;}
   if(cfg.iceTower&&cfg.iceShockwave){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<bd){bd=d;closest=e;}}if(!closest) continue;t.cd=effCd;t.angle=Math.atan2(closest.y-ty,closest.x-tx);shockwaves.push({ox:tx,oy:ty,r:CS*.3,maxR:cfg.shockMaxR||180,spd:cfg.shockSpd||3.0,dmg:effDmg,col:cfg.col,life:1,hit:new Set(),width:3,isIce:true,slowFactor:cfg.slowFactor||.40,slowDur:cfg.slowDur||120});sparks(tx,ty,'#88ddff',6,1);continue;}
-  if(cfg.iceTower&&cfg.iceBullet){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<bd){bd=d;closest=e;}}if(!closest) continue;t.cd=effCd;t.angle=Math.atan2(closest.y-ty,closest.x-tx);projs.push({x:tx,y:ty,tgt:closest,lastX:closest.x,lastY:closest.y,spd:cfg.bulletSpd||12,dmg:effDmg,col:cfg.col,src:t,type:'iceBullet',slowFactor:cfg.slowFactor||.25,slowDur:cfg.slowDur||90,armorShred:cfg.armorShred||.15,shredDur:cfg.shredDur||130,flyFreeze:cfg.flyFreeze||.80,flySpdCap:cfg.flySpdCap||.25});sparks(tx,ty,'#4488ff',4,1.5);continue;}let tgt=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<bd){bd=d;tgt=e;}}if(!tgt) continue;t.angle=Math.atan2(tgt.y-ty,tgt.x-tx);t.cd=effCd;if(cfg.t===CT.ELECTRIC){if(cfg.burst&&cfg.burst>1){const inR=enemies.filter(e=>{const dx=e.x-tx,dy=e.y-ty;return dx*dx+dy*dy<=effRng*effRng;});inR.sort((a,b)=>(a.x-tx)**2+(a.y-ty)**2-(b.x-tx)**2-(b.y-ty)**2);for(const bt of inR.slice(0,cfg.burst)) fireElectric(tx,ty,bt,effDmg,cfg.chn);}else if(cfg.elecBall){projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:2.6,dmg:effDmg,aoe:cfg.aoe||0,chn:cfg.chn||3,chainRng:105,col:cfg.col,sz:8,type:'elecBall'});}else fireElectric(tx,ty,tgt,effDmg,cfg.chn);}else if(cfg.t===CT.SPIKE){if(cfg.hammer) projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:6,dmg:effDmg,aoe:cfg.aoe||45,chn:0,col:cfg.col,sz:6,type:'hammer',stunDur:cfg.stunDur||45});else if(cfg.rapidStrike){for(let rb=0;rb<2;rb++) projs.push({x:tx+(Math.random()-.5)*3,y:ty+(Math.random()-.5)*3,tgt,lastX:tgt.x,lastY:tgt.y,spd:8,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:3,type:'normal'});}else projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:4,type:'normal'});}else if(cfg.minigun){for(let b=0;b<3;b++) projs.push({x:tx+(Math.random()-.5)*4,y:ty+(Math.random()-.5)*4,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:2,type:'normal'});}else projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:cfg.t===CT.SNIPER?10:5.5,dmg:effDmg,aoe:cfg.aoe||0,chn:0,col:cfg.col,sz:cfg.t===CT.CANNON?5:3,type:'normal'});}
+  if(cfg.iceTower&&cfg.iceBullet){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<bd){bd=d;closest=e;}}if(!closest) continue;t.cd=effCd;t.angle=Math.atan2(closest.y-ty,closest.x-tx);projs.push({x:tx,y:ty,tgt:closest,lastX:closest.x,lastY:closest.y,spd:cfg.bulletSpd||12,dmg:effDmg,col:cfg.col,src:t,type:'iceBullet',slowFactor:cfg.slowFactor||.25,slowDur:cfg.slowDur||90,armorShred:cfg.armorShred||.15,shredDur:cfg.shredDur||130,flyFreeze:cfg.flyFreeze||.80,flySpdCap:cfg.flySpdCap||.25});sparks(tx,ty,'#4488ff',4,1.5);continue;}let tgt=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<bd){bd=d;tgt=e;}}if(!tgt) continue;t.angle=Math.atan2(tgt.y-ty,tgt.x-tx);t.cd=effCd;if(cfg.t===CT.ELECTRIC){if(cfg.burst&&cfg.burst>1){const inR=enemies.filter(e=>{const dx=e.x-tx,dy=e.y-ty;return dx*dx+dy*dy<=effRng*effRng;});inR.sort((a,b)=>(a.x-tx)**2+(a.y-ty)**2-(b.x-tx)**2-(b.y-ty)**2);for(const bt of inR.slice(0,cfg.burst)) fireElectric(tx,ty,bt,effDmg,cfg.chn);}else if(cfg.elecBall){projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:2.6,dmg:effDmg,aoe:cfg.aoe||0,chn:cfg.chn||3,chainRng:105,col:cfg.col,sz:8,type:'elecBall'});}else fireElectric(tx,ty,tgt,effDmg,cfg.chn);}else if(cfg.t===CT.SPIKE){if(cfg.hammer) projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:6,dmg:effDmg,aoe:cfg.aoe||45,chn:0,col:cfg.col,sz:6,type:'hammer',stunDur:cfg.stunDur||45});else if(cfg.rapidStrike){for(let rb=0;rb<2;rb++) projs.push({x:tx+(Math.random()-.5)*3,y:ty+(Math.random()-.5)*3,tgt,lastX:tgt.x,lastY:tgt.y,spd:8,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:3,type:'normal',src:t});}else projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:4,type:'normal'});}else if(cfg.minigun){for(let b=0;b<3;b++) projs.push({x:tx+(Math.random()-.5)*4,y:ty+(Math.random()-.5)*4,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:2,type:'normal',src:t});}else projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:cfg.t===CT.SNIPER?10:5.5,dmg:effDmg,aoe:cfg.aoe||0,chn:0,col:cfg.col,sz:cfg.t===CT.CANNON?5:3,type:'normal',src:t});}
   // === ADMIN DRONE UPDATE ===
   updateAdminDrones();
   // === KING WAVE UPDATE (damages towers, proximity-based) ===
@@ -3502,8 +3725,8 @@ function update(){
     if(kw.r>=kw.maxR) kingWaves.splice(ki,1);
   }
   for(let i=shockwaves.length-1;i>=0;i--){const sw=shockwaves[i];if(!sw.hit)sw.hit=new Set();const prevR=sw.r;sw.r+=sw.spd;for(const e of enemies){if(sw.hit.has(e)) continue;const dx=e.x-sw.ox,dy=e.y-sw.oy,d=Math.sqrt(dx*dx+dy*dy);if(d>=prevR-e.sz*0.5&&d<=sw.r+e.sz*0.5){e.hp-=applyArmor(e,sw.dmg);sw.hit.add(e);sparks(e.x,e.y,sw.col,4,1.5);if(sw.isIce){const sf=sw.slowFactor||.40;const sd=sw.slowDur||120;if(sf>e.slowFactor){e.slowFactor=sf;e.slowDur=Math.max(e.slowDur,sd);e.spd=e.spdBase*(1-e.slowFactor);if(e.flying&&sf>=.5){e.spd=Math.min(e.spd,e.spdBase*.20);}ft(e.x,e.y-e.sz-6,'❄','#88ddff');}}else{if(!e.robot) applyStun(e,6);}}}if(sw.r>=sw.maxR) shockwaves.splice(i,1);}
-  for(let i=projs.length-1;i>=0;i--){const p=projs[i];if(p.tgt&&enemies.includes(p.tgt)){p.lastX=p.tgt.x;p.lastY=p.tgt.y;}const dx=p.lastX-p.x,dy=p.lastY-p.y,d=Math.sqrt(dx*dx+dy*dy);if(d<p.spd*1.5){if(p.type==='iceBullet'){const te=p.tgt;if(te&&enemies.includes(te)){te.hp-=applyArmor(te,p.dmg);if(p.armorShred>te.armorShred){te.armorShred=p.armorShred;te.shredDur=Math.max(te.shredDur,p.shredDur);}if(p.slowFactor>te.slowFactor){te.slowFactor=p.slowFactor;te.slowDur=Math.max(te.slowDur,p.slowDur);te.spd=te.spdBase*(1-te.slowFactor);}if(te.flying){const ff=p.flyFreeze||.80;te.slowFactor=Math.max(te.slowFactor,ff);te.slowDur=Math.max(te.slowDur,p.slowDur+60);te.spd=Math.min(te.spdBase*(1-ff),te.spdBase*(p.flySpdCap||.25));ft(te.x,te.y-te.sz-10,'❄ FROZEN','#4488ff');}else{ft(te.x,te.y-te.sz-6,'❄','#88ddff');}sparks(te.x,te.y,'#88ddff',8,2);}}else if(p.type==='elecBall') explodeElecBall(p);else if(p.type==='towershot'){const tw=p.stunTwr;if(tw&&towers.includes(tw)){const wallBonus=tw.cfg.t===CT.WALL?2.5:1;tw.hp-=Math.round(p.dmg*wallBonus);tw.hitFlash=12;if(tw.cfg.t!==CT.WALL) tw.stunned=(tw.stunned||0)+p.stunDur;sparks(p.lastX,p.lastY,'#ff8800',10,2.5);if(tw.cfg.t===CT.WALL) ft(tw.col*CS+CS/2,tw.row*CS,'HIT!','#ff6600');if(tw.hp<=0) destroyTower(tw);}}else if(p.type==='missile'){sparks(p.lastX,p.lastY,'#00ffaa',20,4);if(p.aoe>0){for(const e of enemies){const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe) e.hp-=e.shielded?Math.round(p.dmg*0.4):p.dmg;}}else if(p.tgt&&enemies.includes(p.tgt)) p.tgt.hp-=applyArmor(p.tgt,p.dmg);}else if(p.type==='hammer'){if(p.aoe>0){for(const e of enemies){const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){e.hp-=applyArmor(e,p.dmg);applyStun(e,p.stunDur||45);sparks(e.x,e.y,p.col,4,1.5);}}}sparks(p.lastX,p.lastY,'#ff2255',16,3.5);ft(p.lastX,p.lastY-8,'STUN!','#ff2255');}else{if(p.aoe>0){for(const e of enemies){const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){e.hp-=applyArmor(e,p.dmg);sparks(e.x,e.y,p.col,3,1);}}}else{if(p.tgt&&enemies.includes(p.tgt)){const blocker=isBlockedByShield(p.x,p.y,p.tgt);if(blocker){blocker.hp-=Math.max(1,Math.round(p.dmg*0.25));sparks(blocker.x,blocker.y,'#00ddff',8,2.5);ft(blocker.x,blocker.y-blocker.sz-6,'BLOCKED!','#00ddff');}else p.tgt.hp-=applyArmor(p.tgt,p.dmg);}}}projs.splice(i,1);}else{p.x+=dx/d*p.spd;p.y+=dy/d*p.spd;}}
-  for(let i=enemies.length-1;i>=0;i--){if(enemies[i].hp<=0){const e=enemies[i];const bfx=getBuffsAt(Math.floor(e.x/CS),Math.floor(e.y/CS));const rw=Math.round(e.rw*(1+bfx.goldBonusMult));gold+=rw;const sm=MODES[gameMode].scoreMult||1;score+=Math.round(rw*10*sm);kills++;achStats.totalKills++;if(achStats.totalKills%100===0)saveAchStats();if(achStats.totalKills>=100)unlockAchievement('doom_1');if(achStats.totalKills>=1000)unlockAchievement('doom_2');if(achStats.totalKills>=10000)unlockAchievement('doom_3');if(achStats.totalKills>=100000)unlockAchievement('doom_4');if(achStats.totalKills>=1000000)unlockAchievement('doom_5');if(e.isBoss&&e.bossType==='hacklord')unlockAchievement('hacklord_killer');ft(e.x,e.y-e.sz,`+${rw}g`);sparks(e.x,e.y,e.col,14,2.2);enemies.splice(i,1);syncUI();}}
+  for(let i=projs.length-1;i>=0;i--){const p=projs[i];if(p.tgt&&enemies.includes(p.tgt)){p.lastX=p.tgt.x;p.lastY=p.tgt.y;}const dx=p.lastX-p.x,dy=p.lastY-p.y,d=Math.sqrt(dx*dx+dy*dy);if(d<p.spd*1.5){if(p.type==='iceBullet'){const te=p.tgt;if(te&&enemies.includes(te)){te.hp-=applyArmor(te,p.dmg);if(p.armorShred>te.armorShred){te.armorShred=p.armorShred;te.shredDur=Math.max(te.shredDur,p.shredDur);}if(p.slowFactor>te.slowFactor){te.slowFactor=p.slowFactor;te.slowDur=Math.max(te.slowDur,p.slowDur);te.spd=te.spdBase*(1-te.slowFactor);}if(te.flying){const ff=p.flyFreeze||.80;te.slowFactor=Math.max(te.slowFactor,ff);te.slowDur=Math.max(te.slowDur,p.slowDur+60);te.spd=Math.min(te.spdBase*(1-ff),te.spdBase*(p.flySpdCap||.25));ft(te.x,te.y-te.sz-10,'❄ FROZEN','#4488ff');}else{ft(te.x,te.y-te.sz-6,'❄','#88ddff');}sparks(te.x,te.y,'#88ddff',8,2);}}else if(p.type==='elecBall') explodeElecBall(p);else if(p.type==='towershot'){const tw=p.stunTwr;if(tw&&towers.includes(tw)){const wallBonus=tw.cfg.t===CT.WALL?2.5:1;tw.hp-=Math.round(p.dmg*wallBonus);tw.hitFlash=12;if(tw.cfg.t!==CT.WALL) tw.stunned=(tw.stunned||0)+p.stunDur;sparks(p.lastX,p.lastY,'#ff8800',10,2.5);if(tw.cfg.t===CT.WALL) ft(tw.col*CS+CS/2,tw.row*CS,'HIT!','#ff6600');if(tw.hp<=0) destroyTower(tw);}}else if(p.type==='missile'){sparks(p.lastX,p.lastY,'#00ffaa',20,4);if(p.aoe>0){for(const e of enemies){const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe) e.hp-=e.shielded?Math.round(p.dmg*0.4):p.dmg;}}else if(p.tgt&&enemies.includes(p.tgt)) p.tgt.hp-=applyArmor(p.tgt,p.dmg);}else if(p.type==='hammer'){if(p.aoe>0){for(const e of enemies){const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){e.hp-=applyArmor(e,p.dmg);applyStun(e,p.stunDur||45);sparks(e.x,e.y,p.col,4,1.5);}}}sparks(p.lastX,p.lastY,'#ff2255',16,3.5);ft(p.lastX,p.lastY-8,'STUN!','#ff2255');}else{if(p.aoe>0){for(const e of enemies){const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){e.hp-=applyArmor(e,p.dmg);sparks(e.x,e.y,p.col,3,1);}}}else{if(p.tgt&&enemies.includes(p.tgt)){const blocker=isBlockedByShield(p.x,p.y,p.tgt);if(blocker){blocker.hp-=Math.max(1,Math.round(p.dmg*0.25));sparks(blocker.x,blocker.y,'#00ddff',8,2.5);ft(blocker.x,blocker.y-blocker.sz-6,'BLOCKED!','#00ddff');}else{const _pd=applyArmor(p.tgt,p.dmg);p.tgt.hp-=_pd;if(p.src){p.src.totalDmgDealt=(p.src.totalDmgDealt||0)+_pd;p.tgt._lastHitTower=p.src;}}}}}projs.splice(i,1);}else{p.x+=dx/d*p.spd;p.y+=dy/d*p.spd;}}
+  for(let i=enemies.length-1;i>=0;i--){if(enemies[i].hp<=0){const e=enemies[i];const bfx=getBuffsAt(Math.floor(e.x/CS),Math.floor(e.y/CS));const rw=Math.round(e.rw*(1+bfx.goldBonusMult));gold+=rw;const sm=MODES[gameMode].scoreMult||1;score+=Math.round(rw*10*sm);kills++;achStats.totalKills++;if(e._lastHitTower&&towers.includes(e._lastHitTower)){e._lastHitTower.totalKills=(e._lastHitTower.totalKills||0)+1;}if(e.isBoss&&e._bossSpawnTime&&(Date.now()-e._bossSpawnTime)<=5000){unlockAchievement('boss_speed');}if(achStats.totalKills%100===0)saveAchStats();if(achStats.totalKills>=100)unlockAchievement('doom_1');if(achStats.totalKills>=1000)unlockAchievement('doom_2');if(achStats.totalKills>=10000)unlockAchievement('doom_3');if(achStats.totalKills>=100000)unlockAchievement('doom_4');if(achStats.totalKills>=1000000)unlockAchievement('doom_5');if(e.isBoss&&e.bossType==='hacklord')unlockAchievement('hacklord_killer');ft(e.x,e.y-e.sz,`+${rw}g`);sparks(e.x,e.y,e.col,14,2.2);enemies.splice(i,1);syncUI();}}
   if(gfxMode===3){parts.length=0;}for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.05;p.life--;if(p.life<=0)parts.splice(i,1);}
   if(gfxMode===3){floats.length=0;}for(let i=floats.length-1;i>=0;i--){floats[i].y+=floats[i].vy;floats[i].life--;if(floats[i].life<=0)floats.splice(i,1);}
   if(gfxMode>=2){lxfx.length=0;}else{for(let i=lxfx.length-1;i>=0;i--){lxfx[i].life--;if(lxfx[i].life<=0)lxfx.splice(i,1);}}
