@@ -859,6 +859,8 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 .io-btn{flex:1;background:#04090f;border:1px solid #0e2030;color:#4a7a5a;font-family:'Share Tech Mono',monospace;font-size:10px;padding:7px 4px;cursor:pointer;text-align:center;transition:all .1s;letter-spacing:1px;}
 .io-btn:hover:not(:disabled){border-color:#00ff88;color:#00ff88;background:#001a0d;}
 .io-btn.save-action:hover:not(:disabled){border-color:#ffd700;color:#ffd700;background:#0a0800;}
+.io-btn#prev-btn{border-color:#0e203088;color:#3a3a7a;}
+.io-btn#prev-btn:hover:not(:disabled){border-color:#8888ff;color:#8888ff;background:#080810;}
 .io-btn:disabled{opacity:.3;cursor:not-allowed;}
 #save-status{font-size:9px;color:#2a5a4a;letter-spacing:1px;min-height:14px;text-align:center;}
 #start{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;background:#061a0e;border:1px solid #00ff88;color:#00ff88;padding:11px 8px;cursor:pointer;width:100%;transition:all .15s;text-align:center;}
@@ -1637,6 +1639,9 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     <button class="io-btn" id="load-btn" disabled>📂 LOAD</button>
     <button class="io-btn" id="delete-btn" disabled>🗑 DEL</button>
   </div>
+  <div class="io-row">
+    <button class="io-btn" id="prev-btn" disabled>⏮ PREV VER</button>
+  </div>
   <div id="cloud-status" class="cloud-status" style="opacity:0"></div>
 <div id="save-status"></div>
   <div class="sh">── ENEMY TYPES ─</div>
@@ -1947,17 +1952,19 @@ let selectedSaveSlot=0;
 function getSaveDataLocal(slot){try{const raw=localStorage.getItem(SAVE_KEY_PREFIX+slot);return raw?JSON.parse(raw):null;}catch(e){return null;}}
 function getSaveData(slot){const local=getSaveDataLocal(slot);const cloud=_cloudSaveCache[slot];if(!local&&!cloud)return null;if(!cloud)return local;if(!local)return cloud;return(cloud.savedAt||0)>(local.savedAt||0)?cloud:local;}
 function setSaveDataLocal(slot,data){try{localStorage.setItem(SAVE_KEY_PREFIX+slot,JSON.stringify(data));return true;}catch(e){return false;}}
-function setSaveData(slot,data){const ok=setSaveDataLocal(slot,data);if(currentUser)cloudSave(slot,data).then(s=>{if(s)showCloudStatus('SAVED TO CLOUD');});return ok;}
+function setSaveData(slot,data){const existing=getSaveDataLocal(slot);if(existing)setPrevSaveData(slot,existing);const ok=setSaveDataLocal(slot,data);if(currentUser)cloudSave(slot,data).then(s=>{if(s)showCloudStatus('SAVED TO CLOUD');});return ok;}
 function deleteSaveData(slot){localStorage.removeItem(SAVE_KEY_PREFIX+slot);if(currentUser)cloudDelete(slot);_cloudSaveCache[slot]=null;}
+function getPrevSaveData(slot){try{const raw=localStorage.getItem(SAVE_KEY_PREFIX+'prev_'+slot);return raw?JSON.parse(raw):null;}catch(e){return null;}}
+function setPrevSaveData(slot,data){try{localStorage.setItem(SAVE_KEY_PREFIX+'prev_'+slot,JSON.stringify(data));}catch(e){}}
 
 function refreshSaveSlotUI(){
-  document.querySelectorAll('#save-slots-row .save-slot').forEach((btn,i)=>{const d=getSaveData(i);if(d){btn.innerHTML=`SLOT ${i+1}<br><span style="color:#ffd700;font-size:11px">W${d.wave}</span><br><span style="color:#4a9a6a;font-size:8px">${(d.score||0).toLocaleString()}</span>`;btn.classList.add('has-data');}else{btn.innerHTML=`SLOT ${i+1}<br>—`;btn.classList.remove('has-data');}btn.classList.toggle('on',i===selectedSaveSlot);btn.classList.toggle('cloud-synced',!!_cloudSaveCache[i]);});
+  document.querySelectorAll('#save-slots-row .save-slot').forEach((btn,i)=>{const d=getSaveData(i);const pv=getPrevSaveData(i);if(d){btn.innerHTML=`SLOT ${i+1}<br><span style="color:#ffd700;font-size:11px">W${d.wave}</span><br><span style="color:#4a9a6a;font-size:8px">${(d.score||0).toLocaleString()}</span>${pv?'<br><span style="color:#7777cc;font-size:7px;letter-spacing:1px">⏮PREV</span>':''}`;btn.classList.add('has-data');}else{btn.innerHTML=`SLOT ${i+1}<br>—`;btn.classList.remove('has-data');}btn.classList.toggle('on',i===selectedSaveSlot);btn.classList.toggle('cloud-synced',!!_cloudSaveCache[i]);});
   document.querySelectorAll('#ss-save-slots .ss-slot').forEach((btn,i)=>{const d=getSaveData(i);if(d){btn.innerHTML=`SLOT ${i+1}<br><span class="slot-wave">W${d.wave}</span><br><span class="slot-score">${MODES[d.gameMode]?.label||d.gameMode} · ${(d.score||0).toLocaleString()}</span>`;btn.classList.add('has-data');}else{btn.innerHTML=`SLOT ${i+1}<br><span class="slot-wave">—</span><br><span class="slot-score">empty</span>`;btn.classList.remove('has-data');}btn.classList.toggle('cloud-synced',!!_cloudSaveCache[i]);});
   updateIOButtons();
   // Re-apply slot locks after refresh
   if(typeof applyLevelUnlocks==='function') applyLevelUnlocks();
 }
-function updateIOButtons(){document.getElementById('save-btn').disabled=!gameStarted||gameOver;document.getElementById('load-btn').disabled=!getSaveData(selectedSaveSlot);document.getElementById('delete-btn').disabled=!getSaveData(selectedSaveSlot);}
+function updateIOButtons(){document.getElementById('save-btn').disabled=!gameStarted||gameOver;document.getElementById('load-btn').disabled=!getSaveData(selectedSaveSlot);document.getElementById('delete-btn').disabled=!getSaveData(selectedSaveSlot);document.getElementById('prev-btn').disabled=!getPrevSaveData(selectedSaveSlot);}
 function saveStatus(msg,col='#00ff88'){const el=document.getElementById('save-status');el.textContent=msg;el.style.color=col;clearTimeout(el._t);el._t=setTimeout(()=>{el.textContent='';},3000);}
 function serializeGameState(){return{version:17,gameMode,wave,gold,baseHP,baseMaxHP,score,kills,baseUpgPath,baseUpgLevel,towers:towers.map(t=>({row:t.row,col:t.col,key:t.key,level:t.level,path:t.path,hp:t.hp,maxHp:t.maxHp})),hcPoints,hcPointsSpent,hcLastPointScore,hcUnlocked:[...hcUnlocked],gfxMode:gfxMode,playTimeSeconds:playTimeSeconds,savedAt:Date.now()};}
 function deserializeGameState(data){
@@ -3096,9 +3103,10 @@ function updateHcUI(){
 }
 document.getElementById('autoskip-btn').addEventListener('click',()=>{autoSkip=!autoSkip;const btn=document.getElementById('autoskip-btn');btn.classList.toggle('on',autoSkip);const toast=document.getElementById('autoskip-toast');toast.textContent=autoSkip?'⚡ AUTO-SKIP ON':'⏹ AUTO-SKIP OFF';toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1400);msg(autoSkip?'⚡ Auto-skip enabled!':'⏹ Auto-skip disabled.',2200);});
 document.querySelectorAll('#save-slots-row .save-slot').forEach((btn,i)=>{btn.addEventListener('click',()=>{if(!isUnlocked('slot',String(i))){msg(`⚠ Slot ${i+1} unlocks at Level ${getUnlockLevel('slot',String(i))}!`,2500);return;}selectedSaveSlot=i;refreshSaveSlotUI();});});
-document.getElementById('save-btn').addEventListener('click',()=>{if(MP.active){msg('⚠ Cannot save in CO-OP mode',2000);return;}if(!gameStarted||gameOver){saveStatus('⚠ Cannot save now.','#ff4444');return;}const data=serializeGameState();if(setSaveData(selectedSaveSlot,data)){saveStatus(`✓ Saved to Slot ${selectedSaveSlot+1}`);ft(W/2,H/2,`SAVED → SLOT ${selectedSaveSlot+1}`,'#00ff88');sparks(W/2,H/2,'#00ff88',16,2.5);refreshSaveSlotUI();}else saveStatus('✗ Save failed!','#ff4444');});
+document.getElementById('save-btn').addEventListener('click',()=>{if(MP.active){msg('⚠ Cannot save in CO-OP mode',2000);return;}if(!gameStarted||gameOver){saveStatus('⚠ Cannot save now.','#ff4444');return;}if(!confirm(`Save to Slot ${selectedSaveSlot+1}? This will overwrite the current data.`)) return;const data=serializeGameState();if(setSaveData(selectedSaveSlot,data)){saveStatus(`✓ Saved to Slot ${selectedSaveSlot+1}`);ft(W/2,H/2,`SAVED → SLOT ${selectedSaveSlot+1}`,'#00ff88');sparks(W/2,H/2,'#00ff88',16,2.5);refreshSaveSlotUI();}else saveStatus('✗ Save failed!','#ff4444');});
 document.getElementById('load-btn').addEventListener('click',()=>{if(MP.active){msg('⚠ Cannot load saves in CO-OP mode',2000);return;}const data=getSaveData(selectedSaveSlot);if(!data){saveStatus('⚠ No data in slot.','#ff4444');return;}if(!confirm(`Load Slot ${selectedSaveSlot+1}? (Wave ${data.wave}, ${MODES[data.gameMode]?.label||data.gameMode})`)) return;if(deserializeGameState(data)){document.getElementById('startScreen').classList.add('gone');gameStarted=true;saveStatus(`✓ Loaded Slot ${selectedSaveSlot+1}  W${data.wave}`);msg(`Loaded from Slot ${selectedSaveSlot+1} — Wave ${data.wave}`,3000);}else saveStatus('✗ Load failed.','#ff4444');});
 document.getElementById('delete-btn').addEventListener('click',()=>{const data=getSaveData(selectedSaveSlot);if(!data) return;if(!confirm(`Delete Slot ${selectedSaveSlot+1}?`)) return;deleteSaveData(selectedSaveSlot);saveStatus(`✗ Slot ${selectedSaveSlot+1} deleted.`,'#ff6644');refreshSaveSlotUI();});
+document.getElementById('prev-btn').addEventListener('click',()=>{if(MP.active){msg('⚠ Cannot load saves in CO-OP mode',2000);return;}const data=getPrevSaveData(selectedSaveSlot);if(!data){saveStatus('⚠ No previous version.','#ff4444');return;}if(!confirm(`Load previous version of Slot ${selectedSaveSlot+1}? (Wave ${data.wave}, ${MODES[data.gameMode]?.label||data.gameMode})`)) return;if(deserializeGameState(data)){document.getElementById('startScreen').classList.add('gone');gameStarted=true;saveStatus(`✓ Loaded prev ver  W${data.wave}`);msg(`Previous version of Slot ${selectedSaveSlot+1} loaded — Wave ${data.wave}`,3000);}else saveStatus('✗ Load failed.','#ff4444');});
 document.querySelectorAll('.mb').forEach(b=>{b.addEventListener('click',()=>{if(gameStarted) return;if(!isUnlocked('mode',b.dataset.m)){msg(`⚠ ${b.dataset.m.toUpperCase()} unlocks at Level ${getUnlockLevel('mode',b.dataset.m)}!`,2500);return;}gameMode=b.dataset.m;document.querySelectorAll('.mb').forEach(x=>x.classList.remove('on'));b.classList.add('on');init();msg(`Mode: ${MODES[gameMode].label}`,2000);});});
 document.querySelectorAll('.spb').forEach(b=>{b.addEventListener('click',()=>{if(!isUnlocked('speed',b.dataset.spd)){msg(`⚠ ${b.dataset.spd}× speed unlocks at Level ${getUnlockLevel('speed',b.dataset.spd)}!`,2500);return;}speed=parseInt(b.dataset.spd);document.querySelectorAll('.spb').forEach(x=>x.classList.remove('on'));b.classList.add('on');});});
 document.querySelectorAll('.gfx-btn').forEach(b=>{b.addEventListener('click',()=>{gfxMode=parseInt(b.dataset.gfx);document.querySelectorAll('.gfx-btn').forEach(x=>x.classList.remove('on'));b.classList.add('on');msg(['HIGHEST','MEDIUM','LOW','POTATO'][gfxMode]+' graphics',1500);});});
