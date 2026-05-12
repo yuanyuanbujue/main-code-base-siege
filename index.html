@@ -2048,10 +2048,10 @@ const TS={
     '3A':{t:CT.SILO,cost:3500,hp:290,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#ff3300',name:'NUKE SILO II',siloTower:true,siloType:'nuke',siloDmg:1100,siloAoe:260,siloCdMax:720},
     '4A':{t:CT.SILO,cost:6000,hp:370,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#ff2200',name:'NUKE SILO III',siloTower:true,siloType:'nuke',siloDmg:2400,siloAoe:380,siloCdMax:600},
     '5A':{t:CT.SILO,cost:12000,hp:500,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#ff1100',name:'ARMAGEDDON',siloTower:true,siloType:'nuke',siloDmg:5000,siloAoe:520,siloCdMax:480},
-    '2B':{t:CT.SILO,cost:1400,hp:230,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#cc55ff',name:'LASER STRIKE I',siloTower:true,siloType:'laser',siloDmg:18,siloAoe:0,siloCdMax:3},
-    '3B':{t:CT.SILO,cost:2500,hp:290,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#aa33ee',name:'LASER STRIKE II',siloTower:true,siloType:'laser',siloDmg:36,siloAoe:0,siloCdMax:3},
-    '4B':{t:CT.SILO,cost:4500,hp:370,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#8822dd',name:'LASER STRIKE III',siloTower:true,siloType:'laser',siloDmg:70,siloAoe:0,siloCdMax:3,laserSlow:0.22},
-    '5B':{t:CT.SILO,cost:8000,hp:500,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#6600cc',name:'DEATH BEAM',siloTower:true,siloType:'laser',siloDmg:130,siloAoe:0,siloCdMax:3,laserSlow:0.32,laserShred:0.22}
+    '2B':{t:CT.SILO,cost:1400,hp:230,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#cc55ff',name:'LASER STRIKE I',siloTower:true,siloType:'laser',siloDmg:18,siloAoe:0,siloCdMax:3,siloLaserChargeDur:300,siloLaserFireDur:180,siloLaserRechargeDur:360},
+    '3B':{t:CT.SILO,cost:2500,hp:290,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#aa33ee',name:'LASER STRIKE II',siloTower:true,siloType:'laser',siloDmg:36,siloAoe:0,siloCdMax:3,siloLaserChargeDur:240,siloLaserFireDur:210,siloLaserRechargeDur:300},
+    '4B':{t:CT.SILO,cost:4500,hp:370,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#8822dd',name:'LASER STRIKE III',siloTower:true,siloType:'laser',siloDmg:70,siloAoe:0,siloCdMax:3,laserSlow:0.22,siloLaserChargeDur:180,siloLaserFireDur:240,siloLaserRechargeDur:240},
+    '5B':{t:CT.SILO,cost:8000,hp:500,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#6600cc',name:'DEATH BEAM',siloTower:true,siloType:'laser',siloDmg:130,siloAoe:0,siloCdMax:3,laserSlow:0.32,laserShred:0.22,siloLaserChargeDur:120,siloLaserFireDur:300,siloLaserRechargeDur:180}
   },
 };
 
@@ -3054,7 +3054,7 @@ function showPanel(t){
   let s=`HP: ${Math.round(t.hp)}/${t.maxHp}`;
   if(c.dmg) s+=`  DMG:${c.dmg}`;if(c.rng) s+=`  RNG:${c.rng}`;if(c.cd) s+=`  CD:${c.cd}`;
   if(c.chn) s+=`  CHN:${c.chn}`;if(c.aoe) s+=`  AOE:${c.aoe}`;
-  if(t.key==='silo'||c.siloTower){s+='\nTYPE: '+(c.siloType?c.siloType.toUpperCase():'BASIC')+' | RANGE: INFINITE';if(c.siloType==='nuke')s+='\nNUKE DMG: '+c.siloDmg+' AoE:'+c.siloAoe+'r  CD:'+Math.round(c.siloCdMax/60)+'s';else if(c.siloType==='laser')s+='\nLASER DPS: '+(c.siloDmg*20)+' ('+c.siloDmg+'/3f)';if(c.laserSlow)s+='\nSLOW: '+Math.round(c.laserSlow*100)+'%';if(c.laserShred)s+='\nARMOR SHRED: '+Math.round(c.laserShred*100)+'%';}
+  if(t.key==='silo'||c.siloTower){s+='\nTYPE: '+(c.siloType?c.siloType.toUpperCase():'BASIC')+' | RANGE: INFINITE';if(c.siloType==='nuke')s+='\nNUKE DMG: '+c.siloDmg+' AoE:'+c.siloAoe+'r  CD:'+Math.round(c.siloCdMax/60)+'s';else if(c.siloType==='laser'){s+='\nLASER DMG: '+c.siloDmg+'/tick  |  CHARGE:'+Math.round((c.siloLaserChargeDur||300)/60)+'s FIRE:'+Math.round((c.siloLaserFireDur||180)/60)+'s';if(t.siloLaserPhase){const tSec=Math.ceil((t.siloLaserPhaseTimer||0)/60);s+='\nPHASE: '+(t.siloLaserPhase==='charge'?'CHARGING ('+tSec+'s)':t.siloLaserPhase==='fire'?'FIRING ('+tSec+'s left)':'RECHARGING ('+tSec+'s)');}}if(c.laserSlow)s+='\nSLOW: '+Math.round(c.laserSlow*100)+'%';if(c.laserShred)s+='\nARMOR SHRED: '+Math.round(c.laserShred*100)+'%';}
   if(t.key==='healer') s+=`\nHEAL:${c.healAmt} T:${c.healTick}\nSTUN REDUCE:-${c.healStunReduce||0}/tick${c.baseHealAmt?`\nBASE+${c.baseHealAmt}`:''}`;
   if(t.key==='mine'){if(c.mineType==='compound'||c.mineType==='basic') s+=`\nGOLD/WAVE: +${c.goldPerWave}g`;if(c.mineType==='bank') s+=`\nINTEREST: ${Math.round(c.interestRate*100)}%/wave\nMAX EARN: ${c.maxInterest}g`;}
   if(t.key==='laser'||c.laserTower){s+=`\nSTACK DMG: +${c.stackDmg||0}/tick  MAX: ${c.maxStacks||15}`;if(c.crystalMax) s+=`\nCRYSTALS: max ${c.crystalMax}  LIFE: ${Math.round((c.crystalLife||0)/60)}s\nCHARGE: ${((c.crystalCharge||100)/60).toFixed(1)}s per crystal`;}if(t.key==='bhole'||c.bhTower){s+=`\nPULL DIST: ${c.pullDist||28}px  CD: ${((c.cd||120)/60).toFixed(1)}s`;s+=`\nBurst pulls all enemies in range toward center`;s+=`\nImmunity after ~${Math.round((c.bhMaxExp||300)/8)} pulls`;}if(t.key==='flame'||c.flameTower){if(c.burnDmg) s+=`\nBURN: ${c.burnDmg}/tick for ${Math.round((c.burnDur||0)/60)}s`;if(c.armorShred) s+=`\nARMOR SHRED: -${Math.round(c.armorShred*100)}% DEF for ${Math.round((c.shredDur||0)/60)}s`;
@@ -3490,7 +3490,7 @@ const EDEFS={
   boss_king:{hpM:150,spdM:.10,spdCap:1.0,rw:1200,sz:34,col:'#ffd700',glow:'#ffff44',lbl:'👑',atkD:200,atkCdB:55,flying:false,robot:false,isBoss:true,_bossSpawnTime:Date.now(),bossType:'king',heavyArmor:true},
   boss_hacklord:{hpM:200,spdM:.28,spdCap:2.0,rw:3000,sz:28,col:'#00ff44',glow:'#44ff88',lbl:'💻',atkD:65,atkCdB:50,flying:false,robot:false,isBoss:true,_bossSpawnTime:Date.now(),bossType:'hacklord'},
 };
-function spawnE(entry){const d=EDEFS[entry.variant]||EDEFS.normal;const sm=entry.sizeMult||1;const sc=waveScale();const baseHp=48*sc*d.hpM*sm,baseSpd=(.82+wave*.035+Math.max(0,wave-50)*.015)*d.spdM;const spdCap=d.spdCap||999;const cappedSpd=Math.min(baseSpd,spdCap);const e={x:SPAWN_C*CS+CS*.5,y:SPAWN_R*CS+CS*.5,hp:Math.round(baseHp),mhp:Math.round(baseHp),spd:cappedSpd,spdCap:spdCap,rw:d.rw,sz:d.sz,col:d.col,glow:d.glow,lbl:d.lbl,wob:Math.random()*Math.PI*2,stun:0,mode:'move',atkTarget:null,atkCd:0,atkDmg:d.atkD,atkCdB:d.atkCdB,flying:d.flying,robot:d.robot,heavyArmor:d.heavyArmor||false,altitude:d.flying?(d.altitude||20):0,flyWob:Math.random()*Math.PI*2,variant:entry.variant,isBoss:d.isBoss||false,bossType:d.bossType||null,stunCount:0,unstable:false,spdBase:cappedSpd,isGunner:d.isGunner||false,isShielder:d.isShielder||false,gunCd:0,shielded:false,cmdHealCd:0,cmdStrikeCd:0,burnDmg:0,burnDur:0,armorShred:0,shredDur:0,bhExposure:0,bhImmune:false,slowFactor:0,slowDur:0};if(d.flying) e.y=SPAWN_R*CS+CS*.5-e.altitude;return e;}
+function spawnE(entry){const d=EDEFS[entry.variant]||EDEFS.normal;const sm=entry.sizeMult||1;const sc=waveScale();const baseHp=48*sc*d.hpM*sm,baseSpd=(.82+wave*.035+Math.max(0,wave-50)*.015)*d.spdM;const spdCap=d.spdCap||999;const cappedSpd=Math.min(baseSpd,spdCap);const e={x:SPAWN_C*CS+CS*.5,y:SPAWN_R*CS+CS*.5,hp:Math.round(baseHp),mhp:Math.round(baseHp),spd:cappedSpd,spdCap:spdCap,rw:d.rw,sz:d.sz,col:d.col,glow:d.glow,lbl:d.lbl,wob:Math.random()*Math.PI*2,stun:0,mode:'move',atkTarget:null,atkCd:0,atkDmg:d.atkD,atkCdB:d.atkCdB,flying:d.flying,robot:d.robot,heavyArmor:d.heavyArmor||false,altitude:d.flying?(d.altitude||20):0,flyWob:Math.random()*Math.PI*2,variant:entry.variant,isBoss:d.isBoss||false,bossType:d.bossType||null,stunCount:0,unstable:false,spdBase:cappedSpd,isGunner:d.isGunner||false,isShielder:d.isShielder||false,gunCd:0,shielded:false,cmdHealCd:0,cmdStrikeCd:0,burnDmg:0,burnDur:0,armorShred:0,shredDur:0,bhExposure:0,bhImmune:false,slowFactor:0,slowDur:0};if(d.flying) e.y=SPAWN_R*CS+CS*.5-e.altitude;if(d.isBoss) e._bossSpawnTime=Date.now();return e;}
 
 function isBlockedByShield(px,py,targetEnemy){if(!targetEnemy.shielded) return false;for(const e of enemies){if(!e.isShielder||e.stun>0) continue;const dx=targetEnemy.x-e.x,dy=targetEnemy.y-e.y;if(Math.sqrt(dx*dx+dy*dy)<=65) return e;}return null;}
 function applyArmor(e,dmg,isElec=false){let d=dmg;const shredMult=e.armorShred>0?1+e.armorShred:1;if(e.heavyArmor&&!isElec) d=Math.max(1,Math.round(d*0.15*shredMult));else if(e.armorShred>0) d=Math.round(d*shredMult);if(e.shielded) d=Math.max(1,Math.round(d*0.35));return d;}
@@ -3823,34 +3823,60 @@ function update(){
   updateAllies();
   if(baseUpgPath==='A'&&baseUpgLevel>0){const upd=BASE_UPG.A[baseUpgLevel];baseTurretCd--;if(baseTurretCd<=0){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-bx,dy=e.y-by,d=dx*dx+dy*dy;if(d<=upd.turretRng*upd.turretRng&&d<bd){bd=d;closest=e;}}if(closest){baseTurretAngle=Math.atan2(closest.y-by,closest.x-bx);baseTurretCd=upd.turretCd;const effDmg=Math.round(upd.turretDmg*getBuffsAt(BASE_C,BASE_R).dmgMult);projs.push({x:bx,y:by,tgt:closest,lastX:closest.x,lastY:closest.y,spd:9,dmg:effDmg,aoe:0,chn:0,col:'#00ff88',sz:3,type:'normal'});sparks(bx,by,'#00ff88',4,1.2);}}}
   for(const t of towers){if(t.hitFlash>0) t.hitFlash--;if(t.stunned>0){t.stunned--;continue;}const cfg=t.cfg;if(cfg.t===CT.WALL&&cfg.wallRegen&&t.hp<t.maxHp){t.hp=Math.min(t.maxHp,t.hp+cfg.wallRegen/60);}if(cfg.t===CT.SILO&&cfg.siloTower){t.cd=0;
-  if(!t.siloTarget||!enemies.includes(t.siloTarget)||t.siloTarget.hp<=0){t.siloTarget=null;t.siloManual=false;t.siloFiring=false;t.siloReticleFrozen=false;t.siloBeamHold=0;
-    if(enemies.length>0){let bestD2s=Infinity;for(const en of enemies){const edx=en.x-bx,edy=en.y-by,d2s=edx*edx+edy*edy;if(d2s<bestD2s){bestD2s=d2s;t.siloTarget=en;}}}
+  if(!t.siloTarget||!enemies.includes(t.siloTarget)||t.siloTarget.hp<=0){t.siloTarget=null;t.siloManual=false;
+    // Laser keeps its frozen beam position — only nuke resets on target loss
+    if(cfg.siloType!=='laser'){t.siloFiring=false;t.siloReticleFrozen=false;t.siloBeamHold=0;}
+    if(enemies.length>0&&!(cfg.siloType==='laser'&&t.siloLaserPhase==='recharge')){let bestD2s=Infinity;for(const en of enemies){const edx=en.x-bx,edy=en.y-by,d2s=edx*edx+edy*edy;if(d2s<bestD2s){bestD2s=d2s;t.siloTarget=en;}}}
   }
   if(t.siloBeamLife>0)t.siloBeamLife--;if(t.siloBeamHold>0)t.siloBeamHold--;
-  if(!t.siloTarget){continue;}
+  // Laser keeps firing at its frozen position even without an active target
+  if(!t.siloTarget&&!(cfg.siloType==='laser'&&(t.siloReticleFrozen||t.siloLaserPhase==='recharge'))){continue;}
   if(!t.siloCd)t.siloCd=0;
   t.siloCd--;
   const siloX=t.col*CS+CS/2,siloY=t.row*CS+CS/2;
   const bfxs=getBuffsAt(t.col,t.row);
   if(cfg.siloType==='laser'){
-    if(t.siloCd<=0){t.siloCd=cfg.siloCdMax||3;
-      // Lock beam position ONCE when first firing (stays on place)
-      if(!t.siloReticleFrozen){t.siloFrozenX=t.siloTarget.x;t.siloFrozenY=t.siloTarget.y;t.siloReticleFrozen=true;}
-      // AoE damage at frozen position — hits all enemies in radius
-      const laserRadius=55;
-      const laserFX=t.siloFrozenX,laserFY=t.siloFrozenY;
-      let totalLaserDmg=0;
-      for(const en of enemies){
-        const ldx=en.x-laserFX,ldy=en.y-laserFY;
-        if(ldx*ldx+ldy*ldy<=laserRadius*laserRadius){
-          const eDmg=applyArmor(en,Math.round((cfg.siloDmg||18)*bfxs.dmgMult));
-          en.hp-=eDmg;totalLaserDmg+=eDmg;
-          if(cfg.laserSlow&&cfg.laserSlow>en.slowFactor){en.slowFactor=cfg.laserSlow;en.slowDur=Math.max(en.slowDur,90);en.spd=en.spdBase*(1-cfg.laserSlow);}
-          if(cfg.laserShred&&cfg.laserShred>en.armorShred){en.armorShred=cfg.laserShred;en.shredDur=Math.max(en.shredDur,120);}
-        }
+    // === PATH B LASER: Charge→Fire→Recharge auto-cycle ===
+    if(!t.siloLaserPhase){t.siloLaserPhase='charge';t.siloLaserPhaseTimer=cfg.siloLaserChargeDur||300;t.siloFiring=false;t.siloReticleFrozen=false;t.siloBeamHold=0;}
+    t.siloLaserPhaseTimer--;
+    if(t.siloLaserPhase==='charge'){
+      // Track nearest-to-base enemy during charge (auto-aim)
+      t.siloFiring=false;t.siloReticleFrozen=false;
+      if(t.siloTarget&&enemies.includes(t.siloTarget)&&t.siloTarget.hp>0){t.siloFrozenX=t.siloTarget.x;t.siloFrozenY=t.siloTarget.y;}
+      if(t.siloLaserPhaseTimer<=0){
+        t.siloLaserPhase='fire';t.siloLaserPhaseTimer=cfg.siloLaserFireDur||180;
+        t.siloCd=0;t.siloReticleFrozen=true;
+        ft(t.col*CS+CS/2,t.row*CS-14,'⚡ LASER FIRE!','#cc55ff');
+        sparks(t.col*CS+CS/2,t.row*CS+CS/2,'#cc55ff',14,3);
       }
-      t.siloFiring=true;t.siloBeamLife=8;if(!t.siloBeamHold||t.siloBeamHold<=0)t.siloBeamHold=100;
-      t.totalDmgDealt=(t.totalDmgDealt||0)+totalLaserDmg;
+    } else if(t.siloLaserPhase==='fire'){
+      // Fire laser at frozen position, deal AoE damage
+      if(t.siloCd<=0){t.siloCd=cfg.siloCdMax||3;
+        const laserRadius=55;
+        const laserFX=t.siloFrozenX||0,laserFY=t.siloFrozenY||0;
+        let totalLaserDmg=0;
+        for(const en of enemies){
+          const ldx=en.x-laserFX,ldy=en.y-laserFY;
+          if(ldx*ldx+ldy*ldy<=laserRadius*laserRadius){
+            const eDmg=applyArmor(en,Math.round((cfg.siloDmg||18)*bfxs.dmgMult));
+            en.hp-=eDmg;totalLaserDmg+=eDmg;
+            if(cfg.laserSlow&&cfg.laserSlow>en.slowFactor){en.slowFactor=cfg.laserSlow;en.slowDur=Math.max(en.slowDur,90);en.spd=en.spdBase*(1-cfg.laserSlow);}
+            if(cfg.laserShred&&cfg.laserShred>en.armorShred){en.armorShred=cfg.laserShred;en.shredDur=Math.max(en.shredDur,120);}
+          }
+        }
+        t.siloFiring=true;t.siloBeamLife=8;t.siloBeamHold=8;
+        t.totalDmgDealt=(t.totalDmgDealt||0)+totalLaserDmg;
+      }
+      if(t.siloLaserPhaseTimer<=0){
+        // Beam expires — enter recharge
+        t.siloLaserPhase='recharge';t.siloLaserPhaseTimer=cfg.siloLaserRechargeDur||360;
+        t.siloFiring=false;t.siloReticleFrozen=false;t.siloBeamHold=0;t.siloTarget=null;
+        ft(t.col*CS+CS/2,t.row*CS-14,'RECHARGING...','#8822dd');
+      }
+    } else {
+      // Recharge phase — wait, then cycle back to charge
+      t.siloFiring=false;t.siloReticleFrozen=false;
+      if(t.siloLaserPhaseTimer<=0){t.siloLaserPhase='charge';t.siloLaserPhaseTimer=cfg.siloLaserChargeDur||300;}
     }
   } else {
     if(t.siloCd<=0){t.siloCd=cfg.siloCdMax||1200;
@@ -4426,16 +4452,28 @@ function drawTower(t){
       if(!launched){const eg=0.3+mPulse*0.5;ctx.save();ctx.globalAlpha=eg;ctx.fillStyle='#ff8800';ctx.beginPath();ctx.ellipse(0,6,3+mPulse*2,2,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;ctx.restore();}
     }
     ctx.restore();
-    // Target dot
+    // Phase display (laser) or target dot (nuke)
     ctx.font='bold 7px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';
-    if(hasTarget){ctx.fillStyle='#ff6600';ctx.fillText('LOCK',cx,cy+11);}
-    else{ctx.fillStyle='#4a4a2a';ctx.fillText('SCAN',cx,cy+11);}
-    // CD bar
-    if(cfg.siloType!=='laser'&&cfg.siloCdMax>0){
-      const cdR=Math.max(0,1-(t.siloCd||0)/cfg.siloCdMax);
-      ctx.fillStyle='#1a0a00';ctx.fillRect(x+3,y+CS-5,CS-6,4);
-      ctx.fillStyle=cdR>=1?'#ff4400':sc;ctx.fillRect(x+3,y+CS-5,Math.round((CS-6)*cdR),4);
-      if(cdR>=1&&hasTarget){const rdy=(Math.sin(frame*.25)+1)*.5;ctx.save();ctx.globalAlpha=0.2+rdy*0.3;ctx.fillStyle='#ff6600';ctx.fillRect(x+3,y+CS-5,CS-6,4);ctx.globalAlpha=1;ctx.restore();}
+    if(isLaser&&t.siloLaserPhase){
+      const phase=t.siloLaserPhase;
+      const cDur=cfg.siloLaserChargeDur||300,fDur=cfg.siloLaserFireDur||180,rDur=cfg.siloLaserRechargeDur||360;
+      let barCol,barPct,lbl;
+      if(phase==='charge'){const e2=cDur-(t.siloLaserPhaseTimer||0);barPct=e2/cDur;barCol='#cc55ff';lbl='CHRG';}
+      else if(phase==='fire'){barPct=(t.siloLaserPhaseTimer||0)/fDur;barCol='#ffffff';lbl='FIRE';}
+      else{const e2=rDur-(t.siloLaserPhaseTimer||0);barPct=e2/rDur;barCol='#8822dd';lbl='RCHG';}
+      ctx.fillStyle=barCol;ctx.fillText(lbl,cx,cy+11);
+      ctx.fillStyle='#1a000a';ctx.fillRect(x+3,y+CS-5,CS-6,4);
+      ctx.fillStyle=barCol;ctx.fillRect(x+3,y+CS-5,Math.round((CS-6)*Math.max(0,Math.min(1,barPct))),4);
+      if(phase==='charge'&&barPct>0.3){const g2=(Math.sin(frame*0.25)+1)*.5;ctx.save();ctx.globalAlpha=g2*0.25;ctx.fillStyle=barCol;ctx.beginPath();ctx.arc(cx,cy-3,10+g2*5,0,Math.PI*2);ctx.fill();ctx.restore();}
+    } else {
+      if(hasTarget){ctx.fillStyle='#ff6600';ctx.fillText('LOCK',cx,cy+11);}
+      else{ctx.fillStyle='#4a4a2a';ctx.fillText('SCAN',cx,cy+11);}
+      if(cfg.siloType!=='laser'&&cfg.siloCdMax>0){
+        const cdR=Math.max(0,1-(t.siloCd||0)/cfg.siloCdMax);
+        ctx.fillStyle='#1a0a00';ctx.fillRect(x+3,y+CS-5,CS-6,4);
+        ctx.fillStyle=cdR>=1?'#ff4400':sc;ctx.fillRect(x+3,y+CS-5,Math.round((CS-6)*cdR),4);
+        if(cdR>=1&&hasTarget){const rdy=(Math.sin(frame*.25)+1)*.5;ctx.save();ctx.globalAlpha=0.2+rdy*0.3;ctx.fillStyle='#ff6600';ctx.fillRect(x+3,y+CS-5,CS-6,4);ctx.globalAlpha=1;ctx.restore();}
+      }
     }
   }
 
@@ -4502,14 +4540,17 @@ function draw(){
   // SILO LASER BEAM OVERLAY
   for(const t of towers){
     if(t.key!=='silo'||!t.cfg.siloType) continue;
-    if(!t.siloTarget||!enemies.includes(t.siloTarget)) continue;
+    // Laser: draw beam if frozen position exists (even without active target)
+    const _laserFrozen=t.cfg.siloType==='laser'&&t.siloReticleFrozen&&t.siloFrozenX!==null&&t.siloFrozenY!==null;
+    if(!_laserFrozen&&(!t.siloTarget||!enemies.includes(t.siloTarget))) continue;
     const sx=t.col*CS+CS/2,sy=t.row*CS+CS/2;
-    const ex2=t.siloTarget.x,ey2=t.siloTarget.y;
+    const ex2=(t.siloTarget&&enemies.includes(t.siloTarget))?t.siloTarget.x:(t.siloFrozenX||0);
+    const ey2=(t.siloTarget&&enemies.includes(t.siloTarget))?t.siloTarget.y:(t.siloFrozenY||0);
     if(t.cfg.siloType==='laser'&&(t.siloBeamHold||0)>0){
       // Hacklord-style persistent beam: stays, pulses, then fades
       const bHold=t.siloBeamHold||0;
       const pulse=Math.sin(frame*0.1)*0.18+0.82;
-      const alpha=Math.min(1,(bHold/100))*pulse;
+      const alpha=pulse; // No fade — laser stays at constant brightness
       const laserFX=t.siloFrozenX!==undefined&&t.siloFrozenX!==null?t.siloFrozenX:ex2;
       const laserFY=t.siloFrozenY!==undefined&&t.siloFrozenY!==null?t.siloFrozenY:ey2;
       const laserSrcY=-40;
