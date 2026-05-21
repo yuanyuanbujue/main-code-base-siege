@@ -837,7 +837,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 .bb.ach-locked::after{content:attr(data-lock);position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:9px;color:#ff8800;font-weight:bold;text-shadow:0 0 6px #ff4400;}
 /* ── HARDCORE LOCKED TOWER BUTTONS ── */
 .bb.hc-locked{border-color:#ff224466!important;color:#ff224455!important;background:#0c0008!important;position:relative;cursor:not-allowed;opacity:0.45!important;}
-.bb.hc-locked::after{content:attr(data-lock);position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:8px;color:#ff2244;font-weight:bold;text-shadow:0 0 8px #ff0044;letter-spacing:1px;}
+.bb.hc-locked::before{content:'';position:absolute;inset:0;background:rgba(20,0,8,0.4);z-index:1;pointer-events:none;}.bb.hc-locked::after{content:attr(data-lock);position:absolute;right:4px;bottom:3px;font-size:8px;color:#ff3355;font-weight:bold;text-shadow:0 0 8px #ff0044;letter-spacing:1px;z-index:2;pointer-events:none;}
 .bb.hl-locked::after{content:attr(data-lock);position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:#ff4444;font-weight:bold;text-shadow:0 0 6px #ff0044;}
 @keyframes hlGlitch{0%{transform:translate(0)}25%{transform:translate(-1px,1px)}50%{transform:translate(1px,-1px)}75%{transform:translate(-1px,0)}100%{transform:translate(0)}}
 .bb.on{border-color:var(--a);color:var(--a);background:#060e18;}.bb.on::before{opacity:1;}
@@ -2871,7 +2871,7 @@ const SUG={
     const stLbl=st.toUpperCase();
     const adminBtns=this._admin?`<div style="display:flex;gap:3px;margin-top:4px;"><button class="sug-vote-btn" style="border-color:#00ff88;color:#00ff88;" onclick="SUG.setStatus('${s.id}','accepted')">✓ ACCEPT</button><button class="sug-vote-btn" style="border-color:#ff4444;color:#ff4444;" onclick="SUG.setStatus('${s.id}','rejected')">✗ REJECT</button><button class="sug-vote-btn" style="border-color:#ff8800;color:#ff8800;" onclick="SUG.remove('${s.id}')">🗑 DEL</button></div>`:'';
     const ago=this._timeAgo(s.created_at);
-    return '<div class="sug-item"><div class="sug-text">'+this._esc(s.text)+'</div><div class="sug-meta"><span>'+s.author+' · '+ago+' <span class="sug-status '+st+'">'+stLbl+'</span></span><div class="sug-votes"><button class="sug-vote-btn '+(liked?'voted':'')+'" onclick="SUG.like(\''+s.id+'\')" '+(liked?'disabled':'')+'>♥ '+(liked?'LIKED':'LIKE')+'</button><span class="sug-vote-count">'+( s.vote_count||0)+'</span></div></div>'+adminBtns+'</div>';
+    return '<div class="sug-item"><div class="sug-text">'+this._esc(s.text)+'</div><div class="sug-meta"><span>'+s.author+' · '+ago+' <span class="sug-status '+st+'">'+stLbl+'</span></span><div class="sug-votes">'+( this._admin ?'<button class="sug-vote-btn" style="border-color:#00ff88;color:#00ff88;" onclick="SUG.adminVote(\''+s.id+'\',1)">+♥</button><span class="sug-vote-count">'+(s.vote_count||0)+'</span><button class="sug-vote-btn" style="border-color:#ff4444;color:#ff4444;" onclick="SUG.adminVote(\''+s.id+'\',-1)">−♥</button>' : '<button class="sug-vote-btn '+(liked?'voted':'')+'" onclick="SUG.like(\''+s.id+'\')" '+(liked?'disabled':'')+'>♥ '+(liked?'LIKED':'LIKE')+'</button><span class="sug-vote-count">'+(s.vote_count||0)+'</span>')+'</div></div>'+adminBtns+'</div>';
   },
 
   _esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');},
@@ -2906,6 +2906,14 @@ const SUG={
     const{error}=await this.getSb().from('suggestions').update({status:'deleted'}).eq('id',id);
     if(error){msg('Delete failed',2000);return;}
     this.load();msg('Deleted',1500);
+  },
+
+  async adminVote(id,delta){
+    if(!this._admin)return;
+    const{data}=await this.getSb().from('suggestions').select('vote_count').eq('id',id).single();
+    const cur=data&&data.vote_count!=null?data.vote_count:0;
+    await this.getSb().from('suggestions').update({vote_count:cur+delta}).eq('id',id);
+    this.load();msg(delta>0?'👍 +1':'👎 −1',600);
   },
 
   toggleAdmin(){
