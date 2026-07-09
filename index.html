@@ -1900,7 +1900,7 @@ async function openLeaderboard(){document.getElementById('lb-modal').classList.a
 function updateSubmitRow(){
   const row=document.getElementById('lb-submit-row'),info=document.getElementById('lb-submit-info');
   if(gameMode==='sandbox'){row.style.display='flex';info.textContent='Sandbox mode — scores not submitted';document.getElementById('lb-submit-btn').disabled=true;return;}
-  if(currentUser&&gameStarted&&(gameOver||wave>0)){row.style.display='flex';info.textContent=`Submit as ${playerName||'anon'}: Wave ${wave} · ${score.toLocaleString()} pts · ${gameMode.toUpperCase()}`;document.getElementById('lb-submit-btn').disabled=false;}
+  if(currentUser&&gameStarted&&(gameOver||wave>0||negativeWaveMode)){row.style.display='flex';info.textContent=`Submit as ${playerName||'anon'}: Wave ${wave} · ${score.toLocaleString()} pts · ${gameMode.toUpperCase()}${negativeWaveMode?' · ⚠ NEGATIVE WAVE':''}`;document.getElementById('lb-submit-btn').disabled=false;}
   else if(!currentUser){row.style.display='flex';info.textContent='Sign in to submit scores';document.getElementById('lb-submit-btn').disabled=true;}
   else{row.style.display='none';}
   if(currentUser&&gameMode!=='sandbox') document.getElementById('lb-submit-btn').disabled=false;
@@ -3172,8 +3172,8 @@ let hcPoints=0;              // Upgrade points available to spend
 let hcPointsSpent=0;         // Points already spent
 let hcLastPointScore=0;      // Score at which last point was awarded
 let hcUnlocked=new Set();    // Tower keys unlocked this game
-const HC_TOWER_COSTS={electric:1,healer:3,spike:4,flame:6,buff:15,bhole:8,heli:10,mine:20,laser:11,barracks:7,silo:7};
-const HC_TOWER_NAMES={electric:'TESLA ⚡',healer:'MEDIC ✚',spike:'SPIKE 🔨',flame:'FLAME 🔥',buff:'BUFF TWR ⬆',bhole:'B.HOLE 🕳️',heli:'HELI PAD 🚁',mine:'MINE 💰',laser:'LASER 💎',barracks:'BARRACKS 🛡',silo:'MISSILE SILO 🚀'};
+const HC_TOWER_COSTS={electric:1,healer:3,spike:4,flame:6,buff:15,bhole:8,heli:10,mine:20,laser:11,barracks:7,silo:7,hero_accel:25,hero_score:25};
+const HC_TOWER_NAMES={electric:'TESLA ⚡',healer:'MEDIC ✚',spike:'SPIKE 🔨',flame:'FLAME 🔥',buff:'BUFF TWR ⬆',bhole:'B.HOLE 🕳️',heli:'HELI PAD 🚁',mine:'MINE 💰',laser:'LASER 💎',barracks:'BARRACKS 🛡',silo:'MISSILE SILO 🚀',hero_accel:'HERO: ACCEL ⚡',hero_score:'HERO: SCORE 🏆'};
 
 function init(){
   grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));
@@ -3621,6 +3621,8 @@ document.querySelectorAll('.bb').forEach(b=>{b.addEventListener('click',()=>{
   // === HARDCORE / MODE LOCK: block locked towers (also stops QB programmatic .click() bypass) ===
   {const _ea=gameMode==='hardcore'?getHcAllowed():(MODES[gameMode].allowed||null);
    if(_ea&&b.dataset.t&&!_ea.has(b.dataset.t))return;}
+  // === LOCKED (achievement/leaderboard-gated) buttons cannot be selected ===
+  if(b.classList.contains('ach-locked')||b.classList.contains('hc-locked'))return;
   sellMode=false;upgMode=false;baseUpgMode=false;selBuild=b.dataset.t;document.querySelectorAll('.bb').forEach(x=>x.classList.remove('on'));document.getElementById('sbtn').classList.remove('sell-on');document.getElementById('ubtn').classList.remove('upg-on');document.getElementById('basebtn').classList.remove('base-on');b.classList.add('on');hidePanel();hideBasePanel();if(selBuild==='buff') document.getElementById('buff-hint').classList.add('vis');else document.getElementById('buff-hint').classList.remove('vis');});});
 document.getElementById('up-close-btn').addEventListener('click',()=>{hidePanel();sellMode=false;upgMode=false;baseUpgMode=false;document.querySelectorAll('.bb').forEach(b=>b.classList.remove('on'));document.getElementById('sbtn').classList.remove('sell-on');document.getElementById('ubtn').classList.remove('upg-on');document.getElementById('basebtn').classList.remove('base-on');});
 document.getElementById('up-sell-btn').addEventListener('click',()=>{if(!selTower) return;const t=selTower;const ti=towers.indexOf(t);if(ti===-1) return;if(MP.active&&!MP.canInteractTower(t)){msg(MP.getTowerOwnerMsg(t)||'Not your tower',2000);return;}const ref=Math.floor((t.totalGoldSpent||TS[t.key][1].cost)*.5);if(t.key==='healer'&&t.path==='A'&&t.level>=2){const bon=t.level===2?25:t.level===3?55:t.level===4?90:140;baseMaxHP=Math.max(150,baseMaxHP-bon);baseHP=Math.min(baseHP,baseMaxHP);}if(t.key==='heli'){const hi=helicopters.findIndex(h=>h.towerId===t.id);if(hi!==-1) helicopters.splice(hi,1);}if(t.key==='barracks'){for(let ai=allies.length-1;ai>=0;ai--){if(allies[ai]&&allies[ai].towerId===t.id){sparks(allies[ai].x,allies[ai].y,'#ff4444',5,2);allies.splice(ai,1);}}}gold+=ref;const row=t.row,col=t.col;towers.splice(ti,1);grid[row][col]=CT.EMPTY;bfs();ft(col*CS+CS/2,row*CS,'+'+ref+'g');hidePanel();syncUI();if(MP.active){MP.broadcast('tower:sell',{pid:MP.playerId,row,col});MP.updatePlayerGold();}});
@@ -3733,7 +3735,7 @@ cv.addEventListener('click',e=>{
   if(selBuild==='barracks'&&gameMode==='hardcore'&&!hcUnlocked.has('barracks')){msg('⚠ Unlock Barracks first! (7 pts)',2500);return;}
   if(selBuild==='silo'&&!earnedAchievements.has('boss_speed')){msg('⚠ Missile Silo requires the "I\'M THE BOSS" achievement!',3000);return;}
   if(selBuild==='silo'&&gameMode==='hardcore'&&!hcUnlocked.has('silo')){msg('⚠ Unlock Missile Silo first! (7 pts)',2500);return;}
-  if(selBuild==='hero_score'&&!_heroUnlocked){msg('⚠ HERO SCORE MACHINE unlocks when you reach TOP 3 on the leaderboard!',3000);return;}
+  if(selBuild==='hero_score'&&!_heroUnlocked&&!(gameMode==='hardcore'&&hcUnlocked.has('hero_score'))){msg('⚠ HERO SCORE MACHINE unlocks when you reach TOP 3 on the leaderboard (or unlock with Upgrade Points in Hardcore)!',3000);return;}
   if((selBuild==='hero_accel'||selBuild==='hero_score')&&towers.some(t=>t.key==='hero_accel'||t.key==='hero_score')){msg('⚠ Only ONE Hero Tower allowed per game!',2500);return;}
   // === HARDCORE: General allowed-set guard (catches any bypass path) ===
   {const _hcEa=gameMode==='hardcore'?getHcAllowed():null;
@@ -5944,9 +5946,11 @@ async function bgChatPoll(){
             if (!hasAch) { locked = true; unlockTxt = 'ACHIEVEMENT'; }
           }
           // Hero Score Machine needs a current TOP 3 leaderboard rank
+          // (or, in Hardcore mode, can be unlocked by spending Upgrade Points)
           if (tw.key === 'hero_score') {
             const heroOk = typeof _heroUnlocked !== 'undefined' && _heroUnlocked;
-            if (!heroOk) { locked = true; unlockTxt = 'TOP 3 LEADERBOARD'; }
+            const hcOk = typeof gameMode !== 'undefined' && gameMode === 'hardcore' && typeof hcUnlocked !== 'undefined' && hcUnlocked.has('hero_score');
+            if (!heroOk && !hcOk) { locked = true; unlockTxt = 'TOP 3 LEADERBOARD'; }
           }
         } else {
           // Fallback if game functions aren\'t ready yet
@@ -5954,7 +5958,8 @@ async function bgChatPoll(){
           unlockTxt = tw.unlock === 999 ? 'ACHIEVEMENT' : tw.unlock === 0 ? 'AVAILABLE' : 'LEVEL ' + tw.unlock;
           if (tw.key === 'hero_score') {
             const heroOk = typeof _heroUnlocked !== 'undefined' && _heroUnlocked;
-            locked = !heroOk; unlockTxt = 'TOP 3 LEADERBOARD';
+            const hcOk = typeof gameMode !== 'undefined' && gameMode === 'hardcore' && typeof hcUnlocked !== 'undefined' && hcUnlocked.has('hero_score');
+            locked = !heroOk && !hcOk; unlockTxt = 'TOP 3 LEADERBOARD';
           }
         }
 
@@ -6259,9 +6264,13 @@ async function checkHeroUnlock(){
   applyHeroLockUI();
 }
 function applyHeroLockUI(){
+  // In Hardcore mode, hero towers can instead be unlocked by spending Upgrade Points —
+  // that path is handled by updateModeUI()/hc-locked styling, so skip the TOP3 ach-lock here.
+  const hcBypass = (gameMode==='hardcore' && typeof hcUnlocked!=='undefined' && hcUnlocked.has('hero_score'));
   document.querySelectorAll('.bb[data-t="hero_score"]').forEach(btn=>{
-    btn.classList.toggle('ach-locked', !_heroUnlocked);
-    if(!_heroUnlocked) btn.dataset.lock='TOP3'; else delete btn.dataset.lock;
+    const locked = !_heroUnlocked && !hcBypass;
+    btn.classList.toggle('ach-locked', locked);
+    if(locked) btn.dataset.lock='TOP3'; else delete btn.dataset.lock;
   });
 }
 (function(){
