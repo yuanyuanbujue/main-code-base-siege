@@ -1401,7 +1401,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 <div class="up-item new">🤖 Path C: SWARM PROTOCOL — fastest summon speed &amp; movement, highest mech count</div>
 <div class="up-section-title">hardcore mode</div>
 <div class="up-item new">⚙ HERO: SCORE MACHINE can now be unlocked in Hardcore with HC Upgrade Points (25 pts) instead of requiring a Top 3 leaderboard rank</div>
-<div class="up-item new">⚙ HERO: ACCELERATOR is usable in Hardcore for free — no HC points needed</div>
+<div class="up-item new">⚙ HERO TOWERS unlock is now LINKED — spending 25 HC Upgrade Points once unlocks BOTH Hero: Accelerator and Hero: Score Machine together</div>
 <div class="up-item new">⚙ MECH BASE unlockable in Hardcore for 21 HC Upgrade Points</div>
 <div class="up-item fix">🔒 Locked towers (achievement/leaderboard/HC-gated) can no longer be selected on the build bar until unlocked</div>
 <div class="up-section-title">leaderboard</div>
@@ -3135,8 +3135,9 @@ let hcPoints=0;              // Upgrade points available to spend
 let hcPointsSpent=0;         // Points already spent
 let hcLastPointScore=0;      // Score at which last point was awarded
 let hcUnlocked=new Set();    // Tower keys unlocked this game
-const HC_TOWER_COSTS={electric:1,healer:3,spike:4,flame:6,buff:15,bhole:8,heli:10,mine:20,laser:11,barracks:7,silo:7,hero_score:25,mech_base:21};
-const HC_TOWER_NAMES={electric:'TESLA ⚡',healer:'MEDIC ✚',spike:'SPIKE 🔨',flame:'FLAME 🔥',buff:'BUFF TWR ⬆',bhole:'B.HOLE 🕳️',heli:'HELI PAD 🚁',mine:'MINE 💰',laser:'LASER 💎',barracks:'BARRACKS 🛡',silo:'MISSILE SILO 🚀',hero_score:'HERO: SCORE 🏆',mech_base:'MECH BASE 🤖'};
+const HC_TOWER_COSTS={electric:1,healer:3,spike:4,flame:6,buff:15,bhole:8,heli:10,mine:20,laser:11,barracks:7,silo:7,hero_accel:25,hero_score:25,mech_base:21};
+const HC_TOWER_NAMES={electric:'TESLA ⚡',healer:'MEDIC ✚',spike:'SPIKE 🔨',flame:'FLAME 🔥',buff:'BUFF TWR ⬆',bhole:'B.HOLE 🕳️',heli:'HELI PAD 🚁',mine:'MINE 💰',laser:'LASER 💎',barracks:'BARRACKS 🛡',silo:'MISSILE SILO 🚀',hero_accel:'HERO: ACCEL ⚡',hero_score:'HERO: SCORE 🏆',mech_base:'MECH BASE 🤖'};
+const HERO_HC_KEYS=['hero_accel','hero_score']; // Both heroes are unlocked together by ONE 25-point purchase
 
 function init(){
   grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));
@@ -3559,7 +3560,7 @@ function heroScoreMult(){let m=1;for(const t of towers){if(t.key==='hero_score'&
 function getDiscountedCost(key,col,row){const base=getCfg(key,1,null).cost;if(col===undefined) return base;const{costReduce}=getBuffsAt(col,row);return Math.max(1,Math.round(base*(1-costReduce)));}
 function getHcAllowed(){
   if(gameMode!=='hardcore') return null;
-  const base=new Set(['wall','basic','sniper','cannon','hero_accel']);
+  const base=new Set(['wall','basic','sniper','cannon']);
   for(const k of hcUnlocked) base.add(k);
   if(wave>=100) base.add('ice');
   return base;
@@ -3714,11 +3715,14 @@ function updateHcUI(){
   const grid=document.getElementById('hc-unlock-grid');
   if(!grid) return;
   grid.innerHTML='';
-  const sortedKeys=Object.keys(HC_TOWER_COSTS).sort((a,b)=>HC_TOWER_COSTS[a]-HC_TOWER_COSTS[b]);
-  for(const k of sortedKeys){
-    const cost=HC_TOWER_COSTS[k];
-    const name=HC_TOWER_NAMES[k]||k;
-    const unlocked=hcUnlocked.has(k);
+  const otherKeys=Object.keys(HC_TOWER_COSTS).filter(k=>!HERO_HC_KEYS.includes(k));
+  const entries=otherKeys.map(k=>({keys:[k],cost:HC_TOWER_COSTS[k],name:HC_TOWER_NAMES[k]||k}));
+  entries.push({keys:HERO_HC_KEYS,cost:HC_TOWER_COSTS.hero_score,name:'HERO TOWERS 🦸'});
+  entries.sort((a,b)=>a.cost-b.cost);
+  for(const ent of entries){
+    const cost=ent.cost;
+    const name=ent.name;
+    const unlocked=ent.keys.every(k=>hcUnlocked.has(k));
     const canAfford=hcPoints>=cost;
     const btn=document.createElement('button');
     btn.style.cssText='background:#04090f;border:1px solid '+(unlocked?'#00ff88':canAfford?'#ff2244':'#1a0808')+';color:'+(unlocked?'#00ff88':canAfford?'#ff2244':'#4a2a2a')+';font-family:Share Tech Mono,monospace;font-size:9px;padding:4px 6px;cursor:'+(unlocked||!canAfford?'default':'pointer')+';transition:all .1s;text-align:left;display:flex;justify-content:space-between;opacity:'+(unlocked?'0.6':canAfford?'1':'0.4');
@@ -3726,15 +3730,15 @@ function updateHcUI(){
     if(!unlocked&&canAfford){
       btn.onmouseover=function(){this.style.background='#1a0808';};
       btn.onmouseout=function(){this.style.background='#04090f';};
-      btn.onclick=(function(key,c){return function(){
-        if(hcPoints>=c&&!hcUnlocked.has(key)){
-          hcPoints-=c;hcPointsSpent+=c;hcUnlocked.add(key);
+      btn.onclick=(function(keys,c,nm){return function(){
+        if(hcPoints>=c&&!keys.every(k=>hcUnlocked.has(k))){
+          hcPoints-=c;hcPointsSpent+=c;keys.forEach(k=>hcUnlocked.add(k));
           updateModeUI();updateHcUI();syncUI();
-          ft(W/2,H/2,'🔓 '+HC_TOWER_NAMES[key]+' UNLOCKED!','#00ff88');
+          ft(W/2,H/2,'🔓 '+nm+' UNLOCKED!','#00ff88');
           sparks(W/2,H/2,'#00ff88',20,4);
-          msg('Tower unlocked: '+HC_TOWER_NAMES[key]+'!',3000);
+          msg('Tower unlocked: '+nm+'!',3000);
         }
-      };})(k,cost);
+      };})(ent.keys,cost,name);
     }
     grid.appendChild(btn);
   }
@@ -3802,7 +3806,8 @@ cv.addEventListener('click',e=>{
   if(selBuild==='mech_base'&&gameMode==='hardcore'&&!hcUnlocked.has('mech_base')){msg('⚠ Unlock Mech Base first! (21 pts)',2500);return;}
   if(selBuild==='silo'&&!earnedAchievements.has('boss_speed')){msg('⚠ Missile Silo requires the "I\'M THE BOSS" achievement!',3000);return;}
   if(selBuild==='silo'&&gameMode==='hardcore'&&!hcUnlocked.has('silo')){msg('⚠ Unlock Missile Silo first! (7 pts)',2500);return;}
-  if(selBuild==='hero_score'&&!_heroUnlocked&&!(gameMode==='hardcore'&&hcUnlocked.has('hero_score'))){msg('⚠ HERO SCORE MACHINE unlocks when you reach TOP 3 on the leaderboard (or unlock with Upgrade Points in Hardcore)!',3000);return;}
+  if(selBuild==='hero_accel'&&gameMode==='hardcore'&&!hcUnlocked.has('hero_accel')){msg('⚠ Unlock Hero Towers first! (25 pts, unlocks both heroes)',2500);return;}
+  if(selBuild==='hero_score'&&!_heroUnlocked&&!(gameMode==='hardcore'&&hcUnlocked.has('hero_score'))){msg('⚠ HERO SCORE MACHINE unlocks when you reach TOP 3 on the leaderboard (or unlock Hero Towers with Upgrade Points in Hardcore — 25 pts, unlocks both heroes)!',3000);return;}
   if((selBuild==='hero_accel'||selBuild==='hero_score')&&towers.some(t=>t.key==='hero_accel'||t.key==='hero_score')){msg('⚠ Only ONE Hero Tower allowed per game!',2500);return;}
   // === HARDCORE: General allowed-set guard (catches any bypass path) ===
   {const _hcEa=gameMode==='hardcore'?getHcAllowed():null;
