@@ -1015,6 +1015,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 .lb-filter{display:flex;gap:4px;}
 .lb-f{flex:1;background:#04090f;border:1px solid #0e2030;color:#2a4a6a;font-family:'Share Tech Mono',monospace;font-size:10px;padding:6px 2px;cursor:pointer;text-align:center;transition:all .1s;letter-spacing:1px;}
 .lb-f.on{border-color:#aa88ff;color:#aa88ff;background:#0a0818;}
+#lb-f-level.on{border-color:#00eeff!important;color:#00eeff!important;background:#061a20!important;}
 .lb-table-wrap{overflow-y:auto;flex:1;}
 .lb-table{width:100%;border-collapse:collapse;font-size:11px;}
 .lb-table th{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:3px;color:#1a3a4a;padding:6px 8px;border-bottom:1px solid #0e2030;text-align:left;}
@@ -1515,6 +1516,9 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
       <button class="lb-f" data-m="2">HARD</button>
       <button class="lb-f" data-m="3">HCORE</button>
     </div>
+    <div class="lb-filter" style="margin-top:4px;">
+      <button class="lb-f" data-m="level" id="lb-f-level" style="border-color:#00eeff44;color:#2a6a7a;">🎖 LEVEL</button>
+    </div>
     <div class="lb-submit-row" id="lb-submit-row" style="display:none">
       <span class="lb-submit-info" id="lb-submit-info">Submit your run?</span>
       <button class="lb-submit-btn" id="lb-submit-btn">SUBMIT SCORE</button>
@@ -1522,7 +1526,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     <div class="lb-table-wrap">
       <div class="lb-loading" id="lb-loading">LOADING INTEL...</div>
       <table class="lb-table" id="lb-table" style="display:none">
-        <thead><tr><th>#</th><th>PLAYER</th><th>SCORE</th><th>WAVE</th><th>MODE</th><th>TIME</th></tr></thead>
+        <thead><tr id="lb-thead-row"><th>#</th><th>PLAYER</th><th>SCORE</th><th>WAVE</th><th>MODE</th><th>TIME</th></tr></thead>
         <tbody id="lb-body"></tbody>
       </table>
       <div class="lb-empty" id="lb-empty" style="display:none">NO RECORDS FOUND</div>
@@ -1872,18 +1876,28 @@ document.getElementById('ach-modal').addEventListener('click',e=>{if(e.target===
 document.getElementById('lb-close').addEventListener('click',()=>document.getElementById('lb-modal').classList.remove('vis'));
 document.getElementById('lb-modal').addEventListener('click',e=>{if(e.target===document.getElementById('lb-modal'))document.getElementById('lb-modal').classList.remove('vis');});
 let lbFilter='all';
-document.querySelectorAll('.lb-f').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.lb-f').forEach(b=>b.classList.remove('on'));btn.classList.add('on');lbFilter=btn.dataset.m;loadLeaderboard();});});
+document.querySelectorAll('.lb-f').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.lb-f').forEach(b=>b.classList.remove('on'));btn.classList.add('on');lbFilter=btn.dataset.m;updateSubmitRow();loadLeaderboard();});});
 
 async function openLeaderboard(){document.getElementById('lb-modal').classList.add('vis');updateSubmitRow();loadLeaderboard();}
 function updateSubmitRow(){
-  const row=document.getElementById('lb-submit-row'),info=document.getElementById('lb-submit-info');
-  if(gameMode==='sandbox'){row.style.display='flex';info.textContent='Sandbox mode — scores not submitted';document.getElementById('lb-submit-btn').disabled=true;return;}
-  if(currentUser&&gameStarted&&(gameOver||wave>0||negativeWaveMode)){row.style.display='flex';info.textContent=`Submit as ${playerName||'anon'}: Wave ${wave} · ${score.toLocaleString()} pts · ${gameMode.toUpperCase()}${negativeWaveMode?' · ⚠ NEGATIVE WAVE':''}`;document.getElementById('lb-submit-btn').disabled=false;}
-  else if(!currentUser){row.style.display='flex';info.textContent='Sign in to submit scores';document.getElementById('lb-submit-btn').disabled=true;}
+  const row=document.getElementById('lb-submit-row'),info=document.getElementById('lb-submit-info'),btn=document.getElementById('lb-submit-btn');
+  if(lbFilter==='level'){
+    row.style.display='flex';
+    btn.textContent='SUBMIT LEVEL';
+    btn.onclick=submitLevelScore;
+    if(!currentUser){info.textContent='Sign in to submit your level';btn.disabled=true;}
+    else{info.textContent=`Submit as ${playerName||'anon'}: LV ${playerLevel}`;btn.disabled=false;}
+    return;
+  }
+  btn.textContent='SUBMIT SCORE';
+  btn.onclick=submitScore;
+  if(gameMode==='sandbox'){row.style.display='flex';info.textContent='Sandbox mode — scores not submitted';btn.disabled=true;return;}
+  if(currentUser&&gameStarted&&(gameOver||wave>0||negativeWaveMode)){row.style.display='flex';info.textContent=`Submit as ${playerName||'anon'}: Wave ${wave} · ${score.toLocaleString()} pts · ${gameMode.toUpperCase()}${negativeWaveMode?' · ⚠ NEGATIVE WAVE':''}`;btn.disabled=false;}
+  else if(!currentUser){row.style.display='flex';info.textContent='Sign in to submit scores';btn.disabled=true;}
   else{row.style.display='none';}
-  if(currentUser&&gameMode!=='sandbox') document.getElementById('lb-submit-btn').disabled=false;
+  if(currentUser&&gameMode!=='sandbox') btn.disabled=false;
 }
-document.getElementById('lb-submit-btn').addEventListener('click',submitScore);
+// submit button handler assigned dynamically in updateSubmitRow() based on lbFilter
 async function submitScore(){
   if(!currentUser){openAuthModal();return;}
   if(gameMode==='sandbox'){msg('⚠ Sandbox scores cannot be submitted!',2500);return;}
@@ -1921,9 +1935,58 @@ async function submitScore(){
     setTimeout(()=>{btn.textContent='SUBMIT SCORE';btn.disabled=false;},2000);
   }
 }
+async function submitLevelScore(){
+  if(!currentUser){openAuthModal();return;}
+  const btn=document.getElementById('lb-submit-btn');btn.disabled=true;btn.textContent='SUBMITTING...';
+  try{
+    // Check existing entry — only ever raise the stored level, never lower it
+    const{data:existing}=await sb.from('level_leaderboard').select('level').eq('id',currentUser.id).maybeSingle();
+    if(existing&&existing.level>=playerLevel){
+      btn.textContent='✓ ALREADY RECORDED';
+      msg('Your best level ('+existing.level+') is already on the board.',3000);
+      setTimeout(()=>{btn.textContent='SUBMIT LEVEL';btn.disabled=false;},2500);
+      return;
+    }
+    const payload={id:currentUser.id,level:playerLevel,name:playerName||'guest',updated_at:new Date().toISOString()};
+    const{error}=await sb.from('level_leaderboard').upsert(payload,{onConflict:'id'});
+    if(error){
+      console.error('Level leaderboard submit error:',error);
+      btn.textContent='⚠ '+(error.message||'Error').slice(0,30);
+      msg('⚠ Submit failed: '+(error.message||'Unknown error'),4000);
+      setTimeout(()=>{btn.textContent='SUBMIT LEVEL';btn.disabled=false;},3000);
+    } else {
+      btn.textContent='✓ SUBMITTED';showLbToast('✓ LEVEL SUBMITTED');loadLeaderboard();
+      setTimeout(()=>{btn.textContent='SUBMIT LEVEL';btn.disabled=false;},2500);
+    }
+  }catch(e){
+    console.error('Level leaderboard network error:',e);
+    btn.textContent='⚠ NETWORK ERROR';
+    msg('⚠ Network error — check connection',3000);
+    setTimeout(()=>{btn.textContent='SUBMIT LEVEL';btn.disabled=false;},2000);
+  }
+}
+
 async function loadLeaderboard(){
-  const loading=document.getElementById('lb-loading'),table=document.getElementById('lb-table'),empty=document.getElementById('lb-empty');
+  const loading=document.getElementById('lb-loading'),table=document.getElementById('lb-table'),empty=document.getElementById('lb-empty'),theadRow=document.getElementById('lb-thead-row');
   loading.style.display='block';table.style.display='none';empty.style.display='none';
+
+  if(lbFilter==='level'){
+    theadRow.innerHTML='<th>#</th><th>PLAYER</th><th>LEVEL</th>';
+    try{
+      const{data,error}=await sb.from('level_leaderboard').select('id,level,name').order('level',{ascending:false}).limit(50);
+      loading.style.display='none';
+      if(error){empty.textContent='⚠ ERROR: '+error.message;empty.style.display='block';return;}
+      if(!data||data.length===0){empty.textContent='NO RECORDS FOUND';empty.style.display='block';return;}
+      table.style.display='table';const tbody=document.getElementById('lb-body');tbody.innerHTML='';
+      data.forEach((row,i)=>{const isMe=currentUser&&row.id===currentUser.id;const tr=document.createElement('tr');if(isMe) tr.className='me';
+      const pid=isMe?(playerName||currentUser.email||row.id?.slice(0,8)+'…'):(row.name||(row.id?row.id.slice(0,8)+'…':'—'));
+      tr.innerHTML=`<td class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</td><td>${pid}</td><td class="lb-score-val">🎖 LV ${row.level}</td>`;
+      tbody.appendChild(tr);});
+    }catch(e){loading.style.display='none';empty.style.display='block';}
+    return;
+  }
+
+  theadRow.innerHTML='<th>#</th><th>PLAYER</th><th>SCORE</th><th>WAVE</th><th>MODE</th><th>TIME</th>';
   try{let q=sb.from('leaderboard').select('id,wave,score,mode,name,play_time').order('score',{ascending:false}).limit(50);
   if(lbFilter!=='all') q=q.eq('mode',parseInt(lbFilter));
   const{data,error}=await q;loading.style.display='none';
