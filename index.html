@@ -1647,6 +1647,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
   <button class="bb"    data-t="laser"   style="--a:#00ccff"><span class="bl"><span class="bd"></span>LASER 💎</span><span class="bc">350g</span></button>
   <button class="bb"    data-t="bhole"   style="--a:#aa44ff"><span class="bl"><span class="bd"></span>B.HOLE 🕳️</span><span class="bc">450g</span></button>
   <button class="bb"    data-t="ice"     style="--a:#88ddff"><span class="bl"><span class="bd"></span>ICE ❄</span><span class="bc">175g</span></button>
+  <button class="bb"    data-t="barbwire" style="--a:#c8a874"><span class="bl"><span class="bd"></span>BARBWIRE 🧷</span><span class="bc">300g</span></button>
   <button class="bb"    data-t="heli"    style="--a:#44ffcc" id="heli-btn"><span class="bl"><span class="bd"></span>HELI PAD 🚁</span><span class="bc">400g</span></button>
   <button class="bb"    data-t="barracks" style="--a:#44aa44"><span class="bl"><span class="bd"></span>BARRACKS 🛡</span><span class="bc">350g</span></button>
   <button class="bb"    data-t="mech_base" style="--a:#8899aa" id="mech-base-btn"><span class="bl"><span class="bd"></span>MECH BASE 🤖</span><span class="bc">6000g</span></button>
@@ -2137,9 +2138,9 @@ function deserializeGameState(data){
 // GAME CONSTANTS
 const COLS=22,ROWS=14,CS=38,W=COLS*CS,H=ROWS*CS;
 const BASE_R=7,BASE_C=COLS-1,SPAWN_R=1,SPAWN_C=0;
-const CT={EMPTY:0,WALL:1,BASIC:2,SNIPER:3,CANNON:4,BASE:5,SPAWN:6,ELECTRIC:7,HEALER:8,SPIKE:9,BUFF:10,MINE:11,HELI:12,FLAME:13,BHOLE:14,LASER:15,DRONE:16,ICE:17,BARRACKS:18,SILO:19,MECH_BASE:20};
+const CT={EMPTY:0,WALL:1,BASIC:2,SNIPER:3,CANNON:4,BASE:5,SPAWN:6,ELECTRIC:7,HEALER:8,SPIKE:9,BUFF:10,MINE:11,HELI:12,FLAME:13,BHOLE:14,LASER:15,DRONE:16,ICE:17,BARRACKS:18,SILO:19,MECH_BASE:20,BARBWIRE:21};
 const ML=5;
-const BSET=new Set([CT.WALL,CT.BASIC,CT.SNIPER,CT.CANNON,CT.ELECTRIC,CT.HEALER,CT.SPIKE,CT.BUFF,CT.MINE,CT.HELI,CT.FLAME,CT.BHOLE,CT.LASER,CT.ICE,CT.BARRACKS,CT.SILO,CT.MECH_BASE]);
+const BSET=new Set([CT.WALL,CT.BASIC,CT.SNIPER,CT.CANNON,CT.ELECTRIC,CT.HEALER,CT.SPIKE,CT.BUFF,CT.MINE,CT.HELI,CT.FLAME,CT.BHOLE,CT.LASER,CT.ICE,CT.BARRACKS,CT.SILO,CT.MECH_BASE,CT.BARBWIRE]);
 const GUNNER_BASE_DMG=18,GUNNER_STUN_DUR=30;
 
 const TS={
@@ -2163,6 +2164,7 @@ const TS={
     '5A':{t:CT.DRONE,cost:7000,hp:500,rng:0,dmg:0,cd:0,col:'#ff00ff',name:'SWARM MAX',droneCount:10,droneDmg:50,droneCd:28,droneRng:320,droneSpd:3.2,droneHeal:0,droneBuff:0,droneMissile:true},
     '5B':{t:CT.DRONE,cost:6500,hp:500,rng:0,dmg:0,cd:0,col:'#00ffcc',name:'OMEGA DRONE',droneCount:1,droneDmg:80,droneCd:20,droneRng:350,droneSpd:3.5,droneHeal:15,droneBuff:50,droneMissile:true}},
   ice:{1:{t:CT.ICE,cost:175,hp:75,rng:150,dmg:10,cd:60,aoe:0,chn:0,col:'#88ddff',name:'ICE TOWER',iceTower:true,iceShockwave:true,slowFactor:.40,slowDur:120,shockSpd:3.0,shockMaxR:180},'2A':{t:CT.ICE,cost:300,hp:100,rng:165,dmg:14,cd:55,aoe:0,chn:0,col:'#66ccff',name:'FROST NOVA',iceTower:true,iceShockwave:true,slowFactor:.50,slowDur:135,shockSpd:3.5,shockMaxR:220},'2B':{t:CT.ICE,cost:350,hp:100,rng:180,dmg:18,cd:50,aoe:0,chn:0,col:'#4488ff',name:'CRYO SHOT',iceTower:true,iceBullet:true,slowFactor:.25,slowDur:90,bulletSpd:12,armorShred:.15,shredDur:130,flyFreeze:.80,flySpdCap:.25},'3A':{t:CT.ICE,cost:500,hp:130,rng:180,dmg:20,cd:48,aoe:0,chn:0,col:'#55bbff',name:'FROST NOVA+',iceTower:true,iceShockwave:true,slowFactor:.58,slowDur:150,shockSpd:4.0,shockMaxR:260},'3B':{t:CT.ICE,cost:600,hp:130,rng:200,dmg:28,cd:42,aoe:0,chn:0,col:'#3377ff',name:'CRYO SHOT+',iceTower:true,iceBullet:true,slowFactor:.30,slowDur:100,bulletSpd:14,armorShred:.25,shredDur:160,flyFreeze:.88,flySpdCap:.18},'4A':{t:CT.ICE,cost:850,hp:170,rng:200,dmg:30,cd:40,aoe:0,chn:0,col:'#44aaff',name:'FROST NOVA++',iceTower:true,iceShockwave:true,slowFactor:.65,slowDur:165,shockSpd:4.5,shockMaxR:310},'4B':{t:CT.ICE,cost:1000,hp:170,rng:225,dmg:42,cd:35,aoe:0,chn:0,col:'#2266ee',name:'CRYO SHOT++',iceTower:true,iceBullet:true,slowFactor:.35,slowDur:110,bulletSpd:16,armorShred:.35,shredDur:190,flyFreeze:.92,flySpdCap:.15},'5A':{t:CT.ICE,cost:1400,hp:230,rng:240,dmg:48,cd:32,aoe:0,chn:0,col:'#33ccff',name:'BLIZZARD',iceTower:true,iceShockwave:true,slowFactor:.75,slowDur:180,shockSpd:5.2,shockMaxR:400},'5B':{t:CT.ICE,cost:2200,hp:230,rng:260,dmg:65,cd:28,aoe:0,chn:0,col:'#1155dd',name:'ABSOLUTE ZERO',iceTower:true,iceBullet:true,slowFactor:.40,slowDur:120,bulletSpd:18,armorShred:.50,shredDur:240,flyFreeze:.95,flySpdCap:.10}},
+  barbwire:{1:{t:CT.BARBWIRE,cost:300,hp:130,rng:130,dmg:8,cd:15,aoe:0,chn:0,col:'#c8a874',name:'BARBWIRE',barbwireTower:true,slowFactor:.25,slowDur:30},'2A':{t:CT.BARBWIRE,cost:480,hp:160,rng:165,dmg:10,cd:15,aoe:0,chn:0,col:'#c8a874',name:'LONG WIRE',barbwireTower:true,slowFactor:.25,slowDur:30},'2B':{t:CT.BARBWIRE,cost:550,hp:160,rng:130,dmg:18,cd:15,aoe:0,chn:0,col:'#ff5533',name:'RAZOR WIRE',barbwireTower:true,slowFactor:.30,slowDur:40},'3A':{t:CT.BARBWIRE,cost:820,hp:200,rng:200,dmg:12,cd:15,aoe:0,chn:0,col:'#d4b483',name:'LONG WIRE+',barbwireTower:true,slowFactor:.25,slowDur:30},'3B':{t:CT.BARBWIRE,cost:1020,hp:200,rng:130,dmg:28,cd:15,aoe:0,chn:0,col:'#ff4422',name:'RAZOR WIRE+',barbwireTower:true,slowFactor:.35,slowDur:50},'4A':{t:CT.BARBWIRE,cost:1350,hp:250,rng:235,dmg:14,cd:15,aoe:0,chn:0,col:'#e0c090',name:'LONG WIRE++',barbwireTower:true,slowFactor:.25,slowDur:30},'4B':{t:CT.BARBWIRE,cost:1750,hp:250,rng:130,dmg:40,cd:15,aoe:0,chn:0,col:'#ff3311',name:'RAZOR WIRE++',barbwireTower:true,slowFactor:.40,slowDur:60},'5A':{t:CT.BARBWIRE,cost:2400,hp:320,rng:280,dmg:18,cd:15,aoe:0,chn:0,col:'#eecc99',name:'PERIMETER WIRE',barbwireTower:true,slowFactor:.25,slowDur:30},'5B':{t:CT.BARBWIRE,cost:3200,hp:320,rng:130,dmg:60,cd:15,aoe:0,chn:0,col:'#ff2200',name:'RAZOR STORM',barbwireTower:true,slowFactor:.45,slowDur:75}},
   flame:{1:{t:CT.FLAME,cost:300,hp:85,rng:130,dmg:12,cd:14,aoe:50,chn:0,col:'#ff6622',name:'FLAMETHROWER',flameTower:true,burnDmg:2,burnDur:75},'2A':{t:CT.FLAME,cost:475,hp:115,rng:142,dmg:16,cd:12,aoe:55,chn:0,col:'#ff4400',name:'INFERNO',flameTower:true,burnDmg:5,burnDur:90},'2B':{t:CT.FLAME,cost:525,hp:115,rng:142,dmg:10,cd:14,aoe:58,chn:0,col:'#44ff88',name:'CORROSION',flameTower:true,burnDmg:1,burnDur:60,armorShred:.10,shredDur:120},'3A':{t:CT.FLAME,cost:800,hp:148,rng:155,dmg:24,cd:10,aoe:62,chn:0,col:'#ff3300',name:'INFERNO+',flameTower:true,burnDmg:9,burnDur:105},'3B':{t:CT.FLAME,cost:950,hp:148,rng:158,dmg:14,cd:12,aoe:65,chn:0,col:'#33ff66',name:'CORROSION+',flameTower:true,burnDmg:2,burnDur:70,armorShred:.18,shredDur:150},'4A':{t:CT.FLAME,cost:1250,hp:192,rng:172,dmg:38,cd:8,aoe:72,chn:0,col:'#ff2200',name:'INFERNO++',flameTower:true,burnDmg:14,burnDur:120},'4B':{t:CT.FLAME,cost:1700,hp:192,rng:178,dmg:22,cd:10,aoe:78,chn:0,col:'#22ff55',name:'CORROSION++',flameTower:true,burnDmg:3,burnDur:80,armorShred:.28,shredDur:180},'5A':{t:CT.FLAME,cost:2300,hp:255,rng:190,dmg:58,cd:6,aoe:88,chn:0,col:'#ff0000',name:'HELLFIRE',flameTower:true,burnDmg:20,burnDur:140},'5B':{t:CT.FLAME,cost:3800,hp:255,rng:200,dmg:35,cd:8,aoe:95,chn:0,col:'#00ff44',name:'MELTDOWN',flameTower:true,burnDmg:5,burnDur:90,armorShred:.40,shredDur:210}},
   bhole:{1:{t:CT.BHOLE,cost:450,hp:75,rng:160,dmg:3,cd:120,aoe:0,chn:0,col:'#aa44ff',name:'BLACK HOLE',bhTower:true,pullDist:28,bhMaxExp:300},'2A':{t:CT.BHOLE,cost:600,hp:100,rng:190,dmg:4,cd:100,aoe:0,chn:0,col:'#cc66ff',name:'EVENT HORIZON',bhTower:true,pullDist:32,bhMaxExp:300},'2B':{t:CT.BHOLE,cost:750,hp:100,rng:165,dmg:6,cd:110,aoe:0,chn:0,col:'#ff44aa',name:'SINGULARITY',bhTower:true,pullDist:45,bhMaxExp:280},'3A':{t:CT.BHOLE,cost:1000,hp:132,rng:220,dmg:5,cd:85,aoe:0,chn:0,col:'#dd77ff',name:'EVENT HORIZON+',bhTower:true,pullDist:36,bhMaxExp:320},'3B':{t:CT.BHOLE,cost:1400,hp:132,rng:175,dmg:8,cd:100,aoe:0,chn:0,col:'#ff33aa',name:'SINGULARITY+',bhTower:true,pullDist:58,bhMaxExp:260},'4A':{t:CT.BHOLE,cost:2000,hp:175,rng:255,dmg:6,cd:70,aoe:0,chn:0,col:'#ee88ff',name:'EVENT HORIZON++',bhTower:true,pullDist:40,bhMaxExp:340},'4B':{t:CT.BHOLE,cost:2800,hp:175,rng:185,dmg:12,cd:90,aoe:0,chn:0,col:'#ff22aa',name:'SINGULARITY++',bhTower:true,pullDist:72,bhMaxExp:240},'5A':{t:CT.BHOLE,cost:3200,hp:230,rng:280,dmg:8,cd:55,aoe:0,chn:0,col:'#ffaaff',name:'SUPERMASSIVE',bhTower:true,pullDist:48,bhMaxExp:360},'5B':{t:CT.BHOLE,cost:4500,hp:230,rng:195,dmg:15,cd:80,aoe:0,chn:0,col:'#ff00aa',name:'VOID CRUSH',bhTower:true,pullDist:90,bhMaxExp:220}},
   laser:{1:{t:CT.LASER,cost:300,hp:70,rng:170,dmg:1,cd:4,aoe:0,chn:0,col:'#00ccff',name:'LASER',laserTower:true,stackDmg:2,maxStacks:15,crystalMax:0,crystalLife:0},'2A':{t:CT.LASER,cost:750,hp:95,rng:190,dmg:5,cd:4,aoe:0,chn:0,col:'#00ddff',name:'FOCUS BEAM',laserTower:true,stackDmg:2,maxStacks:18,crystalMax:0},'2B':{t:CT.LASER,cost:1100,hp:95,rng:175,dmg:2,cd:4,aoe:0,chn:0,col:'#ff88ff',name:'CRYSTAL FORGE',laserTower:true,stackDmg:1,maxStacks:15,crystalMax:2,crystalLife:600,crystalCharge:100,crystalDmgR:.1},'3A':{t:CT.LASER,cost:1800,hp:125,rng:210,dmg:7,cd:4,aoe:0,chn:0,col:'#00eeff',name:'FOCUS BEAM+',laserTower:true,stackDmg:2,maxStacks:20,crystalMax:0},'3B':{t:CT.LASER,cost:3400,hp:125,rng:180,dmg:8,cd:4,aoe:0,chn:0,col:'#ff77ff',name:'CRYSTAL FORGE+',laserTower:true,stackDmg:2,maxStacks:16,crystalMax:4,crystalLife:720,crystalCharge:100,crystalDmgR:.4},'4A':{t:CT.LASER,cost:4500,hp:165,rng:240,dmg:40,cd:3,aoe:0,chn:0,col:'#44eeff',name:'FOCUS BEAM++',laserTower:true,stackDmg:1,maxStacks:402,crystalMax:0},'4B':{t:CT.LASER,cost:6500,hp:165,rng:190,dmg:10,cd:4,aoe:0,chn:0,col:'#ff66ff',name:'CRYSTAL FORGE++',laserTower:true,stackDmg:3,maxStacks:18,crystalMax:6,crystalLife:840,crystalCharge:100,crystalDmgR:1},'5A':{t:CT.LASER,cost:9000,hp:2200,rng:5600,dmg:100,cd:0.01,aoe:0,chn:0,col:'#88ffff',name:'DEATH RAY',laserTower:true,stackDmg:10,maxStacks:9999999,crystalMax:0},'5B':{t:CT.LASER,cost:13000,hp:2200,rng:400,dmg:50,cd:2,aoe:0,chn:10,col:'#ff44ff',name:'CRYSTAL MATRIX',laserTower:true,stackDmg:5,maxStacks:20000,crystalMax:100,crystalLife:2060,crystalCharge:10,crystalDmgR:2}},
@@ -2227,8 +2229,8 @@ const TS={
   },
 };
 
-const PATH_NAMES={basic:{A:'MINIGUN',B:'SHOCKWAVE'},sniper:{A:'OVERCHARGE',B:'EXPLOSIVE'},cannon:{A:'RAPID FIRE',B:'DEVASTATOR'},electric:{A:'STORM',B:'PLASMA BALL'},healer:{A:'BASE MEDIC',B:'REGEN+'},spike:{A:'RAPID STRIKE',B:'WARHAMMER'},buff:{A:'COST AMP',B:'WAR BEACON'},mine:{A:'COMPOUND',B:'BANK'},heli:{A:'MISSILE+BULLETS',B:'MINIGUN SPEED'},flame:{A:'INFERNO',B:'CORROSION'},ice:{A:'FROST WAVE',B:'CRYO BULLET'},bhole:{A:'EVENT HORIZON',B:'SINGULARITY'},laser:{A:'FOCUS BEAM',B:'CRYSTAL FORGE'},barracks:{A:'DEMOLISHER',B:'GUNNER',C:'TANK DEPOT'},silo:{A:'NUKE',B:'LASER STRIKE'},hero_accel:{A:'OVERCHARGE BEAM'},hero_score:{A:'SCORE FOCUS',B:'AURA FOCUS'},mech_base:{A:'THE TITAN',B:'WALKING ARSENAL',C:'SWARM PROTOCOL'},admindrone:{A:'SWARM PROTOCOL',B:'MULTI-ROLE'}};
-const PATH_COLORS={basic:{A:'#33aaff',B:'#55ddff'},sniper:{A:'#cc55ff',B:'#ff44bb'},cannon:{A:'#ff9900',B:'#ff6600'},electric:{A:'#aaff00',B:'#88ff44'},healer:{A:'#00ccff',B:'#00ffcc'},spike:{A:'#ff4488',B:'#ff2255'},buff:{A:'#ffd700',B:'#ff8800'},mine:{A:'#ffe066',B:'#ffd700'},heli:{A:'#00ffaa',B:'#44ffcc'},flame:{A:'#ff4400',B:'#44ff88'},ice:{A:'#44ccff',B:'#4488ff'},bhole:{A:'#cc66ff',B:'#ff44aa'},laser:{A:'#00ccff',B:'#ff88ff'},barracks:{A:'#ff8844',B:'#33ccff',C:'#cc8800'},silo:{A:'#ff4400',B:'#cc55ff'},hero_accel:{A:'#ffe066'},hero_score:{A:'#ff44aa',B:'#ffaa00'},mech_base:{A:'#ff3311',B:'#2299ee',C:'#44ee77'},admindrone:{A:'#ff44ff',B:'#44ffee'}};
+const PATH_NAMES={basic:{A:'MINIGUN',B:'SHOCKWAVE'},sniper:{A:'OVERCHARGE',B:'EXPLOSIVE'},cannon:{A:'RAPID FIRE',B:'DEVASTATOR'},electric:{A:'STORM',B:'PLASMA BALL'},healer:{A:'BASE MEDIC',B:'REGEN+'},spike:{A:'RAPID STRIKE',B:'WARHAMMER'},buff:{A:'COST AMP',B:'WAR BEACON'},mine:{A:'COMPOUND',B:'BANK'},heli:{A:'MISSILE+BULLETS',B:'MINIGUN SPEED'},flame:{A:'INFERNO',B:'CORROSION'},ice:{A:'FROST WAVE',B:'CRYO BULLET'},bhole:{A:'EVENT HORIZON',B:'SINGULARITY'},laser:{A:'FOCUS BEAM',B:'CRYSTAL FORGE'},barracks:{A:'DEMOLISHER',B:'GUNNER',C:'TANK DEPOT'},silo:{A:'NUKE',B:'LASER STRIKE'},hero_accel:{A:'OVERCHARGE BEAM'},hero_score:{A:'SCORE FOCUS',B:'AURA FOCUS'},mech_base:{A:'THE TITAN',B:'WALKING ARSENAL',C:'SWARM PROTOCOL'},admindrone:{A:'SWARM PROTOCOL',B:'MULTI-ROLE'},barbwire:{A:'LONG WIRE',B:'RAZOR WIRE'}};
+const PATH_COLORS={basic:{A:'#33aaff',B:'#55ddff'},sniper:{A:'#cc55ff',B:'#ff44bb'},cannon:{A:'#ff9900',B:'#ff6600'},electric:{A:'#aaff00',B:'#88ff44'},healer:{A:'#00ccff',B:'#00ffcc'},spike:{A:'#ff4488',B:'#ff2255'},buff:{A:'#ffd700',B:'#ff8800'},mine:{A:'#ffe066',B:'#ffd700'},heli:{A:'#00ffaa',B:'#44ffcc'},flame:{A:'#ff4400',B:'#44ff88'},ice:{A:'#44ccff',B:'#4488ff'},bhole:{A:'#cc66ff',B:'#ff44aa'},laser:{A:'#00ccff',B:'#ff88ff'},barracks:{A:'#ff8844',B:'#33ccff',C:'#cc8800'},silo:{A:'#ff4400',B:'#cc55ff'},hero_accel:{A:'#ffe066'},hero_score:{A:'#ff44aa',B:'#ffaa00'},mech_base:{A:'#ff3311',B:'#2299ee',C:'#44ee77'},admindrone:{A:'#ff44ff',B:'#44ffee'},barbwire:{A:'#c8a874',B:'#ff5533'}};
 
 function getCfg(key,lvl,path){if(key==='wall') return TS.wall[Math.min(lvl,5)]||TS.wall[1];if(lvl===1) return TS[key][1];return TS[key][lvl+(path||'')]||TS[key][1];}
 function upgCost(key,toLvl,path){if(key==='wall'){const s=TS.wall[Math.min(toLvl,5)];return s?s.cost:TS.wall[1].cost;}if(toLvl===2){const lk2='2'+(path||'A');const s2=TS[key]&&TS[key][lk2];if(s2) return s2.cost;const sA=TS[key]&&TS[key]['2A'];return sA?sA.cost:Math.round(TS[key][1].cost*0.6);}const lk=toLvl+(path||'A');const s=TS[key]&&TS[key][lk];if(s) return s.cost;const base=TS[key][1].cost;if(toLvl===3) return Math.round(base*1.0);if(toLvl===4) return Math.round(base*1.45);if(toLvl===5) return Math.round(base*2.0);return Math.round(base*1.2);}
@@ -2275,7 +2277,7 @@ const ctx=cv.getContext('2d');
 
 let grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));
 let flow=Array.from({length:ROWS},()=>Array(COLS).fill(null));
-let towers=[],enemies=[],projs=[],shockwaves=[],kingWaves=[],adminDrones=[],parts=[],floats=[],lxfx=[],healBeams=[],helicopters=[],crystals=[];
+let towers=[],enemies=[],projs=[],shockwaves=[],kingWaves=[],adminDrones=[],parts=[],floats=[],lxfx=[],healBeams=[],helicopters=[],crystals=[],barbWireSegs=[];
 let gold=200,baseHP=150,baseMaxHP=150,wave=0,score=0,kills=0;
 let gameOver=false,waveOn=false,spawnQ=[],spawnT=0,curWaveType=0;
 let selBuild='wall',sellMode=false,upgMode=false,baseUpgMode=false;
@@ -2527,7 +2529,8 @@ const UNLOCK_MAP = {
   80: [{type:'tower',key:'barracks',label:'BARRACKS'}],
   90: [{type:'speed',key:'4',label:'4× SPEED'}],
   100:[{type:'speed',key:'5',label:'5× SPEED'}],
-  110:[{type:'tower',key:'mech_base',label:'MECH BASE'},{type:'tower',key:'admindrone',label:'DRONE PAD'}]
+  110:[{type:'tower',key:'mech_base',label:'MECH BASE'},{type:'tower',key:'admindrone',label:'DRONE PAD'}],
+  120:[{type:'tower',key:'barbwire',label:'BARBWIRE'}]
 };
 
 // FREE items (always unlocked regardless of level)
@@ -3396,8 +3399,8 @@ let hcPoints=0;              // Upgrade points available to spend
 let hcPointsSpent=0;         // Points already spent
 let hcLastPointScore=0;      // Score at which last point was awarded
 let hcUnlocked=new Set();    // Tower keys unlocked this game
-const HC_TOWER_COSTS={electric:1,healer:3,spike:4,flame:6,ice:5,buff:15,bhole:8,heli:10,mine:20,laser:11,barracks:7,silo:7,hero_accel:25,hero_score:25,mech_base:21,admindrone:9};
-const HC_TOWER_NAMES={electric:'TESLA ⚡',healer:'MEDIC ✚',spike:'SPIKE 🔨',flame:'FLAME 🔥',ice:'ICE ❄',buff:'BUFF TWR ⬆',bhole:'B.HOLE 🕳️',heli:'HELI PAD 🚁',mine:'MINE 💰',laser:'LASER 💎',barracks:'BARRACKS 🛡',silo:'MISSILE SILO 🚀',hero_accel:'HERO: ACCEL ⚡',hero_score:'HERO: SCORE 🏆',mech_base:'MECH BASE 🤖',admindrone:'DRONE PAD 🛸'};
+const HC_TOWER_COSTS={electric:1,healer:3,spike:4,flame:6,ice:5,buff:15,bhole:8,heli:10,mine:20,laser:11,barracks:7,silo:7,hero_accel:25,hero_score:25,mech_base:21,admindrone:9,barbwire:12};
+const HC_TOWER_NAMES={electric:'TESLA ⚡',healer:'MEDIC ✚',spike:'SPIKE 🔨',flame:'FLAME 🔥',ice:'ICE ❄',buff:'BUFF TWR ⬆',bhole:'B.HOLE 🕳️',heli:'HELI PAD 🚁',mine:'MINE 💰',laser:'LASER 💎',barracks:'BARRACKS 🛡',silo:'MISSILE SILO 🚀',hero_accel:'HERO: ACCEL ⚡',hero_score:'HERO: SCORE 🏆',mech_base:'MECH BASE 🤖',admindrone:'DRONE PAD 🛸',barbwire:'BARBWIRE 🧷'};
 const HERO_HC_KEYS=['hero_accel','hero_score']; // Both heroes are unlocked together by ONE 25-point purchase
 
 function init(){
@@ -4067,6 +4070,7 @@ cv.addEventListener('click',e=>{
   if(selBuild==='barracks'&&gameMode==='hardcore'&&!hcUnlocked.has('barracks')){msg('⚠ Unlock Barracks first! (7 pts)',2500);return;}
   if(selBuild==='mech_base'&&gameMode==='hardcore'&&!hcUnlocked.has('mech_base')){msg('⚠ Unlock Mech Base first! (21 pts)',2500);return;}
   if(selBuild==='admindrone'&&gameMode==='hardcore'&&!hcUnlocked.has('admindrone')){msg('⚠ Unlock Drone Pad first! (9 pts)',2500);return;}
+  if(selBuild==='barbwire'&&gameMode==='hardcore'&&!hcUnlocked.has('barbwire')){msg('⚠ Unlock Barbwire first! (12 pts)',2500);return;}
   if(selBuild==='silo'&&!earnedAchievements.has('boss_speed')){msg('⚠ Missile Silo requires the "I\'M THE BOSS" achievement!',3000);return;}
   if(selBuild==='silo'&&gameMode==='hardcore'&&!hcUnlocked.has('silo')){msg('⚠ Unlock Missile Silo first! (7 pts)',2500);return;}
   if(selBuild==='hero_accel'&&gameMode==='hardcore'&&!hcUnlocked.has('hero_accel')){msg('⚠ Unlock Hero Towers first! (25 pts, unlocks both heroes)',2500);return;}
@@ -4369,7 +4373,7 @@ function update(){
   if(waveOn&&spawnQ.length>0){spawnT--;if(spawnT<=0){const entry=spawnQ.shift();enemies.push(spawnE(entry));spawnT=Math.max(12,50-Math.abs(wave)*2);}}
   for(let i=0;i<enemies.length;i++) enemies[i].shielded=false;
   for(let i=0;i<enemies.length;i++){const e=enemies[i];if(!e.isShielder||e.stun>0) continue;for(let j=0;j<enemies.length;j++){const other=enemies[j];if(other===e||other.isShielder) continue;const dx=other.x-e.x,dy=other.y-e.y;if(dx*dx+dy*dy<=65*65) other.shielded=true;}}
-  for(let i=enemies.length-1;i>=0;i--){const e=enemies[i];e.wob+=.1;if(e.stun>0){e.stun--;continue;}if(e.burnDur>0){e.burnDur--;e.hp-=e.burnDmg;if(e.burnDur<=0){e.burnDmg=0;}}if(e.shredDur>0){e.shredDur--;if(e.shredDur<=0){e.armorShred=0;}}if(e.slowDur>0){e.slowDur--;if(e.slowDur<=0){e.slowFactor=0;e.spd=e.spdBase;}}if(e.spdCap&&e.spd>e.spdCap){e.spd=e.spdCap;}if(e.flying){e.flyWob+=.04;const dx=bx-e.x,dy=(by-e.altitude)-e.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<CS*.7){baseHP-=e.atkDmg*2.5;if(baseHP<=0){baseHP=0;doGameOver();}enemies.splice(i,1);sparks(e.x,e.y,e.col,10,2.5);ft(bx,by-16,`-${Math.round(e.atkDmg*2.5)}`,'#ff4444');syncUI();continue;}e.x+=dx/dist*e.spd;e.y+=dy/dist*e.spd;continue;}if(e.mode==='attackBase'){const dx=bx-e.x,dy=by-e.y,d=Math.sqrt(dx*dx+dy*dy);if(d>CS*.45){e.x+=dx/d*e.spd*.55;e.y+=dy/d*e.spd*.55;}if(e.atkCd<=0){e.atkCd=e.atkCdB;baseHP-=e.atkDmg*.6;sparks(bx+(Math.random()-.5)*18,by+(Math.random()-.5)*18,'#ff4444',3,1.2);addLx(e.x,e.y,bx,by,'#ff3300');if(baseHP<=0){baseHP=0;doGameOver();}syncUI();}else e.atkCd--;continue;}if(e.mode==='attack'){if(!e.atkTarget||!towers.includes(e.atkTarget)){e.mode='move';e.atkTarget=null;continue;}const tx=e.atkTarget.col*CS+CS/2,ty=e.atkTarget.row*CS+CS/2;const dx=tx-e.x,dy=ty-e.y,d=Math.sqrt(dx*dx+dy*dy);if(d>CS*.55){e.x+=dx/d*e.spd*.8;e.y+=dy/d*e.spd*.8;}else{if(e.atkCd<=0){e.atkCd=e.atkCdB;e.atkTarget.hp-=e.atkDmg;e.atkTarget.hitFlash=9;sparks(tx,ty,e.col,4,1.2);addLx(e.x,e.y,tx,ty,'#ff4444');if(e.atkTarget.cfg.thorns) e.hp-=e.atkTarget.cfg.thorns;if(e.atkTarget.hp<=0) destroyTower(e.atkTarget);}else e.atkCd--;}continue;}if(e.isBoss&&e.bossType==='commander'){if(!e.cmdHealCd) e.cmdHealCd=0;if(!e.cmdStrikeCd) e.cmdStrikeCd=0;e.cmdHealCd--;e.cmdStrikeCd--;if(e.cmdHealCd<=0){e.cmdHealCd=180;let healed=0;for(const oe of enemies){if(oe===e) continue;const hdx=oe.x-e.x,hdy=oe.y-e.y;if(hdx*hdx+hdy*hdy<=120*120&&oe.hp<oe.mhp){const heal=Math.round(oe.mhp*.15);oe.hp=Math.min(oe.mhp,oe.hp+heal);healed++;addBeam(e.x,e.y,oe.x,oe.y);sparks(oe.x,oe.y,'#ffdd00',5,1.5);}}if(healed>0){ft(e.x,e.y-e.sz-14,'HEAL +'+(healed),'#ffdd00');sparks(e.x,e.y,'#ffdd00',10,2);}}if(e.cmdStrikeCd<=0){e.cmdStrikeCd=360;let strikeTgt=null,bestD=Infinity;for(const t of towers){if(t.cfg.t===CT.WALL) continue;const tdx=t.col*CS+CS/2-e.x,tdy=t.row*CS+CS/2-e.y,td=tdx*tdx+tdy*tdy;if(td<bestD){bestD=td;strikeTgt=t;}}if(strikeTgt){const sx=strikeTgt.col*CS+CS/2,sy=strikeTgt.row*CS+CS/2;for(const t of towers){const adx=t.col*CS+CS/2-sx,ady=t.row*CS+CS/2-sy;if(adx*adx+ady*ady<=85*85){t.hp-=35;t.hitFlash=18;t.stunned=Math.max(t.stunned||0,90);sparks(t.col*CS+CS/2,t.row*CS+CS/2,'#ff4400',12,3);if(t.hp<=0) destroyTower(t);}}ft(sx,sy-20,'⚡ AIRSTRIKE!','#ff4400');sparks(sx,sy,'#ff6600',20,4);lxfx.push({x1:sx,y1:0,x2:sx,y2:sy,col:'#ff4400',life:15,ml:15});}}}
+  for(let i=enemies.length-1;i>=0;i--){const e=enemies[i];e.wob+=.1;if(e.stun>0){e.stun--;continue;}if(e.burnDur>0){e.burnDur--;e.hp-=e.burnDmg;if(e.burnDur<=0){e.burnDmg=0;}}if(e.shredDur>0){e.shredDur--;if(e.shredDur<=0){e.armorShred=0;}}if(e.barbCd>0){e.barbCd--;}if(e.slowDur>0){e.slowDur--;if(e.slowDur<=0){e.slowFactor=0;e.spd=e.spdBase;}}if(e.spdCap&&e.spd>e.spdCap){e.spd=e.spdCap;}if(e.flying){e.flyWob+=.04;const dx=bx-e.x,dy=(by-e.altitude)-e.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<CS*.7){baseHP-=e.atkDmg*2.5;if(baseHP<=0){baseHP=0;doGameOver();}enemies.splice(i,1);sparks(e.x,e.y,e.col,10,2.5);ft(bx,by-16,`-${Math.round(e.atkDmg*2.5)}`,'#ff4444');syncUI();continue;}e.x+=dx/dist*e.spd;e.y+=dy/dist*e.spd;continue;}if(e.mode==='attackBase'){const dx=bx-e.x,dy=by-e.y,d=Math.sqrt(dx*dx+dy*dy);if(d>CS*.45){e.x+=dx/d*e.spd*.55;e.y+=dy/d*e.spd*.55;}if(e.atkCd<=0){e.atkCd=e.atkCdB;baseHP-=e.atkDmg*.6;sparks(bx+(Math.random()-.5)*18,by+(Math.random()-.5)*18,'#ff4444',3,1.2);addLx(e.x,e.y,bx,by,'#ff3300');if(baseHP<=0){baseHP=0;doGameOver();}syncUI();}else e.atkCd--;continue;}if(e.mode==='attack'){if(!e.atkTarget||!towers.includes(e.atkTarget)){e.mode='move';e.atkTarget=null;continue;}const tx=e.atkTarget.col*CS+CS/2,ty=e.atkTarget.row*CS+CS/2;const dx=tx-e.x,dy=ty-e.y,d=Math.sqrt(dx*dx+dy*dy);if(d>CS*.55){e.x+=dx/d*e.spd*.8;e.y+=dy/d*e.spd*.8;}else{if(e.atkCd<=0){e.atkCd=e.atkCdB;e.atkTarget.hp-=e.atkDmg;e.atkTarget.hitFlash=9;sparks(tx,ty,e.col,4,1.2);addLx(e.x,e.y,tx,ty,'#ff4444');if(e.atkTarget.cfg.thorns) e.hp-=e.atkTarget.cfg.thorns;if(e.atkTarget.hp<=0) destroyTower(e.atkTarget);}else e.atkCd--;}continue;}if(e.isBoss&&e.bossType==='commander'){if(!e.cmdHealCd) e.cmdHealCd=0;if(!e.cmdStrikeCd) e.cmdStrikeCd=0;e.cmdHealCd--;e.cmdStrikeCd--;if(e.cmdHealCd<=0){e.cmdHealCd=180;let healed=0;for(const oe of enemies){if(oe===e) continue;const hdx=oe.x-e.x,hdy=oe.y-e.y;if(hdx*hdx+hdy*hdy<=120*120&&oe.hp<oe.mhp){const heal=Math.round(oe.mhp*.15);oe.hp=Math.min(oe.mhp,oe.hp+heal);healed++;addBeam(e.x,e.y,oe.x,oe.y);sparks(oe.x,oe.y,'#ffdd00',5,1.5);}}if(healed>0){ft(e.x,e.y-e.sz-14,'HEAL +'+(healed),'#ffdd00');sparks(e.x,e.y,'#ffdd00',10,2);}}if(e.cmdStrikeCd<=0){e.cmdStrikeCd=360;let strikeTgt=null,bestD=Infinity;for(const t of towers){if(t.cfg.t===CT.WALL) continue;const tdx=t.col*CS+CS/2-e.x,tdy=t.row*CS+CS/2-e.y,td=tdx*tdx+tdy*tdy;if(td<bestD){bestD=td;strikeTgt=t;}}if(strikeTgt){const sx=strikeTgt.col*CS+CS/2,sy=strikeTgt.row*CS+CS/2;for(const t of towers){const adx=t.col*CS+CS/2-sx,ady=t.row*CS+CS/2-sy;if(adx*adx+ady*ady<=85*85){t.hp-=35;t.hitFlash=18;t.stunned=Math.max(t.stunned||0,90);sparks(t.col*CS+CS/2,t.row*CS+CS/2,'#ff4400',12,3);if(t.hp<=0) destroyTower(t);}}ft(sx,sy-20,'⚡ AIRSTRIKE!','#ff4400');sparks(sx,sy,'#ff6600',20,4);lxfx.push({x1:sx,y1:0,x2:sx,y2:sy,col:'#ff4400',life:15,ml:15});}}}
     // === KING BOSS BEHAVIOR ===
     if(e.isBoss&&e.bossType==='king'){
       if(!e.kingSpawnCd) e.kingSpawnCd=0;
@@ -4735,12 +4739,51 @@ function update(){
   }
   continue;
 }
-if(cfg.t===CT.MINE||cfg.t===CT.HELI||cfg.t===CT.BUFF){t.cd=0;continue;}if(cfg.t===CT.FLAME&&cfg.flameTower){if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effRng=cfg.rng*bfx.rngMult;const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const ftx=t.col*CS+CS/2,fty=t.row*CS+CS/2;let fTgt=null,fbd=Infinity;for(const e of enemies){const dx=e.x-ftx,dy=e.y-fty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<fbd){fbd=d;fTgt=e;}}if(!fTgt) continue;t.angle=Math.atan2(fTgt.y-fty,fTgt.x-ftx);t.cd=effCd;const flameHits=enemies.filter(e=>{const dx=e.x-ftx,dy=e.y-fty;return dx*dx+dy*dy<=cfg.aoe*cfg.aoe*bfx.rngMult*bfx.rngMult;});for(const e of flameHits){const d=applyArmor(e,effDmg);e.hp-=d;if(cfg.burnDmg&&cfg.burnDur){e.burnDmg=Math.max(e.burnDmg,cfg.burnDmg);e.burnDur=Math.max(e.burnDur,cfg.burnDur);}if(cfg.armorShred){e.armorShred=Math.max(e.armorShred,cfg.armorShred);e.shredDur=Math.max(e.shredDur,cfg.shredDur||150);}}for(let fi=0;fi<8;fi++){const fa=t.angle+(Math.random()-.5)*.7,fs=2+Math.random()*3.5,fd=8+Math.random()*12;parts.push({x:ftx+Math.cos(t.angle)*fd,y:fty+Math.sin(t.angle)*fd,vx:Math.cos(fa)*fs,vy:Math.sin(fa)*fs,life:14+Math.random()*10,ml:24,col:['#ff4400','#ff6600','#ff8800','#ffaa00','#ffcc00'][Math.floor(Math.random()*5)],sz:3+Math.random()*3});}if(flameHits.length>0){for(let fj=0;fj<4;fj++){const fdx=fTgt.x-ftx,fdy=fTgt.y-fty,fdist=Math.sqrt(fdx*fdx+fdy*fdy)||1;const fmid=.3+Math.random()*.5;parts.push({x:ftx+fdx*fmid+(Math.random()-.5)*12,y:fty+fdy*fmid+(Math.random()-.5)*12,vx:(Math.random()-.5)*1.2,vy:-Math.random()*1.5,life:10+Math.random()*8,ml:18,col:['#ff4400','#ff8800','#ffcc00'][Math.floor(Math.random()*3)],sz:2+Math.random()*2.5});}}continue;}if(cfg.t===CT.BHOLE&&cfg.bhTower){t.angle+=.015;if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effRng=cfg.rng*bfx.rngMult;const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const btx=t.col*CS+CS/2,bty=t.row*CS+CS/2;const pDist=cfg.pullDist||28;const maxExp=cfg.bhMaxExp||300;t.cd=effCd;let pulled=0;for(const e of enemies){const dx=e.x-btx,dy=e.y-bty,dist=Math.sqrt(dx*dx+dy*dy);if(dist>effRng||dist<5) continue;if(e.bhImmune) continue;const resist=Math.max(0,1-e.bhExposure/maxExp);if(resist<=0){e.bhImmune=true;ft(e.x,e.y-e.sz-6,'IMMUNE!','#aa44ff');continue;}const yank=Math.min(dist-5,pDist*resist);e.x-=dx/dist*yank;e.y-=dy/dist*yank;e.bhExposure+=8+(e.isBoss?12:0);const dmg=applyArmor(e,effDmg);e.hp-=dmg;pulled++;sparks(e.x,e.y,'#aa44ff',3,1.2);}if(pulled>0){sparks(btx,bty,'#cc66ff',16,3.5);ft(btx,bty-18,'PULL!','#aa44ff');shockwaves.push({ox:btx,oy:bty,r:10,maxR:effRng,spd:8,dmg:0,col:'#aa44ff',life:1,hit:new Set(),width:2});}continue;}if(cfg.t===CT.LASER&&cfg.laserTower){const bfx=getBuffsAt(t.col,t.row);const effRng=cfg.rng*bfx.rngMult;const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const ltx=t.col*CS+CS/2,lty=t.row*CS+CS/2;let curTgt=t.laserTarget;if(curTgt&&(!enemies.includes(curTgt)||curTgt.hp<=0)){curTgt=null;t.laserTarget=null;t.laserStacks=Math.floor(t.laserStacks*.6);t.laserFiring=0;}if(curTgt){const dx=curTgt.x-ltx,dy=curTgt.y-lty;if(dx*dx+dy*dy>effRng*effRng){curTgt=null;t.laserTarget=null;t.laserStacks=Math.floor(t.laserStacks*.6);t.laserFiring=0;}}if(!curTgt){let bd=Infinity;for(const e of enemies){const dx=e.x-ltx,dy=e.y-lty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<bd){bd=d;curTgt=e;}}if(curTgt){t.laserTarget=curTgt;t.laserStacks=0;t.laserFiring=0;if(cfg.heroTower){t.laserCharge=(t.laserWasIdle!==false)?(cfg.chargeTime||60):0;}t.laserWasIdle=false;}else{t.laserWasIdle=true;}}if(curTgt){t.angle=Math.atan2(curTgt.y-lty,curTgt.x-ltx);if(t.laserCharge>0){t.laserCharge--;continue;}t.laserFiring++;if(t.laserFiring%Math.max(1,cfg.cd)===0&&t.laserStacks<(cfg.maxStacks||15)) t.laserStacks++;const sDmg=effDmg+t.laserStacks*(cfg.stackDmg||2);const finalD=applyArmor(curTgt,Math.round(sDmg*bfx.dmgMult));curTgt.hp-=finalD;if(cfg.crystalMax&&cfg.crystalMax>0&&t.laserFiring>0&&t.laserFiring%(cfg.crystalCharge||100)===0){const myCrystals=crystals.filter(cr=>cr.ownerId===t.id);if(myCrystals.length<cfg.crystalMax){const ca=Math.random()*Math.PI*2,cd2=22+Math.random()*14;crystals.push({ownerId:t.id,x:ltx+Math.cos(ca)*cd2,y:lty+Math.sin(ca)*cd2,life:cfg.crystalLife||360,maxLife:cfg.crystalLife||360,dmg:Math.max(2,Math.round(sDmg*(cfg.crystalDmgR||.4))),rng:effRng*.6,angle:0,target:null,col:cfg.col,bobPhase:Math.random()*Math.PI*2});ft(ltx,lty-14,'💎 CRYSTAL!',cfg.col);sparks(ltx+Math.cos(ca)*cd2,lty+Math.sin(ca)*cd2,cfg.col,10,2);}}}continue;}if(cfg.t===CT.HEALER){if(!t.healCd) t.healCd=0;t.healCd--;if(t.healCd<=0){t.healCd=cfg.healTick||60;const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;for(const ot of towers){if(ot===t) continue;const ddx=ot.col*CS+CS/2-tx,ddy=ot.row*CS+CS/2-ty;if(ddx*ddx+ddy*ddy<=(cfg.rng||110)**2){if(ot.hp<ot.maxHp){ot.hp=Math.min(ot.maxHp,ot.hp+(cfg.healAmt||7));addBeam(tx,ty,ot.col*CS+CS/2,ot.row*CS+CS/2);}if((cfg.healStunReduce||0)>0&&ot.stunned>0) ot.stunned=Math.max(0,ot.stunned-cfg.healStunReduce);}}if(t.path==='A'&&cfg.baseHealAmt&&baseHP<baseMaxHP){baseHP=Math.min(baseMaxHP,baseHP+cfg.baseHealAmt);syncUI();}}continue;}if(!cfg.rng){t.cd=0;continue;}if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effRng=cfg.rng*bfx.rngMult;const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;if(cfg.shockwave){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<bd){bd=d;closest=e;}}if(!closest) continue;t.cd=effCd;
+if(cfg.t===CT.MINE||cfg.t===CT.HELI||cfg.t===CT.BUFF||cfg.t===CT.BARBWIRE){t.cd=0;continue;}if(cfg.t===CT.FLAME&&cfg.flameTower){if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effRng=cfg.rng*bfx.rngMult;const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const ftx=t.col*CS+CS/2,fty=t.row*CS+CS/2;let fTgt=null,fbd=Infinity;for(const e of enemies){const dx=e.x-ftx,dy=e.y-fty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<fbd){fbd=d;fTgt=e;}}if(!fTgt) continue;t.angle=Math.atan2(fTgt.y-fty,fTgt.x-ftx);t.cd=effCd;const flameHits=enemies.filter(e=>{const dx=e.x-ftx,dy=e.y-fty;return dx*dx+dy*dy<=cfg.aoe*cfg.aoe*bfx.rngMult*bfx.rngMult;});for(const e of flameHits){const d=applyArmor(e,effDmg);e.hp-=d;if(cfg.burnDmg&&cfg.burnDur){e.burnDmg=Math.max(e.burnDmg,cfg.burnDmg);e.burnDur=Math.max(e.burnDur,cfg.burnDur);}if(cfg.armorShred){e.armorShred=Math.max(e.armorShred,cfg.armorShred);e.shredDur=Math.max(e.shredDur,cfg.shredDur||150);}}for(let fi=0;fi<8;fi++){const fa=t.angle+(Math.random()-.5)*.7,fs=2+Math.random()*3.5,fd=8+Math.random()*12;parts.push({x:ftx+Math.cos(t.angle)*fd,y:fty+Math.sin(t.angle)*fd,vx:Math.cos(fa)*fs,vy:Math.sin(fa)*fs,life:14+Math.random()*10,ml:24,col:['#ff4400','#ff6600','#ff8800','#ffaa00','#ffcc00'][Math.floor(Math.random()*5)],sz:3+Math.random()*3});}if(flameHits.length>0){for(let fj=0;fj<4;fj++){const fdx=fTgt.x-ftx,fdy=fTgt.y-fty,fdist=Math.sqrt(fdx*fdx+fdy*fdy)||1;const fmid=.3+Math.random()*.5;parts.push({x:ftx+fdx*fmid+(Math.random()-.5)*12,y:fty+fdy*fmid+(Math.random()-.5)*12,vx:(Math.random()-.5)*1.2,vy:-Math.random()*1.5,life:10+Math.random()*8,ml:18,col:['#ff4400','#ff8800','#ffcc00'][Math.floor(Math.random()*3)],sz:2+Math.random()*2.5});}}continue;}if(cfg.t===CT.BHOLE&&cfg.bhTower){t.angle+=.015;if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effRng=cfg.rng*bfx.rngMult;const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const btx=t.col*CS+CS/2,bty=t.row*CS+CS/2;const pDist=cfg.pullDist||28;const maxExp=cfg.bhMaxExp||300;t.cd=effCd;let pulled=0;for(const e of enemies){const dx=e.x-btx,dy=e.y-bty,dist=Math.sqrt(dx*dx+dy*dy);if(dist>effRng||dist<5) continue;if(e.bhImmune) continue;const resist=Math.max(0,1-e.bhExposure/maxExp);if(resist<=0){e.bhImmune=true;ft(e.x,e.y-e.sz-6,'IMMUNE!','#aa44ff');continue;}const yank=Math.min(dist-5,pDist*resist);e.x-=dx/dist*yank;e.y-=dy/dist*yank;e.bhExposure+=8+(e.isBoss?12:0);const dmg=applyArmor(e,effDmg);e.hp-=dmg;pulled++;sparks(e.x,e.y,'#aa44ff',3,1.2);}if(pulled>0){sparks(btx,bty,'#cc66ff',16,3.5);ft(btx,bty-18,'PULL!','#aa44ff');shockwaves.push({ox:btx,oy:bty,r:10,maxR:effRng,spd:8,dmg:0,col:'#aa44ff',life:1,hit:new Set(),width:2});}continue;}if(cfg.t===CT.LASER&&cfg.laserTower){const bfx=getBuffsAt(t.col,t.row);const effRng=cfg.rng*bfx.rngMult;const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const ltx=t.col*CS+CS/2,lty=t.row*CS+CS/2;let curTgt=t.laserTarget;if(curTgt&&(!enemies.includes(curTgt)||curTgt.hp<=0)){curTgt=null;t.laserTarget=null;t.laserStacks=Math.floor(t.laserStacks*.6);t.laserFiring=0;}if(curTgt){const dx=curTgt.x-ltx,dy=curTgt.y-lty;if(dx*dx+dy*dy>effRng*effRng){curTgt=null;t.laserTarget=null;t.laserStacks=Math.floor(t.laserStacks*.6);t.laserFiring=0;}}if(!curTgt){let bd=Infinity;for(const e of enemies){const dx=e.x-ltx,dy=e.y-lty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<bd){bd=d;curTgt=e;}}if(curTgt){t.laserTarget=curTgt;t.laserStacks=0;t.laserFiring=0;if(cfg.heroTower){t.laserCharge=(t.laserWasIdle!==false)?(cfg.chargeTime||60):0;}t.laserWasIdle=false;}else{t.laserWasIdle=true;}}if(curTgt){t.angle=Math.atan2(curTgt.y-lty,curTgt.x-ltx);if(t.laserCharge>0){t.laserCharge--;continue;}t.laserFiring++;if(t.laserFiring%Math.max(1,cfg.cd)===0&&t.laserStacks<(cfg.maxStacks||15)) t.laserStacks++;const sDmg=effDmg+t.laserStacks*(cfg.stackDmg||2);const finalD=applyArmor(curTgt,Math.round(sDmg*bfx.dmgMult));curTgt.hp-=finalD;if(cfg.crystalMax&&cfg.crystalMax>0&&t.laserFiring>0&&t.laserFiring%(cfg.crystalCharge||100)===0){const myCrystals=crystals.filter(cr=>cr.ownerId===t.id);if(myCrystals.length<cfg.crystalMax){const ca=Math.random()*Math.PI*2,cd2=22+Math.random()*14;crystals.push({ownerId:t.id,x:ltx+Math.cos(ca)*cd2,y:lty+Math.sin(ca)*cd2,life:cfg.crystalLife||360,maxLife:cfg.crystalLife||360,dmg:Math.max(2,Math.round(sDmg*(cfg.crystalDmgR||.4))),rng:effRng*.6,angle:0,target:null,col:cfg.col,bobPhase:Math.random()*Math.PI*2});ft(ltx,lty-14,'💎 CRYSTAL!',cfg.col);sparks(ltx+Math.cos(ca)*cd2,lty+Math.sin(ca)*cd2,cfg.col,10,2);}}}continue;}if(cfg.t===CT.HEALER){if(!t.healCd) t.healCd=0;t.healCd--;if(t.healCd<=0){t.healCd=cfg.healTick||60;const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;for(const ot of towers){if(ot===t) continue;const ddx=ot.col*CS+CS/2-tx,ddy=ot.row*CS+CS/2-ty;if(ddx*ddx+ddy*ddy<=(cfg.rng||110)**2){if(ot.hp<ot.maxHp){ot.hp=Math.min(ot.maxHp,ot.hp+(cfg.healAmt||7));addBeam(tx,ty,ot.col*CS+CS/2,ot.row*CS+CS/2);}if((cfg.healStunReduce||0)>0&&ot.stunned>0) ot.stunned=Math.max(0,ot.stunned-cfg.healStunReduce);}}if(t.path==='A'&&cfg.baseHealAmt&&baseHP<baseMaxHP){baseHP=Math.min(baseMaxHP,baseHP+cfg.baseHealAmt);syncUI();}}continue;}if(!cfg.rng){t.cd=0;continue;}if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effRng=cfg.rng*bfx.rngMult;const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;if(cfg.shockwave){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<bd){bd=d;closest=e;}}if(!closest) continue;t.cd=effCd;
   // Update shockwave tower angle to face closest target (for cannon barrel visual)
   t.angle=Math.atan2(closest.y-ty,closest.x-tx);
   shockwaves.push({ox:tx,oy:ty,r:CS*.3,maxR:cfg.shockMaxR||200,spd:cfg.shockSpd||3.2,dmg:effDmg,col:cfg.col,life:1,hit:new Set(),width:3});sparks(tx,ty,cfg.col,6,1);continue;}
   if(cfg.iceTower&&cfg.iceShockwave){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<bd){bd=d;closest=e;}}if(!closest) continue;t.cd=effCd;t.angle=Math.atan2(closest.y-ty,closest.x-tx);shockwaves.push({ox:tx,oy:ty,r:CS*.3,maxR:cfg.shockMaxR||180,spd:cfg.shockSpd||3.0,dmg:effDmg,col:cfg.col,life:1,hit:new Set(),width:3,isIce:true,slowFactor:cfg.slowFactor||.40,slowDur:cfg.slowDur||120});sparks(tx,ty,'#88ddff',6,1);continue;}
   if(cfg.iceTower&&cfg.iceBullet){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<bd){bd=d;closest=e;}}if(!closest) continue;t.cd=effCd;t.angle=Math.atan2(closest.y-ty,closest.x-tx);projs.push({x:tx,y:ty,tgt:closest,lastX:closest.x,lastY:closest.y,spd:cfg.bulletSpd||12,dmg:effDmg,col:cfg.col,src:t,type:'iceBullet',slowFactor:cfg.slowFactor||.25,slowDur:cfg.slowDur||90,armorShred:cfg.armorShred||.15,shredDur:cfg.shredDur||130,flyFreeze:cfg.flyFreeze||.80,flySpdCap:cfg.flySpdCap||.25});sparks(tx,ty,'#4488ff',4,1.5);continue;}let tgt=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;if(d<=effRng*effRng&&d<bd){bd=d;tgt=e;}}if(!tgt) continue;t.angle=Math.atan2(tgt.y-ty,tgt.x-tx);t.cd=effCd;if(cfg.t===CT.ELECTRIC){if(cfg.burst&&cfg.burst>1){const inR=enemies.filter(e=>{const dx=e.x-tx,dy=e.y-ty;return dx*dx+dy*dy<=effRng*effRng;});inR.sort((a,b)=>(a.x-tx)**2+(a.y-ty)**2-(b.x-tx)**2-(b.y-ty)**2);for(const bt of inR.slice(0,cfg.burst)) fireElectric(tx,ty,bt,effDmg,cfg.chn);}else if(cfg.elecBall){projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:2.6,dmg:effDmg,aoe:cfg.aoe||0,chn:cfg.chn||3,chainRng:105,col:cfg.col,sz:8,type:'elecBall'});}else fireElectric(tx,ty,tgt,effDmg,cfg.chn);}else if(cfg.t===CT.SPIKE){if(cfg.hammer) projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:6,dmg:effDmg,aoe:cfg.aoe||45,chn:0,col:cfg.col,sz:6,type:'hammer',stunDur:cfg.stunDur||45});else if(cfg.rapidStrike){for(let rb=0;rb<2;rb++) projs.push({x:tx+(Math.random()-.5)*3,y:ty+(Math.random()-.5)*3,tgt,lastX:tgt.x,lastY:tgt.y,spd:8,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:3,type:'normal',src:t});}else projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:4,type:'normal'});}else if(cfg.minigun){for(let b=0;b<3;b++) projs.push({x:tx+(Math.random()-.5)*4,y:ty+(Math.random()-.5)*4,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:2,type:'normal',src:t});}else projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:cfg.t===CT.SNIPER?10:5.5,dmg:effDmg,aoe:cfg.aoe||0,chn:0,col:cfg.col,sz:cfg.t===CT.CANNON?5:3,type:'normal',src:t});}
+  // === BARBWIRE CONNECTIONS === (every barbwire tower links to every other barbwire tower in range, no chain limit)
+  barbWireSegs.length=0;
+  {
+    const bwTowers=towers.filter(bt=>bt.cfg.t===CT.BARBWIRE&&!(bt.stunned>0));
+    for(let bi=0;bi<bwTowers.length;bi++){
+      const t1=bwTowers[bi];
+      const bfx1=getBuffsAt(t1.col,t1.row);
+      const r1=t1.cfg.rng*bfx1.rngMult;
+      const x1=t1.col*CS+CS/2,y1=t1.row*CS+CS/2;
+      for(let bj=bi+1;bj<bwTowers.length;bj++){
+        const t2=bwTowers[bj];
+        const bfx2=getBuffsAt(t2.col,t2.row);
+        const r2=t2.cfg.rng*bfx2.rngMult;
+        const x2=t2.col*CS+CS/2,y2=t2.row*CS+CS/2;
+        const ddx=x2-x1,ddy=y2-y1,dist=Math.sqrt(ddx*ddx+ddy*ddy);
+        if(dist>(r1+r2)/2) continue;
+        barbWireSegs.push({x1,y1,x2,y2,c1:t1.cfg.col,c2:t2.cfg.col});
+        const dmg1=Math.round(t1.cfg.dmg*bfx1.dmgMult),dmg2=Math.round(t2.cfg.dmg*bfx2.dmgMult);
+        const effDmg=Math.max(dmg1,dmg2);
+        const slowF=Math.max(t1.cfg.slowFactor||0,t2.cfg.slowFactor||0);
+        const slowD=Math.max(t1.cfg.slowDur||0,t2.cfg.slowDur||0);
+        const segLen2=ddx*ddx+ddy*ddy||1;
+        for(const e of enemies){
+          if(e.flying) continue; // barbwire has no effect on flying enemies
+          let tp=((e.x-x1)*ddx+(e.y-y1)*ddy)/segLen2;
+          tp=Math.max(0,Math.min(1,tp));
+          const px=x1+ddx*tp,py=y1+ddy*tp;
+          const dx2=e.x-px,dy2=e.y-py;
+          if(dx2*dx2+dy2*dy2<=(e.sz+9)*(e.sz+9)){
+            if(!(e.barbCd>0)){
+              const d=applyArmor(e,effDmg);e.hp-=d;e.barbCd=15;
+              if(slowF>e.slowFactor){e.slowFactor=slowF;e.slowDur=Math.max(e.slowDur,slowD);e.spd=e.spdBase*(1-e.slowFactor);}
+              sparks(px,py,dmg1>=dmg2?t1.cfg.col:t2.cfg.col,2,1);
+            }
+          }
+        }
+      }
+    }
+  }
   // === ADMIN DRONE UPDATE ===
   updateAdminDrones();
   // === KING WAVE UPDATE (damages towers, proximity-based) ===
@@ -5163,6 +5206,40 @@ function drawTower(t){
     // Ally count indicator
     let myAllyCnt=0;try{myAllyCnt=allies.filter(a=>a.towerId===t.id).length;}catch(e){}
     ctx.fillStyle='#ffffff88';ctx.font='5px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(myAllyCnt+'/'+cfg.allyMax,cx,y+CS-2);
+  } else if(cfg.t===CT.BARBWIRE){
+    ctx.fillStyle='#12100c';ctx.fillRect(x+2,y+2,CS-4,CS-4);
+    ctx.strokeStyle=col+'55';ctx.lineWidth=1;ctx.strokeRect(x+3,y+3,CS-6,CS-6);
+    const pulse=(Math.sin(frame*.07+(t.row*3+t.col)*0.3)+1)*.5;
+    const postXL=x+CS*.28,postXR=x+CS*.72,postTop=y+5,postBot=y+CS-5;
+    // ground shadow
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(cx,postBot+1,CS*.32,2.2,0,0,Math.PI*2);ctx.fill();
+    // wooden posts
+    for(const px of [postXL,postXR]){
+      ctx.fillStyle='#3a2a18';ctx.fillRect(px-2,postTop,4,postBot-postTop);
+      ctx.strokeStyle='#1a1008';ctx.lineWidth=.6;ctx.strokeRect(px-2,postTop,4,postBot-postTop);
+      ctx.fillStyle='#5a4020';ctx.fillRect(px-2,postTop,1.3,postBot-postTop);
+      ctx.beginPath();ctx.moveTo(px-3,postTop);ctx.lineTo(px,postTop-2.5);ctx.lineTo(px+3,postTop);ctx.closePath();ctx.fillStyle='#2a1c10';ctx.fill();
+    }
+    // taut wire strands (slight sag) with glow tinted by current tier color
+    ctx.save();
+    for(const wy of [postTop+4, (postTop+postBot)/2, postBot-5]){
+      const sag=2.2;
+      ctx.strokeStyle=col+'33';ctx.lineWidth=3.5;ctx.globalAlpha=.5+pulse*.2;
+      ctx.beginPath();ctx.moveTo(postXL,wy);ctx.quadraticCurveTo(cx,wy+sag,postXR,wy);ctx.stroke();
+      ctx.strokeStyle=col;ctx.lineWidth=1;ctx.globalAlpha=1;
+      ctx.beginPath();ctx.moveTo(postXL,wy);ctx.quadraticCurveTo(cx,wy+sag,postXR,wy);ctx.stroke();
+      // barbs along the strand
+      for(let bt2=0.15;bt2<1;bt2+=0.22){
+        const bx2=postXL+(postXR-postXL)*bt2,by2=wy+sag*Math.sin(bt2*Math.PI);
+        ctx.strokeStyle=col;ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(bx2-2.6,by2-2.6);ctx.lineTo(bx2+2.6,by2+2.6);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(bx2-2.6,by2+2.6);ctx.lineTo(bx2+2.6,by2-2.6);ctx.stroke();
+      }
+    }
+    ctx.restore();
+    // sharp damage-tier glint (path B towers glow hotter)
+    if(cfg.slowFactor>=.35){ctx.save();ctx.globalAlpha=.35+pulse*.25;ctx.beginPath();ctx.arc(cx,cy,CS*.44,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();ctx.restore();}
+    if(t.stunned>0){ctx.fillStyle='#ff4444';ctx.font='7px Share Tech Mono';ctx.textAlign='center';ctx.fillText('⚡',cx,y+CS-3);}
   } else if(cfg.t===CT.WALL){
     ctx.fillStyle=fl?'#3a1010':'#1a2d40';ctx.fillRect(x+3,y+3,CS-6,CS-6);
     ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.strokeRect(x+3,y+3,CS-6,CS-6);
@@ -5409,10 +5486,48 @@ function drawTower(t){
     else if(t.laserStacks>0){ctx.fillStyle=col+'cc';ctx.font='5px Share Tech Mono';ctx.fillText('x'+t.laserStacks,cx,cy+13);}
   } else if(cfg.t===CT.LASER){
     const isCrystal=!!cfg.crystalMax&&cfg.crystalMax>0;const lc=isCrystal?'#ff88ff':col;
-    ctx.beginPath();ctx.arc(cx,cy,12,0,Math.PI*2);ctx.fillStyle=isCrystal?'#0a0018':'#001a2a';ctx.fill();ctx.strokeStyle=lc;ctx.lineWidth=2;ctx.stroke();
-    ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle);ctx.strokeStyle=lc;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(5,0);ctx.lineTo(18,0);ctx.stroke();ctx.fillStyle=lc;ctx.beginPath();ctx.arc(18,0,2,0,Math.PI*2);ctx.fill();ctx.restore();
-    ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fillStyle=lc;ctx.fill();
-    if(t.laserStacks>0){const sp=t.laserStacks/(t.cfg.maxStacks||15);ctx.fillStyle=lc+'44';ctx.font='5px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('x'+t.laserStacks,cx,cy+10);const glow=sp*.3;ctx.save();ctx.globalAlpha=glow;ctx.beginPath();ctx.arc(cx,cy,14+sp*4,0,Math.PI*2);ctx.fillStyle=lc;ctx.fill();ctx.globalAlpha=1;ctx.restore();}
+    const sp=t.laserStacks?t.laserStacks/(t.cfg.maxStacks||15):0;
+    const spin=frame*(0.02+sp*0.05);
+    // square housing base
+    ctx.fillStyle='#060a12';ctx.fillRect(x+3,y+3,CS-6,CS-6);
+    ctx.strokeStyle=lc+'55';ctx.lineWidth=1;ctx.strokeRect(x+4,y+4,CS-8,CS-8);
+    // corner bolts
+    ctx.fillStyle=lc+'88';
+    for(const[bx3,by3]of[[x+6,y+6],[x+CS-6,y+6],[x+6,y+CS-6],[x+CS-6,y+CS-6]]){ctx.beginPath();ctx.arc(bx3,by3,1,0,Math.PI*2);ctx.fill();}
+    // outer rotating focus ring (dashed)
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(spin);
+    ctx.strokeStyle=lc;ctx.lineWidth=1.4;ctx.setLineDash([4,3]);ctx.globalAlpha=.75;
+    ctx.beginPath();ctx.arc(0,0,10.5,0,Math.PI*2);ctx.stroke();
+    ctx.setLineDash([]);ctx.globalAlpha=1;
+    ctx.restore();
+    // dark lens housing
+    ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);ctx.fillStyle=isCrystal?'#12021c':'#00121e';ctx.fill();ctx.strokeStyle=lc;ctx.lineWidth=1.6;ctx.stroke();
+    // barrel/emitter pointing at target
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle||0);
+    ctx.strokeStyle=lc;ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(6,0);ctx.lineTo(17,0);ctx.stroke();
+    ctx.fillStyle=lc;ctx.beginPath();ctx.arc(17,0,2,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=lc+'99';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(8,-2.5);ctx.lineTo(8,2.5);ctx.stroke();
+    ctx.restore();
+    // pulsing lens core — brighter/larger with more stacks
+    const corePulse=(Math.sin(frame*.15)+1)*.5;
+    ctx.save();ctx.globalAlpha=.5+corePulse*.3+sp*.2;
+    ctx.beginPath();ctx.arc(cx,cy,3+sp*2,0,Math.PI*2);ctx.fillStyle='#ffffff';ctx.fill();
+    ctx.restore();
+    ctx.beginPath();ctx.arc(cx,cy,2,0,Math.PI*2);ctx.fillStyle=lc;ctx.fill();
+    if(isCrystal){
+      // small orbiting shard motes hint at the crystal-forging path
+      for(let ci=0;ci<3;ci++){
+        const ca=spin*1.4+ci*(Math.PI*2/3);
+        const cx2=cx+Math.cos(ca)*13,cy2=cy+Math.sin(ca)*13;
+        ctx.save();ctx.translate(cx2,cy2);ctx.rotate(ca+Math.PI/4);
+        ctx.fillStyle=lc+'cc';ctx.beginPath();ctx.moveTo(0,-3);ctx.lineTo(2,0);ctx.lineTo(0,3);ctx.lineTo(-2,0);ctx.closePath();ctx.fill();
+        ctx.restore();
+      }
+    }
+    if(t.laserStacks>0){
+      ctx.save();ctx.globalAlpha=sp*.35;ctx.beginPath();ctx.arc(cx,cy,14+sp*5,0,Math.PI*2);ctx.fillStyle=lc;ctx.fill();ctx.restore();
+      ctx.fillStyle=lc;ctx.font='5px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('x'+t.laserStacks,cx,y+CS-5);
+    }
   } else if(cfg.t===CT.SILO){
     const sc=cfg.col,isLaser=cfg.siloType==='laser',hasTarget=t.siloTarget&&enemies.includes(t.siloTarget);
     const pulse=(Math.sin(frame*.12)+1)*.5;
@@ -5526,7 +5641,35 @@ function draw(){
   if(gfxMode<2){for(const cr of crystals){const bob=Math.sin(cr.bobPhase)*3;ctx.save();ctx.translate(cr.x,cr.y+bob);ctx.rotate(frame*.03);ctx.beginPath();ctx.moveTo(0,-6);ctx.lineTo(5,0);ctx.lineTo(0,6);ctx.lineTo(-5,0);ctx.closePath();ctx.fillStyle=cr.col+'66';ctx.fill();ctx.strokeStyle=cr.col;ctx.lineWidth=1.5;ctx.stroke();ctx.restore();const lifeR=cr.life/cr.maxLife;ctx.fillStyle='#0a0a1a';ctx.fillRect(cr.x-6,cr.y+bob+8,12,2);ctx.fillStyle=cr.col;ctx.fillRect(cr.x-6,cr.y+bob+8,12*lifeR,2);if(cr.target&&enemies.includes(cr.target)){ctx.save();ctx.globalAlpha=.5;ctx.strokeStyle=cr.col;ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(cr.x,cr.y+bob);ctx.lineTo(cr.target.x,cr.target.y);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;ctx.restore();}}
 
   if(gfxMode<3){for(const sw of shockwaves){const alpha=Math.max(0,1-sw.r/sw.maxR);ctx.beginPath();ctx.arc(sw.ox,sw.oy,sw.r,0,Math.PI*2);ctx.strokeStyle=sw.col;ctx.lineWidth=gfxMode>=2?1:3*(1-sw.r/sw.maxR)+1;ctx.globalAlpha=gfxMode>=1?alpha*.5:alpha*.8;ctx.stroke();if(sw.isIce&&gfxMode===0){ctx.beginPath();ctx.arc(sw.ox,sw.oy,sw.r*.85,0,Math.PI*2);ctx.strokeStyle='rgba(136,221,255,'+alpha*.4+')';ctx.lineWidth=1;ctx.stroke();}ctx.globalAlpha=1;}}
-  }for(const t of towers){if(MP.active&&t.ownerColor){ctx.strokeStyle=t.ownerColor+'66';ctx.lineWidth=2;ctx.strokeRect(t.col*CS+1,t.row*CS+1,CS-2,CS-2);}drawTower(t);}
+  }
+  // BARBWIRE connection wires
+  if(barbWireSegs.length){
+    ctx.save();
+    for(const seg of barbWireSegs){
+      const grad=ctx.createLinearGradient(seg.x1,seg.y1,seg.x2,seg.y2);
+      grad.addColorStop(0,seg.c1);grad.addColorStop(1,seg.c2);
+      const ddx=seg.x2-seg.x1,ddy=seg.y2-seg.y1,len=Math.sqrt(ddx*ddx+ddy*ddy)||1;
+      const nx=-ddy/len,ny=ddx/len;
+      // dark cable backing
+      ctx.strokeStyle='#2a1c10';ctx.lineWidth=3;ctx.globalAlpha=.85;
+      ctx.beginPath();ctx.moveTo(seg.x1,seg.y1);ctx.lineTo(seg.x2,seg.y2);ctx.stroke();
+      // colored core wire (gradient between the two connected towers' tiers)
+      ctx.strokeStyle=grad;ctx.lineWidth=1.2;ctx.globalAlpha=.95;
+      ctx.beginPath();ctx.moveTo(seg.x1,seg.y1);ctx.lineTo(seg.x2,seg.y2);ctx.stroke();
+      // faint animated energy glow flowing along the wire
+      ctx.strokeStyle=grad;ctx.lineWidth=2.5;ctx.globalAlpha=.18+.12*Math.sin(frame*.15);
+      ctx.beginPath();ctx.moveTo(seg.x1,seg.y1);ctx.lineTo(seg.x2,seg.y2);ctx.stroke();
+      // barb tick marks along the wire, tinted per-half by nearest tower's color
+      ctx.lineWidth=1;
+      for(let d2=10;d2<len;d2+=14){
+        const tt=d2/len,px=seg.x1+ddx*tt,py=seg.y1+ddy*tt;
+        ctx.strokeStyle=tt<0.5?seg.c1:seg.c2;ctx.globalAlpha=.75;
+        ctx.beginPath();ctx.moveTo(px-nx*3,py-ny*3);ctx.lineTo(px+nx*3,py+ny*3);ctx.stroke();
+      }
+    }
+    ctx.restore();ctx.globalAlpha=1;
+  }
+  for(const t of towers){if(MP.active&&t.ownerColor){ctx.strokeStyle=t.ownerColor+'66';ctx.lineWidth=2;ctx.strokeRect(t.col*CS+1,t.row*CS+1,CS-2,CS-2);}drawTower(t);}
   for(const h of helicopters) drawHelicopter(h);
   for(const d of adminDrones) drawAdminDrone(d);
   for(const a of allies){try{drawAlly(a);}catch(e){}}
@@ -6212,6 +6355,7 @@ async function bgChatPoll(){
     {key:'laser',   name:'LASER',         col:'#00ccff', type:'Executioner', unlock:40},
     {key:'bhole',   name:'B.HOLE',        col:'#aa44ff', type:'Executioner', unlock:50},
     {key:'ice',     name:'ICE',           col:'#88ddff', type:'Support',      unlock:60},
+    {key:'barbwire',name:'BARBWIRE',      col:'#c8a874', type:'Support',      unlock:120},
     {key:'heli',    name:'HELI PAD',      col:'#44ffcc', type:'Attack',      unlock:70},
     {key:'barracks',name:'BARRACKS',      col:'#44aa44', type:'Support',     unlock:80},
     {key:'mech_base',name:'MECH BASE',    col:'#8899aa', type:'Support',     unlock:110},
@@ -6467,9 +6611,9 @@ async function bgChatPoll(){
     electric:{type:'Splash'}, healer:{type:'Support'}, spike:{type:'Executioner'}, buff:{type:'Support'},
     mine:{type:'Economic'}, flame:{type:'Splash'}, laser:{type:'Executioner'}, bhole:{type:'Executioner'},
     ice:{type:'Support'}, heli:{type:'Attack'}, barracks:{type:'Support'}, mech_base:{type:'Support'}, silo:{type:'Executioner'},
-    hero_accel:{type:'Hero'}, hero_score:{type:'Hero'}, admindrone:{type:'Attack'}
+    hero_accel:{type:'Hero'}, hero_score:{type:'Hero'}, admindrone:{type:'Attack'}, barbwire:{type:'Support'}
   };
-  const TOWER_ORDER = ['wall','basic','sniper','cannon','electric','healer','spike','buff','mine','flame','laser','bhole','ice','heli','barracks','mech_base','admindrone','silo','hero_accel','hero_score'];
+  const TOWER_ORDER = ['wall','basic','sniper','cannon','electric','healer','spike','buff','mine','flame','laser','bhole','ice','barbwire','heli','barracks','mech_base','admindrone','silo','hero_accel','hero_score'];
 
   let curTowerKey = null;
 
