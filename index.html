@@ -2746,7 +2746,7 @@ function getUnlockLevel(type, key) {
 function applyLevelUnlocks() {
   // Silo achievement lock
   document.querySelectorAll('.bb[data-t="silo"]').forEach(btn=>{const ha=earnedAchievements.has('boss_speed');btn.classList.toggle('ach-locked',!ha);if(!ha)btn.dataset.lock='BOSS';else delete btn.dataset.lock;});
-  document.querySelectorAll('.bb[data-t="necromancer"]').forEach(btn=>{const ha=earnedAchievements.has('lastlight_victor')||lastLightWon;btn.classList.toggle('ach-locked',!ha);if(!ha)btn.dataset.lock='VOID';else delete btn.dataset.lock;});
+  document.querySelectorAll('.bb[data-t="necromancer"]').forEach(btn=>{const ha=necromancerUnlocked();btn.classList.toggle('ach-locked',!ha);if(!ha)btn.dataset.lock='VOID';else delete btn.dataset.lock;});
   // Tower buttons
   document.querySelectorAll('.bb[data-t]').forEach(btn => {
     const key = btn.dataset.t;
@@ -2827,7 +2827,7 @@ const ACHIEVEMENTS = [
   {id:'doom_4', icon:'☠', name:'DOOMSLAYER IV', desc:'Kill 100,000 enemies (lifetime)', secret:false, progress:{stat:'totalKills',target:100000}},
   {id:'doom_5', icon:'👹', name:'DOOMSLAYER V', desc:'Kill 1,000,000 enemies (lifetime)', secret:false, progress:{stat:'totalKills',target:1000000}},
   {id:'hacklord_killer', icon:'💻', name:'I\'M THE HACK LORD', desc:'Defeat the Hacklord boss', secret:false},
-  {id:'lastlight_victor', icon:'👁', name:'LIGHT IN THE VOID', desc:'Defeat the Void Reaver and win Last Light', secret:false},
+  {id:'lastlight_victor', icon:'👁', name:'LIGHT IN THE VOID', desc:'Defeat the Void Reaver and win Last Light', secret:false, tiered:true, maxLevel:4},
   {id:'fallen_king', icon:'👑', name:'FALLEN KING', desc:'Hold #1 on leaderboard then drop to #2 or lower', secret:true},
   {id:'inf_guard_1', icon:'🛡', name:'INFINITY GUARDIAN I', desc:'Reach Wave 100', secret:false, progress:{stat:'maxWave',target:100}},
   {id:'inf_guard_2', icon:'🛡', name:'INFINITY GUARDIAN II', desc:'Reach Wave 200', secret:false, progress:{stat:'maxWave',target:200}},
@@ -2843,6 +2843,38 @@ const ACHIEVEMENTS = [
   {id:'rickrolled', icon:'🎵', name:'YOU GOT RICKROLLED', desc:'Never gonna give you up... \u266a', secret:true},
   {id:'negative_wave', icon:'⁻¹', name:'REALITY.EXE HAS STOPPED WORKING', desc:'You discovered the forbidden negative wave glitch...', secret:true},
 ];
+
+// Tiered "LIGHT IN THE VOID" data — 4 stages, one per difficulty the Void Reaver is beaten on.
+// LV1 Easy -> LV2 Normal -> LV3 Hard -> LV4 Hardcore. The texture (icon/glow) changes per stage.
+const VOID_DIFF_LEVEL = {easy:1, normal:2, hard:3, hardcore:4};
+const VOID_TIERS = [
+  null, // index 0 unused (0 = not earned yet)
+  {level:1, diff:'EASY',     icon:'👁️', glow:'#66ffcc', bg:'radial-gradient(circle,#123328,#0a1a14)', name:'LIGHT IN THE VOID I',   desc:'Defeated the Void Reaver on Easy'},
+  {level:2, diff:'NORMAL',   icon:'👁️', glow:'#ffd700', bg:'radial-gradient(circle,#3a3210,#1a1608)', name:'LIGHT IN THE VOID II',  desc:'Defeated the Void Reaver on Normal'},
+  {level:3, diff:'HARD',     icon:'👁️', glow:'#ff8800', bg:'radial-gradient(circle,#3a2410,#1a1008)', name:'LIGHT IN THE VOID III', desc:'Defeated the Void Reaver on Hard'},
+  {level:4, diff:'HARDCORE', icon:'👁️', glow:'#ff2244', bg:'radial-gradient(circle,#3a1018,#1a0810)', name:'LIGHT IN THE VOID IV',  desc:'Defeated the Void Reaver on Hardcore'},
+];
+const NECROMANCER_MIN_VOID_LEVEL = 3; // requires stage 3 or 4 (Hard or Hardcore clear)
+
+function necromancerUnlocked() {
+  return (achStats.voidReaverLevel||0) >= NECROMANCER_MIN_VOID_LEVEL;
+}
+
+// Called when the Void Reaver dies — level is derived from the active difficulty.
+function unlockVoidReaverTier(level) {
+  if (!level || level < 1) return;
+  if (level > 4) level = 4;
+  const prev = achStats.voidReaverLevel||0;
+  if (level <= prev) return; // already have this stage or better
+  achStats.voidReaverLevel = level;
+  saveAchStats();
+  earnedAchievements.add('lastlight_victor');
+  saveAchievements();
+  const tier = VOID_TIERS[level];
+  showAchievementPopup({icon:tier.icon, name:tier.name, desc:tier.desc});
+  if (typeof applyLevelUnlocks === 'function') applyLevelUnlocks();
+  if (typeof renderAchievementList === 'function') renderAchievementList();
+}
 
 let earnedAchievements = new Set();
 
@@ -2912,7 +2944,15 @@ function renderAchievementList() {
   list.innerHTML = ACHIEVEMENTS.map(ach => {
     const earned = earnedAchievements.has(ach.id);
     let progHtml = '';
-    if (ach.progress && !earned) {
+    let icon = ach.icon, name = ach.name, desc = ach.desc, glowStyle = '';
+    if (ach.tiered) {
+      // Texture (icon/name/desc/glow) changes based on the highest stage reached (1-4)
+      const lvl = achStats.voidReaverLevel||0;
+      const tier = VOID_TIERS[lvl] || null;
+      if (tier) { icon = tier.icon; name = tier.name; desc = tier.desc; glowStyle = ' style="filter:drop-shadow(0 0 6px ' + tier.glow + ');background:' + tier.bg + ';border-radius:50%;box-shadow:inset 0 0 8px ' + tier.glow + '55;"'; }
+      const pct = Math.round((lvl/ach.maxLevel)*100);
+      progHtml = '<div class="ach-prog' + (lvl>=ach.maxLevel?' done':'') + '"><div class="ach-prog-bar" style="width:' + pct + '%"></div><span class="ach-prog-txt">STAGE ' + lvl + ' / ' + ach.maxLevel + (lvl>=ach.maxLevel?' — COMPLETE':'') + '</span></div>';
+    } else if (ach.progress && !earned) {
       const cur = achStats[ach.progress.stat] || 0;
       const tgt = ach.progress.target;
       const pct = Math.min(100, Math.round(cur / tgt * 100));
@@ -2921,9 +2961,9 @@ function renderAchievementList() {
       progHtml = '<div class="ach-prog done"><div class="ach-prog-bar" style="width:100%"></div><span class="ach-prog-txt">COMPLETE</span></div>';
     }
     return '<div class="ach-item ' + (earned ? 'earned' : 'locked') + '">' +
-      '<span class="ach-i">' + ach.icon + '</span>' +
-      '<div class="ach-info"><div class="ach-n">' + ach.name + '</div>' +
-      '<div class="ach-d">' + ach.desc + '</div>' + progHtml + '</div>' +
+      '<span class="ach-i"' + glowStyle + '>' + icon + '</span>' +
+      '<div class="ach-info"><div class="ach-n">' + name + '</div>' +
+      '<div class="ach-d">' + desc + '</div>' + progHtml + '</div>' +
       '<span class="ach-check">' + (earned ? '★' : '☆') + '</span></div>';
   }).join('');
   document.getElementById('ach-count').textContent = earnedAchievements.size + ' / ' + ACHIEVEMENTS.length + ' UNLOCKED';
@@ -3037,10 +3077,10 @@ async function sugSubmit(){
 
 // Persistent stat counters for achievements
 const STAT_KEY = 'bs_ach_stats';
-let achStats = {totalBuilt:0, totalKills:0, wasLbFirst:false, maxWave:0, totalGoldSpent:0, maxSingleGameGold:0, maxWaveHardcore:0};
+let achStats = {totalBuilt:0, totalKills:0, wasLbFirst:false, maxWave:0, totalGoldSpent:0, maxSingleGameGold:0, maxWaveHardcore:0, voidReaverLevel:0};
 
 function loadAchStats() {
-  try { const r=localStorage.getItem(STAT_KEY); if(r) achStats={totalBuilt:0,totalKills:0,wasLbFirst:false,maxWave:0,totalGoldSpent:0,maxSingleGameGold:0,maxWaveHardcore:0,...JSON.parse(r)}; } catch(e) {}
+  try { const r=localStorage.getItem(STAT_KEY); if(r) achStats={totalBuilt:0,totalKills:0,wasLbFirst:false,maxWave:0,totalGoldSpent:0,maxSingleGameGold:0,maxWaveHardcore:0,voidReaverLevel:0,...JSON.parse(r)}; } catch(e) {}
 }
 function saveAchStats() {
   try { localStorage.setItem(STAT_KEY, JSON.stringify(achStats)); } catch(e) {}
@@ -4270,7 +4310,7 @@ cv.addEventListener('click',e=>{
   if(selBuild==='admindrone'&&gameMode==='hardcore'&&!hcUnlocked.has('admindrone')){msg('⚠ Unlock Drone Pad first! (9 pts)',2500);return;}
   if(selBuild==='barbwire'&&gameMode==='hardcore'&&!hcUnlocked.has('barbwire')){msg('⚠ Unlock Barbwire first! (12 pts)',2500);return;}
   if(selBuild==='silo'&&!earnedAchievements.has('boss_speed')){msg('⚠ Missile Silo requires the "I\'M THE BOSS" achievement!',3000);return;}
-  if(selBuild==='necromancer'&&!earnedAchievements.has('lastlight_victor')&&!lastLightWon){msg('⚠ Necromancer requires defeating the VOID REAVER first!',3000);return;}
+  if(selBuild==='necromancer'&&!necromancerUnlocked()){msg('⚠ Necromancer requires LIGHT IN THE VOID stage 3+ — beat the VOID REAVER on Hard or Hardcore!',3500);return;}
   if(selBuild==='silo'&&gameMode==='hardcore'&&!hcUnlocked.has('silo')){msg('⚠ Unlock Missile Silo first! (7 pts)',2500);return;}
   if(selBuild==='hero_accel'&&gameMode==='hardcore'&&!hcUnlocked.has('hero_accel')){msg('⚠ Unlock Hero Towers first! (25 pts, unlocks both heroes)',2500);return;}
   if(selBuild==='hero_score'&&!_heroUnlocked&&!(gameMode==='hardcore'&&hcUnlocked.has('hero_score'))){msg('⚠ HERO SCORE MACHINE unlocks when you reach TOP 3 on the leaderboard (or unlock Hero Towers with Upgrade Points in Hardcore — 25 pts, unlocks both heroes)!',3000);return;}
@@ -5175,7 +5215,7 @@ if(cfg.t===CT.NECRO&&cfg.necroTower){
         lastLightWon=true;
         const _reaverXP=1000+wave*15;
         grantXP(_reaverXP);
-        try{unlockAchievement('lastlight_victor');}catch(_e){}
+        try{unlockVoidReaverTier(VOID_DIFF_LEVEL[gameMode]||1);}catch(_e){}
         sparks(W/2,H/2,'#ffd700',60,7);sparks(W/2,H/2,'#d080ff',50,6);
         ft(W/2,H/2-70,'👁 VOID REAVER DEFEATED 👁','#d080ff');
         ft(W/2,H/2-50,'🏆 LAST LIGHT COMPLETE! 🏆','#ffd700');
@@ -7147,8 +7187,8 @@ async function bgChatPoll(){
             if (!hasAch) { locked = true; unlockTxt = 'ACHIEVEMENT'; }
           }
           if (tw.key === 'necromancer') {
-            const vrOk = (typeof lastLightWon !== 'undefined' && lastLightWon) || (typeof earnedAchievements !== 'undefined' && earnedAchievements.has('lastlight_victor'));
-            if (!vrOk) { locked = true; unlockTxt = 'BEAT VOID REAVER'; }
+            const vrOk = typeof necromancerUnlocked === 'function' && necromancerUnlocked();
+            if (!vrOk) { locked = true; unlockTxt = 'VOID LV.3+ (HARD)'; }
           }
           if (tw.key === 'cowboy' && typeof gameMode !== 'undefined' && gameMode === 'hardcore') {
             const hcOk = typeof hcUnlocked !== 'undefined' && hcUnlocked.has('cowboy');
