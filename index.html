@@ -3520,7 +3520,7 @@ let hcPoints=0;              // Upgrade points available to spend
 let hcPointsSpent=0;         // Points already spent
 let hcLastPointScore=0;      // Score at which last point was awarded
 let hcUnlocked=new Set();    // Tower keys unlocked this game
-const HC_TOWER_COSTS={electric:1,healer:3,spike:4,flame:6,ice:5,buff:15,bhole:8,heli:10,mine:20,laser:11,barracks:7,silo:7,hero_accel:25,hero_score:25,mech_base:21,admindrone:9,barbwire:12,cowboy:7};
+const HC_TOWER_COSTS={electric:1,healer:3,spike:4,flame:6,ice:5,buff:15,bhole:8,heli:10,mine:20,laser:11,barracks:7,silo:7,hero_accel:25,hero_score:25,mech_base:21,admindrone:9,barbwire:12,cowboy:7,necromancer:13};
 const HC_TOWER_NAMES={electric:'TESLA ⚡',healer:'MEDIC ✚',spike:'SPIKE 🔨',flame:'FLAME 🔥',ice:'ICE ❄',buff:'DJ TOWER 🎧',bhole:'B.HOLE 🕳️',heli:'HELI PAD 🚁',mine:'FARM 🌾',laser:'LASER 💎',barracks:'BARRACKS 🛡',silo:'MISSILE SILO 🚀',hero_accel:'HERO: ACCEL ⚡',hero_score:'HERO: SCORE 🏆',mech_base:'MECH BASE 🤖',admindrone:'DRONE PAD 🛸',barbwire:'BARBWIRE 🧷',cowboy:'COWBOY 🤠',necromancer:'NECROMANCER 💀'};
 const HERO_HC_KEYS=['hero_accel','hero_score']; // Both heroes are unlocked together by ONE 25-point purchase
 
@@ -4297,6 +4297,7 @@ cv.addEventListener('click',e=>{
   if(selBuild==='admindrone'&&gameMode==='hardcore'&&!hcUnlocked.has('admindrone')){msg('⚠ Unlock Drone Pad first! (9 pts)',2500);return;}
   if(selBuild==='barbwire'&&gameMode==='hardcore'&&!hcUnlocked.has('barbwire')){msg('⚠ Unlock Barbwire first! (12 pts)',2500);return;}
   if(selBuild==='silo'&&!earnedAchievements.has('boss_speed')){msg('⚠ Missile Silo requires the "I\'M THE BOSS" achievement!',3000);return;}
+  if(selBuild==='necromancer'&&gameMode==='hardcore'&&!hcUnlocked.has('necromancer')){msg('⚠ Unlock Necromancer first! (13 pts)',2500);return;}
   if(selBuild==='necromancer'&&!necromancerUnlocked()){msg('⚠ Necromancer requires LIGHT IN THE VOID stage 3+ — beat the VOID REAVER on Hard or Hardcore!',3500);return;}
   if(selBuild==='silo'&&gameMode==='hardcore'&&!hcUnlocked.has('silo')){msg('⚠ Unlock Missile Silo first! (7 pts)',2500);return;}
   if(selBuild==='hero_accel'&&gameMode==='hardcore'&&!hcUnlocked.has('hero_accel')){msg('⚠ Unlock Hero Towers first! (25 pts, unlocks both heroes)',2500);return;}
