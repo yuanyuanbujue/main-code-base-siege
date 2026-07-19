@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>BASE SIEGE v29.2</title>
+<title>BASE SIEGE v29.4</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -273,9 +273,10 @@ const MP={
     const newCfg=TS[t.key]?TS[t.key][d.newKey]:null;
     if(!newCfg) return;
     t.cfg=newCfg;t.hp=newCfg.hp;t.maxHp=newCfg.hp;
-    if(typeof d.newKey==='string'&&d.newKey.length>=2){
-      t.level=parseInt(d.newKey,10); // numeric level only, not the combined "3A" key
-      t.path=d.newKey[1]; // 'A' or 'B'
+    if(typeof d.newKey==='string'&&/^[0-9]+[A-Z]$/.test(d.newKey)){
+      const pathChar=d.newKey[d.newKey.length-1];
+      t.level=parseInt(d.newKey,10);
+      t.path=pathChar;
     } else {
       t.level=Number(d.newKey);
       t.path=null;
@@ -444,7 +445,7 @@ const MP={
 
   onLobbyStart(d){
     gameMode=d.difficulty;
-    selectedMap='free';
+    selectedMap=d.map||'free';
     this.startCoopGame();
   },
 
@@ -785,7 +786,7 @@ document.addEventListener('DOMContentLoaded',function(){
     if(!MP.isHost) return;
     gameMode=MP.lobbyMode;
     await MP.sb.from('rooms').update({status:'playing',difficulty:gameMode}).eq('id',MP.roomId);
-    MP.broadcast('lobby:start',{difficulty:gameMode});
+    MP.broadcast('lobby:start',{difficulty:gameMode,map:selectedMap});
     MP.startCoopGame();
   });
 
@@ -1442,10 +1443,15 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 <div id="update-popup">
 <div class="up-header">
 <div class="up-title">PATCH NOTES</div>
-<div class="up-ver">BASE SIEGE v29.3 — Performance &amp; Path Preview Update</div>
+<div class="up-ver">BASE SIEGE v29.4 — Tower Info &amp; Balance Update</div>
 </div>
 <div class="up-body">
 <div class="up-section">
+<div class="up-section-title">🎯 tower info</div>
+<div class="up-item new">📡 Clicking a tower now shows its range as a dashed circle on the battlefield</div>
+<div class="up-item new">⚡ Selected tower panel now shows before → after stats when standing in a DJ TOWER's buff aura, plus the exact buff % for DMG, fire speed, and range</div>
+<div class="up-section-title">⚖ balance</div>
+<div class="up-item fix">👁 Void Reaver HP cut in half — Last Light's final boss was overtuned and is now more reasonable to fight</div>
 <div class="up-section-title">⚡ performance</div>
 <div class="up-item new">🥔 POTATO graphics mode is now truly minimal — allies, helicopters, and admin drones no longer render at all (fully invisible, still function normally)</div>
 <div class="up-item new">🥔 Tower animations (bobbing, pulsing, rotating, ritual circles, etc.) are now frozen in POTATO mode for a fully static, low-cost render</div>
@@ -1553,7 +1559,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 <div id="lb-toast">✓ SCORE SUBMITTED</div>
 
 <div id="autoskip-toast">⚡ AUTO-SKIP ON</div>
-<header><h1>BASE SIEGE</h1><span class="ver">v29.2</span></header>
+<header><h1>BASE SIEGE</h1><span class="ver">v29.4</span></header>
 
 
 <!-- START SCREEN -->
@@ -1566,7 +1572,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     </div>
   </div>
   <div class="ss-title">BASE SIEGE</div>
-  <div class="ss-ver">v29.2</div>
+  <div class="ss-ver">v29.4</div>
   <div class="ss-sub">SELECT YOUR DIFFICULTY AND DEFEND THE BASE</div>
   <div class="ss-box">
     <div class="ss-sh">── SELECT MODE ─────────────────</div>
@@ -1677,6 +1683,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
   <button class="bb"    data-t="silo"     style="--a:#ff6600" id="silo-btn"><span class="bl"><span class="bd"></span>MISSILE SILO 🚀</span><span class="bc">1000g</span></button>
   <button class="bb"    data-t="hero_accel" style="--a:#ffd23f" id="hero-accel-btn"><span class="bl"><span class="bd"></span>HERO: ACCELERATOR ⚡</span><span class="bc">8000g</span></button>
   <button class="bb ach-locked" data-lock="TOP3" data-t="hero_score" style="--a:#ff66cc" id="hero-score-btn"><span class="bl"><span class="bd"></span>HERO: SCORE MACHINE 🏆</span><span class="bc">6000g</span></button>
+  <button class="bb"    data-t="hero_sacrifice" style="--a:#ff1f5e" id="hero-sacrifice-btn"><span class="bl"><span class="bd"></span>HERO: SACRIFICE TEMPLE 🩸</span><span class="bc">7000g</span></button>
   <button class="bb"    data-t="admindrone" style="--a:#ff88ff" id="drone-btn"><span class="bl"><span class="bd"></span>DRONE PAD 🛸</span><span class="bc">600g</span></button>
   <button class="ab upg-on" id="ubtn">⬆ UPGRADE [click tower]</button>
   <button class="ab" id="sbtn">⤴ SELL [50% back]</button>
@@ -1703,6 +1710,18 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     <button id="up-btn" style="display:none">UPGRADE</button>
     <button id="silo-mark-btn" style="display:none;background:#0a0500;border:1px solid #ff6600;color:#ff6600;font-family:'Share Tech Mono',monospace;font-size:11px;padding:8px;cursor:pointer;width:100%;text-align:left;letter-spacing:1px;transition:all .15s;">🎯 MANUAL TARGET</button>
     <div id="silo-target-info" style="display:none;font-size:9px;color:#ff8800;padding:2px 0 4px 0;letter-spacing:1px;"></div>
+    <!-- SACRIFICE TEMPLE PANEL -->
+    <div id="sacrifice-panel" style="display:none;flex-direction:column;gap:4px;background:#0d0005;border:1px solid #ff1f5e44;padding:7px;margin-bottom:2px;">
+      <div style="font-family:Orbitron,sans-serif;font-size:8px;letter-spacing:2px;color:#ff1f5e;border-bottom:1px solid #2a0010;padding-bottom:3px;">── SACRIFICE BAR ──</div>
+      <div id="sacrifice-level-lbl" style="font-size:9px;color:#ff4488;letter-spacing:1px;"></div>
+      <div style="width:100%;height:10px;background:#150010;border:1px solid #4a0020;border-radius:3px;overflow:hidden;">
+        <div id="sacrifice-bar-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#660011,#ff1f5e,#ff88aa);box-shadow:0 0 6px #ff1f5e;transition:width .3s;"></div>
+      </div>
+      <div id="sacrifice-bar-txt" style="font-size:8px;color:#ff8899;letter-spacing:1px;text-align:center;"></div>
+      <div id="sacrifice-buff-txt" style="font-size:8px;color:#ffaacc;letter-spacing:1px;white-space:pre-line;line-height:1.5;margin-top:2px;"></div>
+      <button id="sacrifice-btn" style="background:#1a0008;border:1px solid #ff1f5e;color:#ff1f5e;font-family:'Share Tech Mono',monospace;font-size:10px;padding:8px;cursor:pointer;letter-spacing:1px;transition:all .15s;">🩸 SELECT TOWER TO SACRIFICE</button>
+      <div id="sacrifice-hint" style="font-size:8px;color:#aa4466;letter-spacing:1px;text-align:center;display:none;">Click any tower on the map to sacrifice it</div>
+    </div>
     <button id="up-sell-btn">SELL TOWER</button>
     <button id="up-close-btn">✕ CLOSE</button>
   </div>
@@ -2172,6 +2191,8 @@ const COLS=22,ROWS=14,CS=38,W=COLS*CS,H=ROWS*CS;
 const BASE_R=7,BASE_C=COLS-1,SPAWN_R=1,SPAWN_C=0;
 const CT={EMPTY:0,WALL:1,BASIC:2,SNIPER:3,CANNON:4,BASE:5,SPAWN:6,ELECTRIC:7,HEALER:8,SPIKE:9,BUFF:10,MINE:11,HELI:12,FLAME:13,BHOLE:14,LASER:15,DRONE:16,ICE:17,BARRACKS:18,SILO:19,MECH_BASE:20,BARBWIRE:21,PATH:22,COWBOY:23,NECRO:24};
 const ML=5;
+const HERO_ML=10; // Hero towers have 10 levels
+function getML(key){return(key==='hero_accel'||key==='hero_score'||key==='hero_sacrifice')?HERO_ML:ML;}
 const BSET=new Set([CT.WALL,CT.BASIC,CT.SNIPER,CT.CANNON,CT.ELECTRIC,CT.HEALER,CT.SPIKE,CT.BUFF,CT.MINE,CT.HELI,CT.FLAME,CT.BHOLE,CT.LASER,CT.ICE,CT.BARRACKS,CT.SILO,CT.MECH_BASE,CT.BARBWIRE,CT.COWBOY,CT.NECRO]);
 // ── MAP SYSTEM ──
 const LAST_LIGHT_PATH=[[1,0],[1,1],[1,2],[1,3],[1,4],[2,4],[3,4],[4,4],[5,4],[5,3],[5,2],[5,1],[6,1],[7,1],[8,1],[9,1],[9,2],[9,3],[9,4],[9,5],[9,6],[9,7],[9,8],[8,8],[7,8],[6,8],[5,8],[4,8],[3,8],[3,9],[3,10],[3,11],[3,12],[3,13],[4,13],[5,13],[6,13],[7,13],[8,13],[9,13],[10,13],[11,13],[11,14],[11,15],[11,16],[11,17],[11,18],[10,18],[9,18],[8,18],[7,18],[7,19],[7,20],[7,21]];
@@ -2277,28 +2298,47 @@ const TS={
     '2A':{t:CT.LASER,cost:4500,hp:520,rng:250,dmg:9, cd:3,aoe:0,chn:0,col:'#ffdd55',name:'ACCELERATOR I',     laserTower:true,stackDmg:0,maxStacks:0,heroTower:true,heroType:'accel',chargeTime:65},
     '3A':{t:CT.LASER,cost:7500,hp:600,rng:270,dmg:15,cd:3,aoe:0,chn:0,col:'#ffe066',name:'ACCELERATOR II',    laserTower:true,stackDmg:0,maxStacks:0,heroTower:true,heroType:'accel',chargeTime:55},
     '4A':{t:CT.LASER,cost:12000,hp:700,rng:290,dmg:24,cd:2,aoe:0,chn:0,col:'#ffe877',name:'ACCELERATOR III',   laserTower:true,stackDmg:0,maxStacks:0,heroTower:true,heroType:'accel',chargeTime:45},
-    '5A':{t:CT.LASER,cost:20000,hp:850,rng:320,dmg:38,cd:2,aoe:0,chn:0,col:'#fff0a0',name:'PRIME ACCELERATOR',laserTower:true,stackDmg:0,maxStacks:0,heroTower:true,heroType:'accel',chargeTime:35}
+    '5A':{t:CT.LASER,cost:20000,hp:850,rng:320,dmg:38,cd:2,aoe:0,chn:0,col:'#fff0a0',name:'PRIME ACCELERATOR',laserTower:true,stackDmg:0,maxStacks:0,heroTower:true,heroType:'accel',chargeTime:35},
+    '6A':{t:CT.LASER,cost:30000,hp:1000,rng:340,dmg:56,cd:2,aoe:0,chn:0,col:'#fff4b8',name:'OVERCHARGE I',    laserTower:true,stackDmg:0,maxStacks:0,heroTower:true,heroType:'accel',chargeTime:28},
+    '7A':{t:CT.LASER,cost:42000,hp:1180,rng:360,dmg:78,cd:2,aoe:0,chn:0,col:'#fff7cc',name:'OVERCHARGE II',   laserTower:true,stackDmg:0,maxStacks:0,heroTower:true,heroType:'accel',chargeTime:22},
+    '8A':{t:CT.LASER,cost:58000,hp:1400,rng:385,dmg:105,cd:1,aoe:0,chn:0,col:'#fffae0',name:'OVERCHARGE III',  laserTower:true,stackDmg:0,maxStacks:0,heroTower:true,heroType:'accel',chargeTime:17},
+    '9A':{t:CT.LASER,cost:78000,hp:1680,rng:415,dmg:140,cd:1,aoe:0,chn:0,col:'#fffdee',name:'APEX BEAM',       laserTower:true,stackDmg:0,maxStacks:0,heroTower:true,heroType:'accel',chargeTime:12},
+    '10A':{t:CT.LASER,cost:110000,hp:2000,rng:450,dmg:190,cd:1,aoe:0,chn:0,col:'#ffffff',name:'ETERNAL ACCELERATOR',laserTower:true,stackDmg:0,maxStacks:0,heroTower:true,heroType:'accel',chargeTime:8}
   },
   hero_score:{
     1  :{t:CT.BUFF,cost:6000, hp:300,rng:140,dmg:0,cd:0,col:'#ff66cc',name:'HERO SCORE MACHINE',buffType:'combat',dmgBoost:.10,spdBoost:.06,rngBoost:.05,heroTower:true,heroType:'score',scoreMultBonus:.10},
-    // Path A — SCORE FOCUS: score multiplier ramps up fast, aura buff stays modest.
     '2A':{t:CT.BUFF,cost:3000, hp:320,rng:150,dmg:0,cd:0,col:'#ff44aa',name:'SCORE FOCUS I',   buffType:'combat',dmgBoost:.08,spdBoost:.04,rngBoost:.03,heroTower:true,heroType:'score',scoreMultBonus:.35},
     '3A':{t:CT.BUFF,cost:5000, hp:360,rng:165,dmg:0,cd:0,col:'#ff2299',name:'SCORE FOCUS II',  buffType:'combat',dmgBoost:.10,spdBoost:.05,rngBoost:.04,heroTower:true,heroType:'score',scoreMultBonus:.70},
     '4A':{t:CT.BUFF,cost:8000, hp:410,rng:180,dmg:0,cd:0,col:'#ff0088',name:'SCORE FOCUS III', buffType:'combat',dmgBoost:.13,spdBoost:.07,rngBoost:.05,heroTower:true,heroType:'score',scoreMultBonus:1.3},
     '5A':{t:CT.BUFF,cost:13000,hp:480,rng:200,dmg:0,cd:0,col:'#ff0066',name:'PRIME SCORE ENGINE',buffType:'combat',dmgBoost:.16,spdBoost:.09,rngBoost:.06,heroTower:true,heroType:'score',scoreMultBonus:2.5},
-    // Path B — AURA FOCUS: buffs nearby towers hard, score multiplier grows slowly.
+    '6A':{t:CT.BUFF,cost:20000,hp:560,rng:218,dmg:0,cd:0,col:'#dd0055',name:'SCORE NEXUS I',   buffType:'combat',dmgBoost:.20,spdBoost:.12,rngBoost:.08,heroTower:true,heroType:'score',scoreMultBonus:4.0},
+    '7A':{t:CT.BUFF,cost:30000,hp:650,rng:236,dmg:0,cd:0,col:'#bb0044',name:'SCORE NEXUS II',  buffType:'combat',dmgBoost:.25,spdBoost:.15,rngBoost:.10,heroTower:true,heroType:'score',scoreMultBonus:6.0},
+    '8A':{t:CT.BUFF,cost:44000,hp:760,rng:258,dmg:0,cd:0,col:'#990033',name:'SCORE NEXUS III', buffType:'combat',dmgBoost:.32,spdBoost:.20,rngBoost:.13,heroTower:true,heroType:'score',scoreMultBonus:9.0},
+    '9A':{t:CT.BUFF,cost:62000,hp:900,rng:280,dmg:0,cd:0,col:'#770022',name:'APEX SCORE CORE', buffType:'combat',dmgBoost:.40,spdBoost:.26,rngBoost:.17,heroTower:true,heroType:'score',scoreMultBonus:13.0},
+    '10A':{t:CT.BUFF,cost:88000,hp:1080,rng:310,dmg:0,cd:0,col:'#ff99dd',name:'ETERNAL SCORE MACHINE',buffType:'combat',dmgBoost:.50,spdBoost:.34,rngBoost:.22,heroTower:true,heroType:'score',scoreMultBonus:20.0},
     '2B':{t:CT.BUFF,cost:3000, hp:340,rng:170,dmg:0,cd:0,col:'#ffaa00',name:'AURA FOCUS I',    buffType:'combat',dmgBoost:.20,spdBoost:.12,rngBoost:.10,heroTower:true,heroType:'score',scoreMultBonus:.15},
     '3B':{t:CT.BUFF,cost:5000, hp:400,rng:190,dmg:0,cd:0,col:'#ff9900',name:'AURA FOCUS II',   buffType:'combat',dmgBoost:.32,spdBoost:.20,rngBoost:.16,heroTower:true,heroType:'score',scoreMultBonus:.22},
     '4B':{t:CT.BUFF,cost:8000, hp:470,rng:215,dmg:0,cd:0,col:'#ff8800',name:'AURA FOCUS III',  buffType:'combat',dmgBoost:.48,spdBoost:.30,rngBoost:.24,heroTower:true,heroType:'score',scoreMultBonus:.30},
-    '5B':{t:CT.BUFF,cost:13000,hp:560,rng:245,dmg:0,cd:0,col:'#ff6600',name:'PRIME WAR BEACON',buffType:'combat',dmgBoost:.70,spdBoost:.45,rngBoost:.35,heroTower:true,heroType:'score',scoreMultBonus:.40}
+    '5B':{t:CT.BUFF,cost:13000,hp:560,rng:245,dmg:0,cd:0,col:'#ff6600',name:'PRIME WAR BEACON',buffType:'combat',dmgBoost:.70,spdBoost:.45,rngBoost:.35,heroTower:true,heroType:'score',scoreMultBonus:.40},
+    '6B':{t:CT.BUFF,cost:20000,hp:660,rng:268,dmg:0,cd:0,col:'#ee5500',name:'WAR NEXUS I',     buffType:'combat',dmgBoost:.95,spdBoost:.62,rngBoost:.46,heroTower:true,heroType:'score',scoreMultBonus:.55},
+    '7B':{t:CT.BUFF,cost:30000,hp:780,rng:294,dmg:0,cd:0,col:'#dd4400',name:'WAR NEXUS II',    buffType:'combat',dmgBoost:1.25,spdBoost:.82,rngBoost:.60,heroTower:true,heroType:'score',scoreMultBonus:.72},
+    '8B':{t:CT.BUFF,cost:44000,hp:920,rng:322,dmg:0,cd:0,col:'#cc3300',name:'WAR NEXUS III',   buffType:'combat',dmgBoost:1.60,spdBoost:1.05,rngBoost:.76,heroTower:true,heroType:'score',scoreMultBonus:.92},
+    '9B':{t:CT.BUFF,cost:62000,hp:1100,rng:354,dmg:0,cd:0,col:'#bb2200',name:'APEX WAR BEACON', buffType:'combat',dmgBoost:2.00,spdBoost:1.32,rngBoost:.95,heroTower:true,heroType:'score',scoreMultBonus:1.15},
+    '10B':{t:CT.BUFF,cost:88000,hp:1320,rng:390,dmg:0,cd:0,col:'#ff8844',name:'ETERNAL WAR BEACON',buffType:'combat',dmgBoost:2.50,spdBoost:1.65,rngBoost:1.20,heroTower:true,heroType:'score',scoreMultBonus:1.45}
+  },
+  // HERO: SACRIFICE TEMPLE — unlocked at Player Level 50. Deals zero damage itself;
+  // it exists purely to pour a massive combat aura into nearby towers.
+  hero_sacrifice:{
+    // No upgrade tree — temple power grows via tower sacrifices (sacrificeLevel 0-5)
+    1  :{t:CT.BUFF,cost:7000, hp:260,rng:130,dmg:0,cd:0,col:'#ff1f5e',name:'SACRIFICE TEMPLE',       buffType:'combat',dmgBoost:.15,spdBoost:.10,rngBoost:.08,heroTower:true,heroType:'sacrifice'}
   },
 };
 
-const PATH_NAMES={basic:{A:'MINIGUN',B:'SHOCKWAVE'},sniper:{A:'OVERCHARGE',B:'EXPLOSIVE'},cannon:{A:'RAPID FIRE',B:'DEVASTATOR'},electric:{A:'STORM',B:'PLASMA BALL'},healer:{A:'BASE MEDIC',B:'REGEN+'},spike:{A:'RAPID STRIKE',B:'WARHAMMER'},buff:{A:'BASS BOOST',B:'DJ BOOTH'},mine:{A:'BIG FARM',B:'BANK'},heli:{A:'MISSILE+BULLETS',B:'MINIGUN SPEED'},flame:{A:'INFERNO',B:'CORROSION'},ice:{A:'FROST WAVE',B:'CRYO BULLET'},bhole:{A:'EVENT HORIZON',B:'SINGULARITY'},laser:{A:'FOCUS BEAM',B:'CRYSTAL FORGE'},barracks:{A:'DEMOLISHER',B:'GUNNER',C:'TANK DEPOT'},silo:{A:'NUKE',B:'LASER STRIKE'},hero_accel:{A:'OVERCHARGE BEAM'},hero_score:{A:'SCORE FOCUS',B:'AURA FOCUS'},mech_base:{A:'THE TITAN',B:'WALKING ARSENAL',C:'SWARM PROTOCOL'},admindrone:{A:'SWARM PROTOCOL',B:'MULTI-ROLE'},barbwire:{A:'LONG WIRE',B:'RAZOR WIRE'},cowboy:{A:'GUNSLINGER',B:'POSSE CALLER'},necromancer:{A:'DEATH CALLER',B:'BONE WARDEN'}};
-const PATH_COLORS={basic:{A:'#33aaff',B:'#55ddff'},sniper:{A:'#cc55ff',B:'#ff44bb'},cannon:{A:'#ff9900',B:'#ff6600'},electric:{A:'#aaff00',B:'#88ff44'},healer:{A:'#00ccff',B:'#00ffcc'},spike:{A:'#ff4488',B:'#ff2255'},buff:{A:'#ffd700',B:'#ff8800'},mine:{A:'#ffe066',B:'#ffd700'},heli:{A:'#00ffaa',B:'#44ffcc'},flame:{A:'#ff4400',B:'#44ff88'},ice:{A:'#44ccff',B:'#4488ff'},bhole:{A:'#cc66ff',B:'#ff44aa'},laser:{A:'#00ccff',B:'#ff88ff'},barracks:{A:'#ff8844',B:'#33ccff',C:'#cc8800'},silo:{A:'#ff4400',B:'#cc55ff'},hero_accel:{A:'#ffe066'},hero_score:{A:'#ff44aa',B:'#ffaa00'},mech_base:{A:'#ff3311',B:'#2299ee',C:'#44ee77'},admindrone:{A:'#ff44ff',B:'#44ffee'},barbwire:{A:'#c8a874',B:'#ff5533'},cowboy:{A:'#ffdca8',B:'#c8955a'},necromancer:{A:'#bb8fff',B:'#6a4a9a'}};
+const PATH_NAMES={basic:{A:'MINIGUN',B:'SHOCKWAVE'},sniper:{A:'OVERCHARGE',B:'EXPLOSIVE'},cannon:{A:'RAPID FIRE',B:'DEVASTATOR'},electric:{A:'STORM',B:'PLASMA BALL'},healer:{A:'BASE MEDIC',B:'REGEN+'},spike:{A:'RAPID STRIKE',B:'WARHAMMER'},buff:{A:'BASS BOOST',B:'DJ BOOTH'},mine:{A:'BIG FARM',B:'BANK'},heli:{A:'MISSILE+BULLETS',B:'MINIGUN SPEED'},flame:{A:'INFERNO',B:'CORROSION'},ice:{A:'FROST WAVE',B:'CRYO BULLET'},bhole:{A:'EVENT HORIZON',B:'SINGULARITY'},laser:{A:'FOCUS BEAM',B:'CRYSTAL FORGE'},barracks:{A:'DEMOLISHER',B:'GUNNER',C:'TANK DEPOT'},silo:{A:'NUKE',B:'LASER STRIKE'},hero_accel:{A:'OVERCHARGE BEAM'},hero_score:{A:'SCORE FOCUS',B:'AURA FOCUS'},hero_sacrifice:{A:'BLOOD ALTAR',B:'SOUL BEACON'},mech_base:{A:'THE TITAN',B:'WALKING ARSENAL',C:'SWARM PROTOCOL'},admindrone:{A:'SWARM PROTOCOL',B:'MULTI-ROLE'},barbwire:{A:'LONG WIRE',B:'RAZOR WIRE'},cowboy:{A:'GUNSLINGER',B:'POSSE CALLER'},necromancer:{A:'DEATH CALLER',B:'BONE WARDEN'}};
+const PATH_COLORS={basic:{A:'#33aaff',B:'#55ddff'},sniper:{A:'#cc55ff',B:'#ff44bb'},cannon:{A:'#ff9900',B:'#ff6600'},electric:{A:'#aaff00',B:'#88ff44'},healer:{A:'#00ccff',B:'#00ffcc'},spike:{A:'#ff4488',B:'#ff2255'},buff:{A:'#ffd700',B:'#ff8800'},mine:{A:'#ffe066',B:'#ffd700'},heli:{A:'#00ffaa',B:'#44ffcc'},flame:{A:'#ff4400',B:'#44ff88'},ice:{A:'#44ccff',B:'#4488ff'},bhole:{A:'#cc66ff',B:'#ff44aa'},laser:{A:'#00ccff',B:'#ff88ff'},barracks:{A:'#ff8844',B:'#33ccff',C:'#cc8800'},silo:{A:'#ff4400',B:'#cc55ff'},hero_accel:{A:'#ffe066'},hero_score:{A:'#ff44aa',B:'#ffaa00'},hero_sacrifice:{A:'#ff1144',B:'#aa22ff'},mech_base:{A:'#ff3311',B:'#2299ee',C:'#44ee77'},admindrone:{A:'#ff44ff',B:'#44ffee'},barbwire:{A:'#c8a874',B:'#ff5533'},cowboy:{A:'#ffdca8',B:'#c8955a'},necromancer:{A:'#bb8fff',B:'#6a4a9a'}};
 
 function getCfg(key,lvl,path){if(key==='wall') return TS.wall[Math.min(lvl,5)]||TS.wall[1];if(lvl===1) return TS[key][1];return TS[key][lvl+(path||'')]||TS[key][1];}
-function upgCost(key,toLvl,path){if(key==='wall'){const s=TS.wall[Math.min(toLvl,5)];return s?s.cost:TS.wall[1].cost;}if(toLvl===2){const lk2='2'+(path||'A');const s2=TS[key]&&TS[key][lk2];if(s2) return s2.cost;const sA=TS[key]&&TS[key]['2A'];return sA?sA.cost:Math.round(TS[key][1].cost*0.6);}const lk=toLvl+(path||'A');const s=TS[key]&&TS[key][lk];if(s) return s.cost;const base=TS[key][1].cost;if(toLvl===3) return Math.round(base*1.0);if(toLvl===4) return Math.round(base*1.45);if(toLvl===5) return Math.round(base*2.0);return Math.round(base*1.2);}
+function upgCost(key,toLvl,path){if(key==='wall'){const s=TS.wall[Math.min(toLvl,5)];return s?s.cost:TS.wall[1].cost;}if(toLvl===2){const lk2='2'+(path||'A');const s2=TS[key]&&TS[key][lk2];if(s2) return s2.cost;const sA=TS[key]&&TS[key]['2A'];return sA?sA.cost:Math.round(TS[key][1].cost*0.6);}const lk=toLvl+(path||'A');const s=TS[key]&&TS[key][lk];if(s) return s.cost;const base=TS[key][1].cost;if(toLvl===3) return Math.round(base*1.0);if(toLvl===4) return Math.round(base*1.45);if(toLvl===5) return Math.round(base*2.0);if(toLvl===6) return Math.round(base*3.2);if(toLvl===7) return Math.round(base*4.5);if(toLvl===8) return Math.round(base*6.2);if(toLvl===9) return Math.round(base*8.5);if(toLvl===10) return Math.round(base*12.0);return Math.round(base*1.2);}
 
 const BASE_UPG={A:{1:{cost:200,hpBonus:50,turretDmg:25,turretRng:180,turretCd:75,name:'FORTRESS I'},2:{cost:600,hpBonus:100,turretDmg:50,turretRng:200,turretCd:40,name:'FORTRESS II'},3:{cost:2200,hpBonus:600,turretDmg:90,turretRng:220,turretCd:30,name:'FORTRESS III'},4:{cost:4500,hpBonus:2000,turretDmg:160,turretRng:250,turretCd:22,name:'CITADEL'},5:{cost:8000,hpBonus:5000,turretDmg:280,turretRng:300,turretCd:14,name:'FORTRESS MAX'}},B:{1:{cost:250,goldPerWave:30,name:'TREASURY I'},2:{cost:500,goldPerWave:65,name:'TREASURY II'},3:{cost:900,goldPerWave:110,name:'TREASURY III'},4:{cost:1800,goldPerWave:180,name:'VAULT'},5:{cost:3500,goldPerWave:300,name:'TREASURY MAX'}}};
 const BASE_ML=5;
@@ -2586,6 +2626,63 @@ let baseUpgPath=null,baseUpgLevel=0;
 let baseTurretAngle=0,baseTurretCd=0;
 let autoSkip=false;
 let siloMarkMode=false,siloMarkTower=null;
+// ── SACRIFICE TEMPLE STATE ──
+let sacrificeSelectMode=false,sacrificeTempleRef=null;
+// Sacrifice levels: 0=base, each sacrifice adds to bar; bar thresholds per level
+// sacrificeLevel on the tower object (0-5), sacrificeBar (accumulated cost), sacrificeBarMax per level
+const SACRIFICE_LEVELS=[
+  {level:0,barMax:0,    name:'SACRIFICE TEMPLE',      col:'#ff1f5e', dmgBoost:.15,spdBoost:.10,rngBoost:.08,rng:130},
+  {level:1,barMax:2000, name:'BLOOD ALTAR I',          col:'#ff1144', dmgBoost:.25,spdBoost:.18,rngBoost:.12,rng:140},
+  {level:2,barMax:5000, name:'BLOOD ALTAR II',         col:'#ee0033', dmgBoost:.38,spdBoost:.28,rngBoost:.18,rng:150},
+  {level:3,barMax:10000,name:'BLOOD ALTAR III',        col:'#dd0022', dmgBoost:.55,spdBoost:.42,rngBoost:.26,rng:160},
+  {level:4,barMax:18000,name:'PRIME BLOOD ALTAR',      col:'#cc0011', dmgBoost:.80,spdBoost:.60,rngBoost:.38,rng:175},
+  {level:5,barMax:28000,name:'BLOOD SANCTUM I',        col:'#ff2244', dmgBoost:1.10,spdBoost:.82,rngBoost:.52,rng:188},
+  {level:6,barMax:42000,name:'BLOOD SANCTUM II',       col:'#ff3355', dmgBoost:1.45,spdBoost:1.08,rngBoost:.68,rng:202},
+  {level:7,barMax:60000,name:'BLOOD SANCTUM III',      col:'#ff4466', dmgBoost:1.85,spdBoost:1.38,rngBoost:.86,rng:218},
+  {level:8,barMax:84000,name:'ETERNAL BLOOD ALTAR',    col:'#ff6677', dmgBoost:2.30,spdBoost:1.72,rngBoost:1.06,rng:236},
+  {level:9,barMax:115000,name:'APEX SACRIFICE TEMPLE', col:'#ff8899', dmgBoost:2.80,spdBoost:2.10,rngBoost:1.28,rng:256},
+  {level:10,barMax:Infinity,name:'APEX SACRIFICE TEMPLE',col:'#ff8899',dmgBoost:2.80,spdBoost:2.10,rngBoost:1.28,rng:256}
+];
+function getSacrificeStats(t){
+  const sl=Math.min(t.sacrificeLevel||0,9);
+  return SACRIFICE_LEVELS[sl];
+}
+function applyTempleBuffStats(t){
+  // Update cfg buffs dynamically from sacrifice level
+  const sl=getSacrificeStats(t);
+  t.cfg.dmgBoost=sl.dmgBoost;t.cfg.spdBoost=sl.spdBoost;t.cfg.rngBoost=sl.rngBoost;t.cfg.rng=sl.rng;t.cfg.col=sl.col;t.cfg.name=sl.name;
+}
+function doSacrifice(temple,victimTower){
+  if(!temple||!victimTower||victimTower===temple) return;
+  if(victimTower.key==='hero_accel'||victimTower.key==='hero_score'||victimTower.key==='hero_sacrifice') return;
+  const sacrificeCost=victimTower.totalGoldSpent||TS[victimTower.key][1].cost;
+  const refund=Math.floor(sacrificeCost*.25); // 25% gold back
+  gold+=refund;
+  temple.sacrificeBar=(temple.sacrificeBar||0)+sacrificeCost;
+  // Level up temple while bar exceeds threshold
+  while(true){
+    const curLvl=temple.sacrificeLevel||0;
+    if(curLvl>=9) break;
+    const nextThresh=SACRIFICE_LEVELS[curLvl+1].barMax;
+    if(temple.sacrificeBar>=nextThresh){temple.sacrificeLevel=curLvl+1;ft(temple.col*CS+CS/2,temple.row*CS-10,'🩸 BLOOD ALTAR LV'+(temple.sacrificeLevel),'#ff1144');}
+    else break;
+  }
+  applyTempleBuffStats(temple);
+  // Remove victim tower
+  const idx=towers.indexOf(victimTower);
+  if(idx!==-1){
+    if(victimTower.key==='heli'){const hi=helicopters.findIndex(h=>h.towerId===victimTower.id);if(hi!==-1) helicopters.splice(hi,1);}
+    if(victimTower.key==='barracks'||victimTower.key==='mech_base'||victimTower.key==='cowboy'||victimTower.key==='necromancer'){for(let ai=allies.length-1;ai>=0;ai--){if(allies[ai]&&allies[ai].towerId===victimTower.id){sparks(allies[ai].x,allies[ai].y,'#ff1144',5,2);allies.splice(ai,1);}}}
+    grid[victimTower.row][victimTower.col]=CT.EMPTY;
+    towers.splice(idx,1);
+    bfs();
+  }
+  sparks(temple.col*CS+CS/2,temple.row*CS+CS/2,'#ff1f5e',20,3);
+  ft(temple.col*CS+CS/2,temple.row*CS,'⚡ SACRIFICED +'+sacrificeCost+'g','#ff4488');
+  if(refund>0) ft(temple.col*CS+CS/2,temple.row*CS-12,'+'+refund+'g refund','#ffd700');
+  msg('🩸 Tower sacrificed! +'+sacrificeCost+' power  |  +'+refund+'g refund',2500);
+  syncUI();
+}
 
 // ═══════════════════════════════════════════════
 // XP / LEVELING SYSTEM
@@ -2602,7 +2699,7 @@ const UNLOCK_MAP = {
   30: [{type:'tower',key:'mine',label:'FARM'}],
   35: [{type:'tower',key:'flame',label:'FLAMETHROWER'}],
   40: [{type:'tower',key:'laser',label:'LASER'}],
-  50: [{type:'mode',key:'hardcore',label:'HARDCORE MODE'},{type:'tower',key:'bhole',label:'BLACK HOLE'}],
+  50: [{type:'mode',key:'hardcore',label:'HARDCORE MODE'},{type:'tower',key:'bhole',label:'BLACK HOLE'},{type:'tower',key:'hero_sacrifice',label:'SACRIFICE TEMPLE'}],
   60: [{type:'tower',key:'ice',label:'ICE TOWER'}],
   70: [{type:'tower',key:'heli',label:'HELI PAD'}],
   80: [{type:'tower',key:'barracks',label:'BARRACKS'}],
@@ -2758,7 +2855,7 @@ function applyLevelUnlocks() {
     }
   });
   // Start-screen mode buttons (hardcore locked until 50)
-  document.querySelectorAll('.ss-mode[data-m]').forEach(btn => {
+  document.querySelectorAll('#startScreen .ss-mode[data-m]').forEach(btn => {
     const key = btn.dataset.m;
     const unlocked = isUnlocked('mode', key);
     btn.classList.toggle('lvl-locked', !unlocked);
@@ -3520,9 +3617,9 @@ let hcPoints=0;              // Upgrade points available to spend
 let hcPointsSpent=0;         // Points already spent
 let hcLastPointScore=0;      // Score at which last point was awarded
 let hcUnlocked=new Set();    // Tower keys unlocked this game
-const HC_TOWER_COSTS={electric:1,healer:3,spike:4,flame:6,ice:5,buff:15,bhole:8,heli:10,mine:20,laser:11,barracks:7,silo:7,hero_accel:25,hero_score:25,mech_base:21,admindrone:9,barbwire:12,cowboy:7,necromancer:13};
-const HC_TOWER_NAMES={electric:'TESLA ⚡',healer:'MEDIC ✚',spike:'SPIKE 🔨',flame:'FLAME 🔥',ice:'ICE ❄',buff:'DJ TOWER 🎧',bhole:'B.HOLE 🕳️',heli:'HELI PAD 🚁',mine:'FARM 🌾',laser:'LASER 💎',barracks:'BARRACKS 🛡',silo:'MISSILE SILO 🚀',hero_accel:'HERO: ACCEL ⚡',hero_score:'HERO: SCORE 🏆',mech_base:'MECH BASE 🤖',admindrone:'DRONE PAD 🛸',barbwire:'BARBWIRE 🧷',cowboy:'COWBOY 🤠',necromancer:'NECROMANCER 💀'};
-const HERO_HC_KEYS=['hero_accel','hero_score']; // Both heroes are unlocked together by ONE 25-point purchase
+const HC_TOWER_COSTS={electric:1,healer:3,spike:4,flame:6,ice:5,buff:15,bhole:8,heli:10,mine:20,laser:11,barracks:7,silo:7,hero_accel:25,hero_score:25,hero_sacrifice:25,mech_base:21,admindrone:9,barbwire:12,cowboy:7,necromancer:13};
+const HC_TOWER_NAMES={electric:'TESLA ⚡',healer:'MEDIC ✚',spike:'SPIKE 🔨',flame:'FLAME 🔥',ice:'ICE ❄',buff:'DJ TOWER 🎧',bhole:'B.HOLE 🕳️',heli:'HELI PAD 🚁',mine:'FARM 🌾',laser:'LASER 💎',barracks:'BARRACKS 🛡',silo:'MISSILE SILO 🚀',hero_accel:'HERO: ACCEL ⚡',hero_score:'HERO: SCORE 🏆',hero_sacrifice:'HERO: SACRIFICE 🩸',mech_base:'MECH BASE 🤖',admindrone:'DRONE PAD 🛸',barbwire:'BARBWIRE 🧷',cowboy:'COWBOY 🤠',necromancer:'NECROMANCER 💀'};
+const HERO_HC_KEYS=['hero_accel','hero_score','hero_sacrifice']; // All heroes are unlocked together by ONE 25-point purchase
 
 function init(){
   grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));
@@ -4026,7 +4123,10 @@ function drawAlly(a){
 
 function findBreakthrough(fr,fc){const vis=new Set(),q=[[fr,fc]],cands=[];vis.add(`${fr},${fc}`);let qi=0;while(qi<q.length){const[r,c]=q[qi++];for(const[dr,dc] of[[-1,0],[1,0],[0,-1],[0,1]]){const nr=r+dr,nc=c+dc;if(nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;const k=`${nr},${nc}`;if(vis.has(k)) continue;vis.add(k);const g=grid[nr][nc];if(g===CT.BASE||g===CT.SPAWN){q.push([nr,nc]);continue;}if(BSET.has(g)){const t=towers.find(t=>t.row===nr&&t.col===nc);if(t) cands.push(t);}else q.push([nr,nc]);}}if(!cands.length) return null;cands.sort((a,b)=>(a.hp/a.maxHp)-(b.hp/b.maxHp));return cands[0];}
 function destroyTower(t){const i=towers.indexOf(t);if(i===-1) return;towers.splice(i,1);grid[t.row][t.col]=CT.EMPTY;for(const e of enemies) if(e.atkTarget===t){e.atkTarget=null;e.mode='move';}if(t.key==='barracks'||t.key==='mech_base'||t.key==='cowboy'||t.key==='necromancer'){for(let ai=allies.length-1;ai>=0;ai--){if(allies[ai]&&allies[ai].towerId===t.id){try{if(allies[ai].explode)allyExplode(allies[ai]);}catch(e){}sparks(allies[ai].x,allies[ai].y,'#ff4444',5,2);allies.splice(ai,1);}}}if(t.key==='heli'){const hi=helicopters.findIndex(h=>h.towerId===t.id);if(hi!==-1) helicopters.splice(hi,1);}if(t.key==='admindrone'){adminDrones=adminDrones.filter(d=>d.towerId!==t.id);}if(selTower===t) hidePanel();bfs();sparks(t.col*CS+CS/2,t.row*CS+CS/2,t.cfg.col,24,3.5);ft(t.col*CS+CS/2,t.row*CS-4,'DESTROYED!','#ff4444');}
-function getBuffsAt(col,row){let dmgMult=1,cdDiv=1,rngMult=1,costReduce=0,goldBonusMult=0;const tx=col*CS+CS/2,ty=row*CS+CS/2;for(const bt of towers){if((bt.key!=='buff'&&bt.key!=='hero_score')||!bt.cfg.buffType) continue;const dx=bt.col*CS+CS/2-tx,dy=bt.row*CS+CS/2-ty;if(dx*dx+dy*dy>bt.cfg.rng*bt.cfg.rng) continue;dmgMult+=(bt.cfg.dmgBoost||0);cdDiv+=(bt.cfg.spdBoost||0);rngMult+=(bt.cfg.rngBoost||0);costReduce+=(bt.cfg.costReduce||0);goldBonusMult+=(bt.cfg.goldBonus||0);}return{dmgMult,cdDiv,rngMult,costReduce:Math.min(costReduce,.65),goldBonusMult};}
+function getBuffsAt(col,row){let dmgMult=1,cdDiv=1,rngMult=1,costReduce=0,goldBonusMult=0;const tx=col*CS+CS/2,ty=row*CS+CS/2;for(const bt of towers){if((bt.key!=='buff'&&bt.key!=='hero_score'&&bt.key!=='hero_sacrifice')||!bt.cfg.buffType) continue;const dx=bt.col*CS+CS/2-tx,dy=bt.row*CS+CS/2-ty;
+  // For sacrifice temple, use dynamic sacrifice level stats
+  const bCfg=(bt.key==='hero_sacrifice')?Object.assign({},bt.cfg,getSacrificeStats(bt)):bt.cfg;
+  if(dx*dx+dy*dy>bCfg.rng*bCfg.rng) continue;dmgMult+=(bCfg.dmgBoost||0);cdDiv+=(bCfg.spdBoost||0);rngMult+=(bCfg.rngBoost||0);costReduce+=(bCfg.costReduce||0);goldBonusMult+=(bCfg.goldBonus||0);}return{dmgMult,cdDiv,rngMult,costReduce:Math.min(costReduce,.65),goldBonusMult};}
 // Hero Score Machine's score-multiplier path — only one hero can exist so this is 1 or 1+bonus.
 function heroScoreMult(){let m=1;for(const t of towers){if(t.key==='hero_score'&&t.cfg.scoreMultBonus) m+=t.cfg.scoreMultBonus;}return m;}
 function getDiscountedCost(key,col,row){const base=getCfg(key,1,null).cost;if(col===undefined) return base;const{costReduce}=getBuffsAt(col,row);return Math.max(1,Math.round(base*(1-costReduce)));}
@@ -4051,13 +4151,14 @@ function showPanel(t){
   selTower=t;hideBasePanel();document.getElementById('up').classList.add('vis');
   document.querySelectorAll('.bb,.ab').forEach(b=>{if(b.style.display!=='none'){b.dataset.hiddenByPanel='1';b.style.display='none';}});
   document.querySelectorAll('.sh').forEach(h=>{if(h.textContent.includes('BUILD')){h.dataset.hiddenByPanel='1';h.style.display='none';}});
-  const c=getCfg(t.key,t.level,t.path);const isChoice=t.key!=='wall'&&t.level===1;
+  const c=getCfg(t.key,t.level,t.path);const isChoice=t.key!=='wall'&&t.level===1&&TS[t.key]&&(TS[t.key]['2A']||TS[t.key]['2B']);
   const pr=document.getElementById('pr'),ub=document.getElementById('up-btn');
-  let title=`${c.name}  LVL ${t.level}`;if(t.level===ML) title+=' [MAX]';
+  let title=`${c.name}  LVL ${t.level}`;if(t.level===getML(t.key)) title+=' [MAX]';
   document.getElementById('up-title').textContent=title;
   let s=`HP: ${Math.round(t.hp)}/${t.maxHp}`;
   if(c.dmg) s+=`  DMG:${c.dmg}`;if(c.rng) s+=`  RNG:${c.rng}`;if(c.cd) s+=`  CD:${c.cd}`;
   if(c.chn) s+=`  CHN:${c.chn}`;if(c.aoe) s+=`  AOE:${c.aoe}`;
+  if(!c.buffType&&t.col!==undefined){const _bf=getBuffsAt(t.col,t.row);if(_bf.dmgMult!==1||_bf.cdDiv!==1||_bf.rngMult!==1){s+='\n--- BUFFED ---';if(c.dmg) s+=`\nDMG: ${c.dmg} → ${Math.round(c.dmg*_bf.dmgMult)}  (+${Math.round((_bf.dmgMult-1)*100)}%)`;if(c.cd) s+=`\nCD: ${c.cd} → ${(c.cd/_bf.cdDiv).toFixed(1)}  (+${Math.round((_bf.cdDiv-1)*100)}% spd)`;if(c.rng) s+=`\nRNG: ${c.rng} → ${Math.round(c.rng*_bf.rngMult)}  (+${Math.round((_bf.rngMult-1)*100)}%)`;}}
   if(t.key==='silo'||c.siloTower){s+='\nTYPE: '+(c.siloType?c.siloType.toUpperCase():'BASIC')+' | RANGE: INFINITE';if(c.siloType==='nuke')s+='\nNUKE DMG: '+c.siloDmg+' AoE:'+c.siloAoe+'r  CD:'+Math.round(c.siloCdMax/60)+'s';else if(c.siloType==='laser'){s+='\nLASER DMG: '+c.siloDmg+'/tick  |  CHARGE:'+Math.round((c.siloLaserChargeDur||300)/60)+'s FIRE:'+Math.round((c.siloLaserFireDur||180)/60)+'s';if(t.siloLaserPhase){const tSec=Math.ceil((t.siloLaserPhaseTimer||0)/60);s+='\nPHASE: '+(t.siloLaserPhase==='charge'?'CHARGING ('+tSec+'s)':t.siloLaserPhase==='fire'?'FIRING ('+tSec+'s left)':'RECHARGING ('+tSec+'s)');}}if(c.laserSlow)s+='\nSLOW: '+Math.round(c.laserSlow*100)+'%';if(c.laserShred)s+='\nARMOR SHRED: '+Math.round(c.laserShred*100)+'%';}
   if(t.key==='healer') s+=`\nHEAL:${c.healAmt} T:${c.healTick}\nSTUN REDUCE:-${c.healStunReduce||0}/tick${c.baseHealAmt?`\nBASE+${c.baseHealAmt}`:''}`;
   if(t.key==='mine'){if(c.mineType==='compound'||c.mineType==='basic') s+=`\nGOLD/WAVE: +${c.goldPerWave}g`;if(c.mineType==='bank') s+=`\nINTEREST: ${Math.round(c.interestRate*100)}%/wave\nMAX EARN: ${c.maxInterest}g`;}
@@ -4085,26 +4186,48 @@ function showPanel(t){
   document.getElementById('ts-spent').textContent=(t.totalGoldSpent||0)+'g';
   const siloMBEl=document.getElementById('silo-mark-btn'),siloTiEl=document.getElementById('silo-target-info');
   if(t.key==='silo'){if(siloMBEl)siloMBEl.style.display='block';if(siloTiEl){siloTiEl.style.display='block';siloTiEl.textContent=t.siloTarget&&enemies.includes(t.siloTarget)?'TARGET: '+(t.siloTarget.variant||'?').toUpperCase()+' HP:'+Math.round(t.siloTarget.hp)+'/'+t.siloTarget.mhp+(t.siloManual?' [MANUAL]':' [AUTO]'):'NO TARGET (auto-scan)';}}else{if(siloMBEl)siloMBEl.style.display='none';if(siloTiEl)siloTiEl.style.display='none';}
+  // ── SACRIFICE TEMPLE PANEL ──
+  const sacPanel=document.getElementById('sacrifice-panel');
+  const isSacTemple=t.key==='hero_sacrifice';
+  if(sacPanel) sacPanel.style.display=isSacTemple?'flex':'none';
+  if(isSacTemple){
+    const sl=t.sacrificeLevel||0;const bar=t.sacrificeBar||0;
+    const sd=SACRIFICE_LEVELS[Math.min(sl,9)];const sdNext=SACRIFICE_LEVELS[Math.min(sl+1,9)];
+    document.getElementById('sacrifice-level-lbl').textContent='🩸 '+sd.name+(sl>=9?' [MAX]':' — LVL '+(sl+1)+' NEXT');
+    const pct=sl>=9?100:Math.min(100,Math.round(bar/sdNext.barMax*100));
+    document.getElementById('sacrifice-bar-fill').style.width=pct+'%';
+    document.getElementById('sacrifice-bar-txt').textContent=sl>=9?'MAXIMUM POWER':bar+' / '+sdNext.barMax+' sacrifice pts';
+    document.getElementById('sacrifice-buff-txt').textContent='★ DMG +'+Math.round(sd.dmgBoost*100)+'%  |  SPD +'+Math.round(sd.spdBoost*100)+'%\n★ RNG +'+Math.round(sd.rngBoost*100)+'%  |  RANGE: '+sd.rng;
+    const sbtn=document.getElementById('sacrifice-btn');
+    const shint=document.getElementById('sacrifice-hint');
+    if(sacrificeSelectMode&&sacrificeTempleRef===t){sbtn.textContent='❌ CANCEL SACRIFICE';sbtn.style.borderColor='#ff8800';sbtn.style.color='#ff8800';shint.style.display='block';}
+    else{sbtn.textContent='🩸 SELECT TOWER TO SACRIFICE';sbtn.style.borderColor='#ff1f5e';sbtn.style.color='#ff1f5e';shint.style.display='none';}
+  }
   const sellVal=Math.floor((t.totalGoldSpent||TS[t.key][1].cost)*.5);
   document.getElementById('ts-sell').textContent=sellVal+'g';
   document.getElementById('up-sell-btn').textContent='SELL TOWER ('+sellVal+'g)';
-  if(isChoice){
+  if(isSacTemple){
+    // Temple never uses path/upgrade buttons
+    pr.style.display='none';ub.style.display='none';
+    const _pCBtn=document.getElementById('pC');if(_pCBtn)_pCBtn.style.display='none';
+  } else if(isChoice){
     pr.style.display='flex';ub.style.display='none';
     const pN=PATH_NAMES[t.key]||{A:'A',B:'B'},pColors=PATH_COLORS[t.key]||{A:'#33aaff',B:'#ff8844'};
-    const ucA=getDiscountedUpgCost(t,2,'A'),ucB=getDiscountedUpgCost(t,2,'B');
+    const hasB=!!(TS[t.key]&&TS[t.key]['2B']);
+    const ucA=getDiscountedUpgCost(t,2,'A');
     const pa=document.getElementById('pA'),pb=document.getElementById('pB'),pCBtn=document.getElementById('pC');
-    pa.style.setProperty('--pc',pColors.A);pb.style.setProperty('--pc',pColors.B);
-    pa.innerHTML=`${pN.A}<br><small>${ucA}g</small>`;pb.innerHTML=`${pN.B}<br><small>${ucB}g</small>`;
-    pa.disabled=gold<ucA;pb.disabled=gold<ucB;
-    if(pN.C&&pCBtn){const ucC=getDiscountedUpgCost(t,2,'C');pCBtn.style.display='';pCBtn.style.setProperty('--pc',pColors.C||'#cc8800');pCBtn.innerHTML=`${pN.C}<br><small>${ucC}g</small>`;pCBtn.disabled=gold<ucC;}else if(pCBtn){pCBtn.style.display='none';}
+    pa.style.setProperty('--pc',pColors.A);
+    pa.innerHTML=`${pN.A}<br><small>${ucA}g</small>`;pa.disabled=gold<ucA;pa.style.display='';
+    if(hasB){const ucB=getDiscountedUpgCost(t,2,'B');pb.style.display='';pb.style.setProperty('--pc',pColors.B||'#ff8844');pb.innerHTML=`${pN.B}<br><small>${ucB}g</small>`;pb.disabled=gold<ucB;}else{pb.style.display='none';}
+    if(pN.C&&pCBtn&&TS[t.key]&&TS[t.key]['2C']){const ucC=getDiscountedUpgCost(t,2,'C');pCBtn.style.display='';pCBtn.style.setProperty('--pc',pColors.C||'#cc8800');pCBtn.innerHTML=`${pN.C}<br><small>${ucC}g</small>`;pCBtn.disabled=gold<ucC;}else if(pCBtn){pCBtn.style.display='none';}
   } else {
     pr.style.display='none';
     const _pCBtn=document.getElementById('pC');if(_pCBtn)_pCBtn.style.display='none';
-    if(t.level>=ML){ub.style.display='';ub.textContent='MAX LEVEL';ub.disabled=true;}
+    if(t.level>=getML(t.key)){ub.style.display='';ub.textContent='MAX LEVEL';ub.disabled=true;}
     else{ub.style.display='';const uc=getDiscountedUpgCost(t,t.level+1,t.path);ub.textContent=`UPGRADE (${uc}g)`;ub.disabled=gold<uc;}
   }
 }
-function hidePanel(){selTower=null;siloMarkMode=false;siloMarkTower=null;document.getElementById('up').classList.remove('vis');
+function hidePanel(){selTower=null;siloMarkMode=false;siloMarkTower=null;sacrificeSelectMode=false;sacrificeTempleRef=null;document.getElementById('up').classList.remove('vis');
   document.querySelectorAll('.bb,.ab').forEach(b=>{if(b.dataset.hiddenByPanel){delete b.dataset.hiddenByPanel;b.style.display='';}});
   document.querySelectorAll('.sh').forEach(h=>{if(h.dataset.hiddenByPanel){delete h.dataset.hiddenByPanel;h.style.display='';}});}
 function showBasePanel(){hidePanel();document.getElementById('base-up').classList.add('vis');updateBasePanelUI();}
@@ -4133,7 +4256,7 @@ function applyBaseUpgrade(){
   else if(baseUpgPath==='B'){const upd=BASE_UPG.B[baseUpgLevel];ft(BASE_C*CS+CS/2,BASE_R*CS,`TREASURY +${upd.goldPerWave}g/wave`,'#ffd700');}
 }
 function doUpgrade(path){
-  if(!selTower||selTower.level>=ML) return;
+  if(!selTower||selTower.level>=getML(selTower.key)) return;
   if(MP.active&&!MP.canInteractTower(selTower)){msg(MP.getTowerOwnerMsg(selTower)||'Not your tower',2000);return;}
   const uc=getDiscountedUpgCost(selTower,selTower.level+1,path||selTower.path);
   if(gold<uc){msg('⚠ Not enough gold!');return;}
@@ -4149,6 +4272,13 @@ function doUpgrade(path){
 // ── EVENTS
 document.getElementById('up-btn').addEventListener('click',()=>doUpgrade(selTower?.path||null));
 document.getElementById('silo-mark-btn').addEventListener('click',()=>{if(!selTower||selTower.key!=='silo')return;if(siloMarkMode&&siloMarkTower===selTower){siloMarkMode=false;siloMarkTower=null;msg('Mark mode off',1200);return;}siloMarkMode=true;siloMarkTower=selTower;msg('Click an enemy to manually lock target',2500);});
+document.getElementById('sacrifice-btn').addEventListener('click',()=>{
+  if(!selTower||selTower.key!=='hero_sacrifice') return;
+  if(sacrificeSelectMode&&sacrificeTempleRef===selTower){sacrificeSelectMode=false;sacrificeTempleRef=null;msg('Sacrifice cancelled',1200);showPanel(selTower);return;}
+  sacrificeSelectMode=true;sacrificeTempleRef=selTower;
+  msg('🩸 Click any tower on the map to sacrifice it to the temple!',3000);
+  showPanel(selTower);
+});
 document.getElementById('pA').addEventListener('click',()=>doUpgrade('A'));
 document.getElementById('pB').addEventListener('click',()=>doUpgrade('B'));
 document.getElementById('pC').addEventListener('click',()=>doUpgrade('C'));
@@ -4257,6 +4387,16 @@ cv.addEventListener('click',e=>{
     }else{msg('⚠ No enemy nearby — click closer to an enemy',1500);}
     siloMarkMode=false;siloMarkTower=null;return;
   }
+  // SACRIFICE SELECT MODE: clicking a tower sacrifices it to the temple
+  if(sacrificeSelectMode&&sacrificeTempleRef){
+    const victim=towers.find(t=>t.row===row&&t.col===col);
+    if(victim){
+      if(victim===sacrificeTempleRef){msg('⚠ Cannot sacrifice the temple itself!',2000);}
+      else if(victim.key==='hero_accel'||victim.key==='hero_score'||victim.key==='hero_sacrifice'){msg('⚠ Cannot sacrifice Hero towers!',2000);}
+      else{doSacrifice(sacrificeTempleRef,victim);if(selTower===sacrificeTempleRef) showPanel(sacrificeTempleRef);}
+    } else {msg('⚠ No tower there — click a tower to sacrifice',1500);}
+    sacrificeSelectMode=false;sacrificeTempleRef=null;return;
+  }
   // === HACKLORD: System Block — handle tower unlock clicks ===
   // Skip lock check if player is in sell/upgrade mode (those always work)
   if(hlSystemBlock&&!sellMode&&!upgMode){
@@ -4302,7 +4442,8 @@ cv.addEventListener('click',e=>{
   if(selBuild==='silo'&&gameMode==='hardcore'&&!hcUnlocked.has('silo')){msg('⚠ Unlock Missile Silo first! (7 pts)',2500);return;}
   if(selBuild==='hero_accel'&&gameMode==='hardcore'&&!hcUnlocked.has('hero_accel')){msg('⚠ Unlock Hero Towers first! (25 pts, unlocks both heroes)',2500);return;}
   if(selBuild==='hero_score'&&!_heroUnlocked&&!(gameMode==='hardcore'&&hcUnlocked.has('hero_score'))){msg('⚠ HERO SCORE MACHINE unlocks when you reach TOP 3 on the leaderboard (or unlock Hero Towers with Upgrade Points in Hardcore — 25 pts, unlocks both heroes)!',3000);return;}
-  if((selBuild==='hero_accel'||selBuild==='hero_score')&&towers.some(t=>t.key==='hero_accel'||t.key==='hero_score')){msg('⚠ Only ONE Hero Tower allowed per game!',2500);return;}
+  if(selBuild==='hero_sacrifice'&&typeof isUnlocked==='function'&&!isUnlocked('tower','hero_sacrifice')&&!(gameMode==='hardcore'&&hcUnlocked.has('hero_sacrifice'))){msg('⚠ HERO: SACRIFICE TEMPLE unlocks at Player Level 50 (or unlock Hero Towers with Upgrade Points in Hardcore — 25 pts)!',3000);return;}
+  if((selBuild==='hero_accel'||selBuild==='hero_score'||selBuild==='hero_sacrifice')&&towers.some(t=>t.key==='hero_accel'||t.key==='hero_score'||t.key==='hero_sacrifice')){msg('⚠ Only ONE Hero Tower allowed per game!',2500);return;}
   if(selBuild==='buff'&&towers.filter(t=>t.key==='buff').length>=3){msg('⚠ Only 3 DJ TOWERS allowed per game!',2500);return;}
   // === HARDCORE: General allowed-set guard (catches any bypass path) ===
   {const _hcEa=gameMode==='hardcore'?getHcAllowed():null;
@@ -4328,7 +4469,7 @@ cv.addEventListener('touchmove',function(e){e.preventDefault();const touch=e.tou
 // ── START SCREEN
 (function(){
   const ss=document.getElementById('startScreen');
-  const ssModes=document.querySelectorAll('.ss-mode');
+  const ssModes=document.querySelectorAll('#startScreen .ss-mode');
   let ssMode='easy';
   ssModes.forEach(b=>{b.addEventListener('click',()=>{if(!isUnlocked('mode',b.dataset.m)){msg(`⚠ ${b.dataset.m.toUpperCase()} unlocks at Level ${getUnlockLevel('mode',b.dataset.m)}!`,2500);return;}ssMode=b.dataset.m;ssModes.forEach(x=>x.classList.remove('on'));b.classList.add('on');});});
   const ssMaps=document.querySelectorAll('.ss-map');
@@ -4593,7 +4734,7 @@ const EDEFS={
   void_abyss:{hpM:3.4,spdM:.52,spdCap:3.3,rw:28,sz:14,col:'#4a1a80',glow:'#9955dd',lbl:'A',atkD:40,atkCdB:44,flying:false,robot:false,name:'Abyss Walker'},
   void_corruptor:{hpM:3.9,spdM:.34,spdCap:2.1,rw:30,sz:15,col:'#25073f',glow:'#a833ff',lbl:'C',atkD:36,atkCdB:46,flying:false,robot:false,tauntPull:true,name:'Corruptor'},
   void_null:{hpM:2.3,spdM:.4,spdCap:2.5,rw:20,sz:12,col:'#160028',glow:'#d060ff',lbl:'N',atkD:20,atkCdB:50,flying:false,robot:false,isSummoner:true,name:'Null Entity'},
-  void_reaver:{hpM:170,spdM:.16,spdCap:2.0,rw:20000,sz:32,col:'#6a1acc',glow:'#d080ff',lbl:'👁',atkD:160,atkCdB:50,flying:false,robot:false,isBoss:true,_bossSpawnTime:Date.now(),bossType:'reaver',name:'Void Reaver'},
+  void_reaver:{hpM:85,spdM:.16,spdCap:2.0,rw:20000,sz:32,col:'#6a1acc',glow:'#d080ff',lbl:'👁',atkD:160,atkCdB:50,flying:false,robot:false,isBoss:true,_bossSpawnTime:Date.now(),bossType:'reaver',name:'Void Reaver'},
   void_darkmatter:{hpM:9,spdM:.30,spdCap:2.2,rw:140,sz:19,col:'#170833',glow:'#7a3aff',lbl:'☄',atkD:55,atkCdB:46,flying:false,robot:false,isMiniBoss:true,darkMatter:true,name:'Dark Matter Beast'},
   void_voidchampion:{hpM:7,spdM:.42,spdCap:2.6,rw:120,sz:18,col:'#2a0850',glow:'#b060ff',lbl:'♛',atkD:42,atkCdB:44,flying:false,robot:false,isMiniBoss:true,isChampion:true,name:'Void Champion'},
 };
@@ -5073,6 +5214,25 @@ if(cfg.t===CT.NECRO&&cfg.necroTower){
   const dmgDoneN=applyArmor(nTgt,effDmgN);nTgt.hp-=dmgDoneN;
   addLx(nx,ny,nTgt.x,nTgt.y,'#aa66ff');
   sparks(nTgt.x,nTgt.y,'#aa66ff',3,1.2);
+  // ── SOUL REAPER special: drains sacrifice temple for half its HP (every 20s)
+  if(cfg.name==='SOUL REAPER'){
+    if(!t.soulDrainCd) t.soulDrainCd=0;
+    t.soulDrainCd--;
+    if(t.soulDrainCd<=0){
+      const temple=towers.find(t2=>t2.key==='hero_sacrifice');
+      if(temple&&temple.hp>1){
+        t.soulDrainCd=1200;
+        const drain=Math.floor(temple.hp/2);
+        temple.hp=Math.max(1,temple.hp-drain);
+        temple.hitFlash=18;
+        sparks(temple.col*CS+CS/2,temple.row*CS+CS/2,'#9a6fd0',16,3);
+        addLx(nx,ny,temple.col*CS+CS/2,temple.row*CS+CS/2,'#aa66ff');
+        ft(temple.col*CS+CS/2,temple.row*CS-8,'💀 SOUL DRAIN -'+drain,'#9a6fd0');
+        msg('💀 Soul Reaper drained the Sacrifice Temple! (-'+drain+' HP)',2500);
+        if(temple.hp<=0) destroyTower(temple);
+      }
+    }
+  }
   t.energy+=cfg.energyPerHit;
   if(cfg.bigSkelEnergyMax) t.bigEnergy+=cfg.energyPerHit;
   if(t.energy>=cfg.energyMax){
@@ -5520,7 +5680,7 @@ function ng(){ctx.shadowBlur=gfxMode>=1?0:0;}
 function hbar(x,y,w,h,r){ctx.fillStyle='#100808';ctx.fillRect(x,y,w,h);ctx.fillStyle=r>.6?'#00cc55':r>.3?'#ffaa00':'#ff2200';ctx.fillRect(x,y,w*Math.max(0,r),h);}
 function drawLx(x1,y1,x2,y2,col,alpha){ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);for(let i=1;i<6;i++){const t=i/6;ctx.lineTo(x1+(x2-x1)*t+(Math.random()-.5)*16,y1+(y2-y1)*t+(Math.random()-.5)*16);}ctx.lineTo(x2,y2);ctx.stroke();ctx.restore();}
 function drawBeam(x1,y1,x2,y2,a){ctx.save();ctx.globalAlpha=a*.6;ctx.strokeStyle='#00ffcc';ctx.lineWidth=1.2;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.setLineDash([]);ctx.restore();}
-function pips(x,y,lvl,col){for(let i=0;i<ML;i++){ctx.beginPath();ctx.arc(x+i*5,y,2,0,Math.PI*2);ctx.fillStyle=i<lvl?col:'#1a2a3a';ctx.fill();}}
+function pips(x,y,lvl,col,maxLvl){const m=maxLvl||ML;for(let i=0;i<m;i++){ctx.beginPath();ctx.arc(x+i*5,y,2,0,Math.PI*2);ctx.fillStyle=i<lvl?col:'#1a2a3a';ctx.fill();}}
 
 // ══════════════════════════════
 // TOWER DRAW
@@ -5834,6 +5994,44 @@ function drawTower(t){
     ctx.fillText('♛',cx,y+8);
     // Live score multiplier readout
     ctx.fillStyle=col+'dd';ctx.font='bold 6px Share Tech Mono';ctx.fillText('x'+mult.toFixed(2),cx,cy+15);
+  } else if(cfg.t===CT.BUFF&&cfg.heroTower&&cfg.heroType==='sacrifice'){
+    // ── HERO SACRIFICE TEMPLE — dark stone altar pouring power into nearby towers ──
+    const pulse=(Math.sin(_frm*.05)+1)*.5;
+    // Aura range ring — pulsing dashed crimson ring showing the buff radius
+    ctx.save();ctx.translate(cx,cy);
+    ctx.strokeStyle=col+'33';ctx.lineWidth=1;ctx.setLineDash([3,5]);ctx.lineDashOffset=_frm*.4;
+    ctx.beginPath();ctx.arc(0,0,cfg.rng,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+    ctx.restore();
+    // Four small stone pillars around the altar
+    ctx.save();ctx.translate(cx,cy);
+    for(let i=0;i<4;i++){
+      const a=i/4*Math.PI*2+Math.PI/4,px=Math.cos(a)*11,py=Math.sin(a)*11;
+      ctx.save();ctx.translate(px,py);
+      ctx.fillStyle='#1a0006';ctx.fillRect(-2,-6,4,12);ctx.strokeStyle=col+'aa';ctx.lineWidth=1;ctx.strokeRect(-2,-6,4,12);
+      ctx.restore();
+    }
+    ctx.restore();
+    // Altar plinth (hexagon)
+    ctx.save();ctx.translate(cx,cy+3);
+    ctx.beginPath();for(let i=0;i<6;i++){const a=i/6*Math.PI*2-Math.PI/6,R=10;ctx[i===0?'moveTo':'lineTo'](Math.cos(a)*R,Math.sin(a)*R*.6);}ctx.closePath();
+    ctx.fillStyle='#120004';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.restore();
+    // Glowing sacrificial flame at center — brighter/bigger with pulse
+    const glowR=5+pulse*2.5;
+    ctx.save();ctx.globalAlpha=.3+pulse*.2;ctx.beginPath();ctx.arc(cx,cy-3,glowR+4,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();ctx.globalAlpha=1;ctx.restore();
+    ctx.save();ctx.translate(cx,cy-3);
+    gl(col,8+pulse*8);
+    ctx.beginPath();ctx.moveTo(0,-7);ctx.quadraticCurveTo(4,-1,2,4);ctx.quadraticCurveTo(0,7,-2,4);ctx.quadraticCurveTo(-4,-1,0,-7);ctx.closePath();
+    ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=.5;ctx.stroke();
+    ng();ctx.restore();
+    // Rotating inner sigil (pentagram-ish) linking the pillars, showing "sacrifice" theme
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(_frm*.012);
+    ctx.strokeStyle=col+'88';ctx.lineWidth=.8;ctx.beginPath();
+    for(let i=0;i<5;i++){const a=i*(Math.PI*4/5)-Math.PI/2,R=9;ctx[i===0?'moveTo':'lineTo'](Math.cos(a)*R,Math.sin(a)*R);}
+    ctx.closePath();ctx.stroke();ctx.restore();
+    // Skull badge above tower
+    ctx.fillStyle=col;ctx.font='bold 7px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('☠',cx,y+8);
   } else if(cfg.t===CT.BUFF){
     const bc=cfg.buffType==='cost'?'#ffd700':cfg.buffType==='combat'?'#ff8800':'#ffaa33';
     ctx.save();ctx.translate(cx,cy);
@@ -6106,10 +6304,11 @@ function drawTower(t){
     }
   }
 
-  if(sel){ctx.strokeStyle='#ffd700';ctx.lineWidth=2;ctx.strokeRect(x+1,y+1,CS-2,CS-2);}
+  if(sel){ctx.strokeStyle='#ffd700';ctx.lineWidth=2;ctx.strokeRect(x+1,y+1,CS-2,CS-2);
+    if(cfg.rng&&cfg.rng<9999){ctx.save();ctx.strokeStyle='rgba(255,215,0,0.55)';ctx.lineWidth=1.5;ctx.setLineDash([6,4]);ctx.beginPath();ctx.arc(cx,cy,cfg.rng,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(255,215,0,0.06)';ctx.beginPath();ctx.arc(cx,cy,cfg.rng,0,Math.PI*2);ctx.fill();ctx.restore();}}
   if(ua&&!fl){const p=(Math.sin(_frm*.28)+1)*.5;ctx.strokeStyle=`rgba(255,80,0,${.5+p*.5})`;ctx.lineWidth=1.5;ctx.strokeRect(x,y,CS,CS);}
   if(stun){ctx.fillStyle='rgba(255,136,0,0.2)';ctx.fillRect(x+2,y+2,CS-4,CS-4);ctx.fillStyle='#ff8800';ctx.font='bold 6px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('STUN',cx,cy-8);}
-  pips(x+3,y+5,t.level,cfg.col);
+  pips(x+3,y+5,t.level,cfg.col,getML(t.key));
   hbar(x+2,y+CS-7,CS-4,4,t.hp/t.maxHp);
 }
 
@@ -7069,6 +7268,7 @@ async function bgChatPoll(){
     {key:'silo',    name:'MISSILE SILO',  col:'#ff6600', type:'Executioner', unlock:999},
     {key:'hero_accel', name:'HERO: ACCELERATOR',    col:'#ffd23f', type:'Hero', unlock:999},
     {key:'hero_score', name:'HERO: SCORE MACHINE',  col:'#ff66cc', type:'Hero', unlock:999},
+    {key:'hero_sacrifice', name:'HERO: SACRIFICE TEMPLE',  col:'#ff1f5e', type:'Hero', unlock:50},
   ];
 
   // Live-cost getter: reads straight from TS[key][1].cost (the base/level-1
@@ -7325,9 +7525,9 @@ async function bgChatPoll(){
     electric:{type:'Splash'}, healer:{type:'Support'}, spike:{type:'Executioner'}, buff:{type:'Support'},
     mine:{type:'Economic'}, cowboy:{type:'Economic'}, necromancer:{type:'Support'}, flame:{type:'Splash'}, laser:{type:'Executioner'}, bhole:{type:'Executioner'},
     ice:{type:'Support'}, heli:{type:'Attack'}, barracks:{type:'Support'}, mech_base:{type:'Support'}, silo:{type:'Executioner'},
-    hero_accel:{type:'Hero'}, hero_score:{type:'Hero'}, admindrone:{type:'Attack'}, barbwire:{type:'Support'}
+    hero_accel:{type:'Hero'}, hero_score:{type:'Hero'}, hero_sacrifice:{type:'Hero'}, admindrone:{type:'Attack'}, barbwire:{type:'Support'}
   };
-  const TOWER_ORDER = ['wall','basic','sniper','cannon','electric','healer','spike','buff','mine','cowboy','flame','laser','bhole','ice','barbwire','heli','barracks','necromancer','mech_base','admindrone','silo','hero_accel','hero_score'];
+  const TOWER_ORDER = ['wall','basic','sniper','cannon','electric','healer','spike','buff','mine','cowboy','flame','laser','bhole','ice','barbwire','heli','barracks','necromancer','mech_base','admindrone','silo','hero_accel','hero_score','hero_sacrifice'];
 
   let curTowerKey = null;
 
