@@ -680,7 +680,7 @@ const MP={
     if(_map.locked&&_map.path){for(const[r,c] of _map.path){if(grid[r]&&grid[r][c]!==undefined) grid[r][c]=CT.PATH;}}
     grid[BASE_R][BASE_C]=CT.BASE;grid[SPAWN_R][SPAWN_C]=CT.SPAWN;
     s.towers.forEach(t=>{
-      const cfg=TS[t.key]?TS[t.key][t.level||1]:null;
+      const cfg=getCfg(t.key,t.level||1,t.path);
       if(!cfg) return;
       grid[t.row][t.col]=cfg.t;
       const newT={row:t.row,col:t.col,key:t.key,cfg,hp:t.hp||cfg.hp,maxHp:cfg.hp,cd:0,level:t.level,path:t.path,id:++_towerIdCounter,owner:t.owner,ownerColor:t.owner?PLAYER_COLORS[this.players[t.owner]?.color_index||0]:'#8888aa',ownerName:t.owner?(this.players[t.owner]?.name||'?'):'GLOBAL'};
@@ -6813,6 +6813,16 @@ function executeAdminCommand(cmd) {
       ft(BASE_C*CS+CS/2, BASE_R*CS-10, '🏆 Score → ' + score, '#aa88ff');
       // Recalculate HC points for new score
       if(gameMode==='hardcore'){hcLastPointScore=Math.floor(score/10000000)*10000000;const totalPts=Math.floor(score/10000000);if(totalPts>hcPoints+hcPointsSpent){const bonus=totalPts-(hcPoints+hcPointsSpent);hcPoints+=bonus;updateHcUI();ft(BASE_C*CS+CS/2,BASE_R*CS+10,'🔓 +'+bonus+' pts','#ff2244');}}
+      break;
+    case 'give_hc_points':
+      const hcAmt = parseInt(value) || 0;
+      if(hcAmt!==0){
+        hcPoints = Math.max(0, hcPoints + hcAmt);
+        updateHcUI();
+        ft(BASE_C*CS+CS/2, BASE_R*CS-10, (hcAmt>0?'🔓 +':'🔓 ') + hcAmt + ' HC PTS', '#ff2244');
+        sparks(BASE_C*CS+CS/2, BASE_R*CS+CS/2, '#ff2244', 20, 4);
+        msg('🔓 Admin granted '+hcAmt+' Hardcore Upgrade Points! ('+hcPoints+' available)', 3500);
+      }
       break;
     case 'set_hp':
       const hpVal = parseInt(value) || 100;
