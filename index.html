@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>BASE SIEGE v29.4</title>
+<title>BASE SIEGE v29.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -1447,23 +1447,21 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 <div id="update-popup">
 <div class="up-header">
 <div class="up-title">PATCH NOTES</div>
-<div class="up-ver">BASE SIEGE v29.4 — Tower Info &amp; Balance Update</div>
+<div class="up-ver">BASE SIEGE v29.6 — Merge Cannons &amp; Hero Balance Update</div>
 </div>
 <div class="up-body">
 <div class="up-section">
-<div class="up-section-title">🎯 tower info</div>
-<div class="up-item new">📡 Clicking a tower now shows its range as a dashed circle on the battlefield</div>
-<div class="up-item new">⚡ Selected tower panel now shows before → after stats when standing in a DJ TOWER's buff aura, plus the exact buff % for DMG, fire speed, and range</div>
+<div class="up-section-title">🔫 new: blaster cannon</div>
+<div class="up-item new">🔫 New 2×2 merge tower! Surround/build 4 level-1 BLASTER towers in a square, then hit "MERGE 2x2 INTO BLASTER CANNON" to fuse them</div>
+<div class="up-item new">🔫 Path A — GATLING FORTRESS: one big central minigun plus 4 smaller corner guns, all firing in 5-barrel bursts with no charge-up, for relentless sustained DPS</div>
+<div class="up-item new">💥 Path B — SHOCK CANNON: charges up like a railgun, then unleashes one massive circular blast that damages AND stuns every enemy caught in it</div>
 <div class="up-section-title">⚖ balance</div>
-<div class="up-item fix">👁 Void Reaver HP cut in half — Last Light's final boss was overtuned and is now more reasonable to fight</div>
-<div class="up-section-title">⚡ performance</div>
-<div class="up-item new">🥔 POTATO graphics mode is now truly minimal — allies, helicopters, and admin drones no longer render at all (fully invisible, still function normally)</div>
-<div class="up-item new">🥔 Tower animations (bobbing, pulsing, rotating, ritual circles, etc.) are now frozen in POTATO mode for a fully static, low-cost render</div>
-<div class="up-item new">🎨 Removed expensive per-frame radial/linear gradients on LOW and POTATO (drone/heli glows, necromancer &amp; black-hole tower glow, void-map background and path-tile glow, barbwire cables, boss iris, dark matter core, burn effect) in favor of flat color fills — biggest gains on the Last Light (void) map where every path tile previously redrew a gradient every frame</div>
-<div class="up-section-title">🗺 new setting</div>
-<div class="up-item new">📌 SHOW ENEMY PATH toggle added to Settings — highlights the live route enemies will walk to reach your base, updating automatically as you place or sell towers</div>
-<div class="up-section-title">🔧 fixes</div>
-<div class="up-item fix">🔧 Fixed a crash in the tower renderer that could cause towers and enemies to stop appearing entirely when POTATO mode's animation-freeze logic conflicted with the frame timer</div>
+<div class="up-item fix">⚡ RAILGUN CANNON (2×2 merge) significantly buffed across every tier — its DPS was barely ahead of a single-tile RAILGUN despite costing 4 towers and 4 tiles; damage now scales to properly reward the merge</div>
+<div class="up-item fix">🏆 HERO: SCORE MACHINE nerfed — combat buff % (DMG/speed/range) reduced ~35% and score-multiplier bonus reduced ~45% across every upgrade tier, both paths. It was providing far too much power for a single hero slot</div>
+<div class="up-section-title">🎨 vfx</div>
+<div class="up-item new">🎨 Fixed a bug where the 2×2 merge cannons fired from an off-center point instead of their true middle — the BLASTER CANNON in particular looked like only one gun was ever shooting</div>
+<div class="up-item new">🎨 GATLING FORTRESS now fires visibly from all 5 barrels (4 corners + center), each with its own muzzle flash and sparks, instead of every shot spawning from one shared point</div>
+<div class="up-item new">🎨 SHOCK CANNON charge-up now has a brighter windup glow, crackling arcs, and a bigger dual-ring blast + screen shake on detonation</div>
 </div>
 </div>
 <div class="up-footer"><button class="up-btn" onclick="document.getElementById('update-popup-overlay').classList.add('hidden')">GOT IT</button></div>
@@ -1563,7 +1561,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 <div id="lb-toast">✓ SCORE SUBMITTED</div>
 
 <div id="autoskip-toast">⚡ AUTO-SKIP ON</div>
-<header><h1>BASE SIEGE</h1><span class="ver">v29.4</span></header>
+<header><h1>BASE SIEGE</h1><span class="ver">v29.6</span></header>
 
 
 <!-- START SCREEN -->
@@ -1576,7 +1574,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     </div>
   </div>
   <div class="ss-title">BASE SIEGE</div>
-  <div class="ss-ver">v29.4</div>
+  <div class="ss-ver">v29.6</div>
   <div class="ss-sub">SELECT YOUR DIFFICULTY AND DEFEND THE BASE</div>
   <div class="ss-box">
     <div class="ss-sh">── SELECT MODE ─────────────────</div>
@@ -1717,6 +1715,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     </div>
     <button id="up-btn" style="display:none">UPGRADE</button>
     <button id="up-merge-btn" style="display:none;background:#001a2a;border:1px solid #00eeff;color:#00eeff;font-family:'Share Tech Mono',monospace;font-size:10px;padding:8px;cursor:pointer;letter-spacing:1px;margin-bottom:6px;">⚡ MERGE 2x2 INTO RAILGUN CANNON</button>
+    <button id="up-merge-btn2" style="display:none;background:#1a1200;border:1px solid #ffaa00;color:#ffaa00;font-family:'Share Tech Mono',monospace;font-size:10px;padding:8px;cursor:pointer;letter-spacing:1px;margin-bottom:6px;">🔫 MERGE 2x2 INTO BLASTER CANNON</button>
     <button id="silo-mark-btn" style="display:none;background:#0a0500;border:1px solid #ff6600;color:#ff6600;font-family:'Share Tech Mono',monospace;font-size:11px;padding:8px;cursor:pointer;width:100%;text-align:left;letter-spacing:1px;transition:all .15s;">🎯 MANUAL TARGET</button>
     <div id="silo-target-info" style="display:none;font-size:9px;color:#ff8800;padding:2px 0 4px 0;letter-spacing:1px;"></div>
     <!-- SACRIFICE TEMPLE PANEL -->
@@ -2216,7 +2215,7 @@ const BASE_R=7,BASE_C=COLS-1,SPAWN_R=1,SPAWN_C=0;
 const CT={EMPTY:0,WALL:1,BASIC:2,SNIPER:3,CANNON:4,BASE:5,SPAWN:6,ELECTRIC:7,HEALER:8,SPIKE:9,BUFF:10,MINE:11,HELI:12,FLAME:13,BHOLE:14,LASER:15,DRONE:16,ICE:17,BARRACKS:18,SILO:19,MECH_BASE:20,BARBWIRE:21,PATH:22,COWBOY:23,NECRO:24};
 const ML=5;
 const HERO_ML=10; // Hero towers have 10 levels
-function getML(key){if(key==='hero_score')return 6;if(key==='railgun_cannon')return 5;return(key==='hero_accel'||key==='hero_sacrifice')?HERO_ML:ML;}
+function getML(key){if(key==='hero_score')return 6;if(key==='railgun_cannon'||key==='blaster_cannon')return 5;return(key==='hero_accel'||key==='hero_sacrifice')?HERO_ML:ML;}
 function towerAt(r,c){for(const t of towers){if(t.size===2){if(r>=t.row&&r<=t.row+1&&c>=t.col&&c<=t.col+1) return t;}else if(t.row===r&&t.col===c) return t;}return null;}
 function clearTowerGrid(t){if(t.size===2){grid[t.row][t.col]=CT.EMPTY;grid[t.row][t.col+1]=CT.EMPTY;grid[t.row+1][t.col]=CT.EMPTY;grid[t.row+1][t.col+1]=CT.EMPTY;}else{grid[t.row][t.col]=CT.EMPTY;}}
 function findRailgunGroup(t){
@@ -2227,6 +2226,20 @@ function findRailgunGroup(t){
     const cells=[[ar,ac],[ar,ac+1],[ar+1,ac],[ar+1,ac+1]];
     const members=cells.map(([r,c])=>towerAt(r,c));
     if(members.every(m=>m&&m.key==='sniper'&&m.level===1&&m.size!==2)){
+      if(MP.active&&!members.every(m=>MP.canInteractTower(m))) continue;
+      return{anchorRow:ar,anchorCol:ac,members:[...new Set(members)]};
+    }
+  }
+  return null;
+}
+function findBlasterGroup(t){
+  if(!t||t.key!=='basic'||t.level!==1) return null;
+  for(const[dr,dc] of[[0,0],[0,-1],[-1,0],[-1,-1]]){
+    const ar=t.row+dr,ac=t.col+dc;
+    if(ar<0||ac<0||ar+1>=ROWS||ac+1>=COLS) continue;
+    const cells=[[ar,ac],[ar,ac+1],[ar+1,ac],[ar+1,ac+1]];
+    const members=cells.map(([r,c])=>towerAt(r,c));
+    if(members.every(m=>m&&m.key==='basic'&&m.level===1&&m.size!==2)){
       if(MP.active&&!members.every(m=>MP.canInteractTower(m))) continue;
       return{anchorRow:ar,anchorCol:ac,members:[...new Set(members)]};
     }
@@ -2255,15 +2268,26 @@ const TS={
   wall:{1:{t:CT.WALL,cost:60,hp:350,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#4a708a',name:'BARRIER'},2:{t:CT.WALL,cost:60,hp:600,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#5a80a0',name:'BARRIER II'},3:{t:CT.WALL,cost:60,hp:950,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#6a90b0',name:'BARRIER III',thorns:22},4:{t:CT.WALL,cost:100,hp:1500,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#7aaac0',name:'BARRIER IV',thorns:40},5:{t:CT.WALL,cost:200,hp:2400,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#8abbd0',name:'BULWARK',thorns:65,wallRegen:12}},
   basic:{1:{t:CT.BASIC,cost:75,hp:80,rng:148,dmg:18,cd:55,aoe:0,chn:0,col:'#33aaff',name:'BLASTER'},'2A':{t:CT.BASIC,cost:350,hp:110,rng:155,dmg:9,cd:12,aoe:0,chn:0,col:'#33aaff',name:'MINIGUN',minigun:true},'2B':{t:CT.BASIC,cost:150,hp:110,rng:175,dmg:10,cd:72,aoe:0,chn:0,col:'#55ddff',name:'SHOCKWAVE',shockwave:true,shockSpd:3.2,shockMaxR:200},'3A':{t:CT.BASIC,cost:500,hp:148,rng:162,dmg:12,cd:9,aoe:0,chn:0,col:'#55aaff',name:'MINIGUN+',minigun:true},'3B':{t:CT.BASIC,cost:900,hp:148,rng:220,dmg:55,cd:40,aoe:0,chn:0,col:'#44eeff',name:'SHOCKWAVE+',shockwave:true,shockSpd:4,shockMaxR:290},'4A':{t:CT.BASIC,cost:750,hp:195,rng:172,dmg:16,cd:6,aoe:0,chn:0,col:'#66bbff',name:'MINIGUN++',minigun:true},'4B':{t:CT.BASIC,cost:1400,hp:195,rng:260,dmg:85,cd:30,aoe:0,chn:0,col:'#33eeff',name:'SHOCKWAVE++',shockwave:true,shockSpd:4.8,shockMaxR:360},'5A':{t:CT.BASIC,cost:1000,hp:260,rng:185,dmg:24,cd:4,aoe:0,chn:0,col:'#88ccff',name:'GATLING',minigun:true},'5B':{t:CT.BASIC,cost:2200,hp:260,rng:320,dmg:165,cd:20,aoe:0,chn:0,col:'#00ffff',name:'STORM WAVE',shockwave:true,shockSpd:5.5,shockMaxR:440}},
   railgun_cannon:{
-    1  :{t:CT.SNIPER,cost:0,   hp:520, rng:9999,dmg:280, cd:260,chargeTime:170,col:'#66ddff',name:'RAILGUN CANNON',railgunTower:true,beamWidth:12},
-    '2A':{t:CT.SNIPER,cost:2600,hp:680, rng:9999,dmg:680, cd:430,chargeTime:340,col:'#33bbff',name:'SIEGE RAILGUN',railgunTower:true,beamWidth:14},
-    '2B':{t:CT.SNIPER,cost:2600,hp:600, rng:9999,dmg:150, cd:95, chargeTime:55, col:'#99eeff',name:'RAPID RAILGUN',railgunTower:true,beamWidth:10},
-    '3A':{t:CT.SNIPER,cost:4500,hp:900, rng:9999,dmg:1360,cd:460,chargeTime:360,col:'#2299ff',name:'HEAVY RAILGUN',railgunTower:true,beamWidth:16},
-    '3B':{t:CT.SNIPER,cost:4500,hp:800, rng:9999,dmg:200, cd:90, chargeTime:48, col:'#aaffff',name:'OVERDRIVE RAILGUN',railgunTower:true,beamWidth:12},
-    '4A':{t:CT.SNIPER,cost:7000,hp:1150,rng:9999,dmg:2125,cd:490,chargeTime:380,col:'#1199ff',name:'TITAN RAILGUN',railgunTower:true,beamWidth:18},
-    '4B':{t:CT.SNIPER,cost:7000,hp:1000,rng:9999,dmg:280, cd:85, chargeTime:42, col:'#ccffff',name:'HYPER RAILGUN',railgunTower:true,beamWidth:14},
-    '5A':{t:CT.SNIPER,cost:11000,hp:1500,rng:9999,dmg:3400,cd:520,chargeTime:400,col:'#0088ff',name:'APEX RAILGUN',railgunTower:true,beamWidth:20},
-    '5B':{t:CT.SNIPER,cost:11000,hp:1300,rng:9999,dmg:620, cd:75, chargeTime:35, col:'#eeffff',name:'ANNIHILATOR RAILGUN',railgunTower:true,beamWidth:17}
+    1  :{t:CT.SNIPER,cost:0,   hp:520, rng:9999,dmg:758, cd:260,chargeTime:170,col:'#66ddff',name:'RAILGUN CANNON',railgunTower:true,beamWidth:12},
+    '2A':{t:CT.SNIPER,cost:2200,hp:680, rng:9999,dmg:3351, cd:430,chargeTime:340,col:'#33bbff',name:'SIEGE RAILGUN',railgunTower:true,beamWidth:14},
+    '2B':{t:CT.SNIPER,cost:2200,hp:600, rng:9999,dmg:322, cd:95, chargeTime:55, col:'#99eeff',name:'RAPID RAILGUN',railgunTower:true,beamWidth:10},
+    '3A':{t:CT.SNIPER,cost:3800,hp:900, rng:9999,dmg:7347,cd:460,chargeTime:360,col:'#2299ff',name:'HEAVY RAILGUN',railgunTower:true,beamWidth:16},
+    '3B':{t:CT.SNIPER,cost:3800,hp:800, rng:9999,dmg:435, cd:90, chargeTime:48, col:'#aaffff',name:'OVERDRIVE RAILGUN',railgunTower:true,beamWidth:12},
+    '4A':{t:CT.SNIPER,cost:6000,hp:1150,rng:9999,dmg:12538,cd:490,chargeTime:380,col:'#1199ff',name:'TITAN RAILGUN',railgunTower:true,beamWidth:18},
+    '4B':{t:CT.SNIPER,cost:6000,hp:1000,rng:9999,dmg:629, cd:85, chargeTime:42, col:'#ccffff',name:'HYPER RAILGUN',railgunTower:true,beamWidth:14},
+    '5A':{t:CT.SNIPER,cost:9500,hp:1500,rng:9999,dmg:22080,cd:520,chargeTime:400,col:'#0088ff',name:'APEX RAILGUN',railgunTower:true,beamWidth:20},
+    '5B':{t:CT.SNIPER,cost:9500,hp:1300,rng:9999,dmg:1422, cd:75, chargeTime:35, col:'#eeffff',name:'ANNIHILATOR RAILGUN',railgunTower:true,beamWidth:17}
+  },
+  blaster_cannon:{
+    1  :{t:CT.BASIC,cost:0,   hp:450, rng:220,dmg:25,  cd:90, aoe:0,chn:0,col:'#ffaa00',name:'BLASTER CANNON',blasterCannon:true,minigun:true,shots:5},
+    '2A':{t:CT.BASIC,cost:1200,hp:600, rng:260,dmg:68,  cd:36, aoe:0,chn:0,col:'#ffbb22',name:'GATLING FORTRESS',blasterCannon:true,minigun:true,shots:5},
+    '2B':{t:CT.BASIC,cost:1200,hp:550, rng:260,dmg:175, cd:120,chargeTime:180,col:'#ff6622',name:'SHOCK CANNON',blasterCannon:true,chargeShockwave:true,stunDur:110,blastRadius:150},
+    '3A':{t:CT.BASIC,cost:3100,hp:800, rng:300,dmg:91,  cd:27, aoe:0,chn:0,col:'#ffcc33',name:'GATLING FORTRESS+',blasterCannon:true,minigun:true,shots:5},
+    '3B':{t:CT.BASIC,cost:3100,hp:750, rng:300,dmg:2195,cd:160,chargeTime:220,col:'#ff5511',name:'SHOCK CANNON+',blasterCannon:true,chargeShockwave:true,stunDur:140,blastRadius:190},
+    '4A':{t:CT.BASIC,cost:4900,hp:1000,rng:340,dmg:121, cd:18, aoe:0,chn:0,col:'#ffdd44',name:'GATLING FORTRESS++',blasterCannon:true,minigun:true,shots:5},
+    '4B':{t:CT.BASIC,cost:4900,hp:950, rng:340,dmg:5474,cd:200,chargeTime:260,col:'#ff4400',name:'SHOCK CANNON++',blasterCannon:true,chargeShockwave:true,stunDur:170,blastRadius:230},
+    '5A':{t:CT.BASIC,cost:7700,hp:1300,rng:380,dmg:181, cd:12, aoe:0,chn:0,col:'#ffee66',name:'GATLING OMEGA',blasterCannon:true,minigun:true,shots:5},
+    '5B':{t:CT.BASIC,cost:7700,hp:1250,rng:380,dmg:18711,cd:240,chargeTime:300,col:'#ff2200',name:'ANNIHILATION CANNON',blasterCannon:true,chargeShockwave:true,stunDur:210,blastRadius:270}
   },
   sniper:{1:{t:CT.SNIPER,cost:160,hp:60,rng:285,dmg:42,cd:100,aoe:0,chn:0,col:'#bb44ff',name:'RAILGUN'},'2A':{t:CT.SNIPER,cost:275,hp:92,rng:302,dmg:112,cd:108,aoe:0,chn:0,col:'#cc55ff',name:'OVERCHARGE'},'2B':{t:CT.SNIPER,cost:375,hp:92,rng:278,dmg:50,cd:98,aoe:72,chn:0,col:'#ff44bb',name:'EXPLOSIVE'},'3A':{t:CT.SNIPER,cost:375,hp:125,rng:325,dmg:224,cd:105,aoe:0,chn:0,col:'#dd66ff',name:'OVERCHARGE+'},'3B':{t:CT.SNIPER,cost:475,hp:125,rng:295,dmg:66,cd:88,aoe:115,chn:0,col:'#ff55cc',name:'EXPLOSIVE+'},'4A':{t:CT.SNIPER,cost:575,hp:168,rng:355,dmg:350,cd:102,aoe:0,chn:0,col:'#ee88ff',name:'OVERCHARGE++'},'4B':{t:CT.SNIPER,cost:675,hp:168,rng:315,dmg:92,cd:78,aoe:150,chn:0,col:'#ff77dd',name:'EXPLOSIVE++'},'5A':{t:CT.SNIPER,cost:775,hp:225,rng:410,dmg:560,cd:98,aoe:0,chn:0,col:'#ffaaff',name:'RAILGUN MK5'},'5B':{t:CT.SNIPER,cost:1200,hp:225,rng:345,dmg:200,cd:65,aoe:205,chn:0,col:'#ff88ff',name:'NOVA CANNON'}},
   cannon:{1:{t:CT.CANNON,cost:200,hp:100,rng:175,dmg:35,cd:75,aoe:55,chn:0,col:'#ff8800',name:'CANNON'},'2A':{t:CT.CANNON,cost:250,hp:138,rng:232,dmg:42,cd:45,aoe:62,chn:0,col:'#ff9900',name:'RAPID FIRE'},'2B':{t:CT.CANNON,cost:400,hp:138,rng:198,dmg:78,cd:78,aoe:105,chn:0,col:'#ff6600',name:'DEVASTATOR'},'3A':{t:CT.CANNON,cost:350,hp:180,rng:280,dmg:50,cd:30,aoe:68,chn:0,col:'#ffaa00',name:'RAPID FIRE+'},'3B':{t:CT.CANNON,cost:600,hp:180,rng:218,dmg:125,cd:68,aoe:152,chn:0,col:'#ff4400',name:'DEVASTATOR+'},'4A':{t:CT.CANNON,cost:450,hp:240,rng:330,dmg:68,cd:20,aoe:80,chn:0,col:'#ffcc00',name:'RAPID FIRE++'},'4B':{t:CT.CANNON,cost:900,hp:240,rng:248,dmg:200,cd:58,aoe:210,chn:0,col:'#ff3300',name:'DEVASTATOR++'},'5A':{t:CT.CANNON,cost:1000,hp:320,rng:400,dmg:100,cd:14,aoe:95,chn:0,col:'#ffdd44',name:'ARTILLERY'},'5B':{t:CT.CANNON,cost:2000,hp:320,rng:275,dmg:420,cd:248,aoe:480,chn:1,col:'#ff2200',name:'OBLITERATOR'}},
@@ -2357,25 +2381,25 @@ const TS={
     '10A':{t:CT.LASER,cost:110000,hp:2000,rng:450,dmg:190,cd:1,aoe:0,chn:0,col:'#ffffff',name:'ETERNAL ACCELERATOR',laserTower:true,stackDmg:0,maxStacks:0,heroTower:true,heroType:'accel',chargeTime:8}
   },
   hero_score:{
-    1  :{t:CT.BUFF,cost:9000, hp:300,rng:140,dmg:0,cd:0,col:'#ff66cc',name:'HERO SCORE MACHINE',buffType:'combat',dmgBoost:.10,spdBoost:.06,rngBoost:.05,heroTower:true,heroType:'score',scoreMultBonus:.06},
-    '2A':{t:CT.BUFF,cost:4800, hp:320,rng:150,dmg:0,cd:0,col:'#ff44aa',name:'SCORE FOCUS I',   buffType:'combat',dmgBoost:.08,spdBoost:.04,rngBoost:.03,heroTower:true,heroType:'score',scoreMultBonus:.20},
-    '3A':{t:CT.BUFF,cost:8000, hp:360,rng:165,dmg:0,cd:0,col:'#ff2299',name:'SCORE FOCUS II',  buffType:'combat',dmgBoost:.10,spdBoost:.05,rngBoost:.04,heroTower:true,heroType:'score',scoreMultBonus:.40},
-    '4A':{t:CT.BUFF,cost:13000, hp:410,rng:180,dmg:0,cd:0,col:'#ff0088',name:'SCORE FOCUS III', buffType:'combat',dmgBoost:.13,spdBoost:.07,rngBoost:.05,heroTower:true,heroType:'score',scoreMultBonus:.75},
-    '5A':{t:CT.BUFF,cost:21000,hp:480,rng:200,dmg:0,cd:0,col:'#ff0066',name:'PRIME SCORE ENGINE',buffType:'combat',dmgBoost:.16,spdBoost:.09,rngBoost:.06,heroTower:true,heroType:'score',scoreMultBonus:1.4},
-    '6A':{t:CT.BUFF,cost:32000,hp:560,rng:218,dmg:0,cd:0,col:'#dd0055',name:'SCORE NEXUS I',   buffType:'combat',dmgBoost:.20,spdBoost:.12,rngBoost:.08,heroTower:true,heroType:'score',scoreMultBonus:2.2},
-    '7A':{t:CT.BUFF,cost:30000,hp:650,rng:236,dmg:0,cd:0,col:'#bb0044',name:'SCORE NEXUS II',  buffType:'combat',dmgBoost:.25,spdBoost:.15,rngBoost:.10,heroTower:true,heroType:'score',scoreMultBonus:6.0},
-    '8A':{t:CT.BUFF,cost:44000,hp:760,rng:258,dmg:0,cd:0,col:'#990033',name:'SCORE NEXUS III', buffType:'combat',dmgBoost:.32,spdBoost:.20,rngBoost:.13,heroTower:true,heroType:'score',scoreMultBonus:9.0},
-    '9A':{t:CT.BUFF,cost:62000,hp:900,rng:280,dmg:0,cd:0,col:'#770022',name:'APEX SCORE CORE', buffType:'combat',dmgBoost:.40,spdBoost:.26,rngBoost:.17,heroTower:true,heroType:'score',scoreMultBonus:13.0},
-    '10A':{t:CT.BUFF,cost:88000,hp:1080,rng:310,dmg:0,cd:0,col:'#ff99dd',name:'ETERNAL SCORE MACHINE',buffType:'combat',dmgBoost:.50,spdBoost:.34,rngBoost:.22,heroTower:true,heroType:'score',scoreMultBonus:20.0},
-    '2B':{t:CT.BUFF,cost:4800, hp:340,rng:170,dmg:0,cd:0,col:'#ffaa00',name:'AURA FOCUS I',    buffType:'combat',dmgBoost:.20,spdBoost:.12,rngBoost:.10,heroTower:true,heroType:'score',scoreMultBonus:.10},
-    '3B':{t:CT.BUFF,cost:8000, hp:400,rng:190,dmg:0,cd:0,col:'#ff9900',name:'AURA FOCUS II',   buffType:'combat',dmgBoost:.32,spdBoost:.20,rngBoost:.16,heroTower:true,heroType:'score',scoreMultBonus:.14},
-    '4B':{t:CT.BUFF,cost:13000, hp:470,rng:215,dmg:0,cd:0,col:'#ff8800',name:'AURA FOCUS III',  buffType:'combat',dmgBoost:.48,spdBoost:.30,rngBoost:.24,heroTower:true,heroType:'score',scoreMultBonus:.18},
-    '5B':{t:CT.BUFF,cost:21000,hp:560,rng:245,dmg:0,cd:0,col:'#ff6600',name:'PRIME WAR BEACON',buffType:'combat',dmgBoost:.70,spdBoost:.45,rngBoost:.35,heroTower:true,heroType:'score',scoreMultBonus:.24},
-    '6B':{t:CT.BUFF,cost:32000,hp:660,rng:268,dmg:0,cd:0,col:'#ee5500',name:'WAR NEXUS I',     buffType:'combat',dmgBoost:.95,spdBoost:.62,rngBoost:.46,heroTower:true,heroType:'score',scoreMultBonus:.32},
-    '7B':{t:CT.BUFF,cost:30000,hp:780,rng:294,dmg:0,cd:0,col:'#dd4400',name:'WAR NEXUS II',    buffType:'combat',dmgBoost:1.25,spdBoost:.82,rngBoost:.60,heroTower:true,heroType:'score',scoreMultBonus:.72},
-    '8B':{t:CT.BUFF,cost:44000,hp:920,rng:322,dmg:0,cd:0,col:'#cc3300',name:'WAR NEXUS III',   buffType:'combat',dmgBoost:1.60,spdBoost:1.05,rngBoost:.76,heroTower:true,heroType:'score',scoreMultBonus:.92},
-    '9B':{t:CT.BUFF,cost:62000,hp:1100,rng:354,dmg:0,cd:0,col:'#bb2200',name:'APEX WAR BEACON', buffType:'combat',dmgBoost:2.00,spdBoost:1.32,rngBoost:.95,heroTower:true,heroType:'score',scoreMultBonus:1.15},
-    '10B':{t:CT.BUFF,cost:88000,hp:1320,rng:390,dmg:0,cd:0,col:'#ff8844',name:'ETERNAL WAR BEACON',buffType:'combat',dmgBoost:2.50,spdBoost:1.65,rngBoost:1.20,heroTower:true,heroType:'score',scoreMultBonus:1.45}
+    1  :{t:CT.BUFF,cost:9000, hp:300,rng:140,dmg:0,cd:0,col:'#ff66cc',name:'HERO SCORE MACHINE',buffType:'combat',dmgBoost:.07,spdBoost:.04,rngBoost:.03,heroTower:true,heroType:'score',scoreMultBonus:.03},
+    '2A':{t:CT.BUFF,cost:4800, hp:320,rng:150,dmg:0,cd:0,col:'#ff44aa',name:'SCORE FOCUS I',   buffType:'combat',dmgBoost:.05,spdBoost:.03,rngBoost:.02,heroTower:true,heroType:'score',scoreMultBonus:.11},
+    '3A':{t:CT.BUFF,cost:8000, hp:360,rng:165,dmg:0,cd:0,col:'#ff2299',name:'SCORE FOCUS II',  buffType:'combat',dmgBoost:.07,spdBoost:.03,rngBoost:.03,heroTower:true,heroType:'score',scoreMultBonus:.22},
+    '4A':{t:CT.BUFF,cost:13000, hp:410,rng:180,dmg:0,cd:0,col:'#ff0088',name:'SCORE FOCUS III', buffType:'combat',dmgBoost:.08,spdBoost:.05,rngBoost:.03,heroTower:true,heroType:'score',scoreMultBonus:.41},
+    '5A':{t:CT.BUFF,cost:21000,hp:480,rng:200,dmg:0,cd:0,col:'#ff0066',name:'PRIME SCORE ENGINE',buffType:'combat',dmgBoost:.10,spdBoost:.06,rngBoost:.04,heroTower:true,heroType:'score',scoreMultBonus:.77},
+    '6A':{t:CT.BUFF,cost:32000,hp:560,rng:218,dmg:0,cd:0,col:'#dd0055',name:'SCORE NEXUS I',   buffType:'combat',dmgBoost:.13,spdBoost:.08,rngBoost:.05,heroTower:true,heroType:'score',scoreMultBonus:1.21},
+    '7A':{t:CT.BUFF,cost:30000,hp:650,rng:236,dmg:0,cd:0,col:'#bb0044',name:'SCORE NEXUS II',  buffType:'combat',dmgBoost:.16,spdBoost:.10,rngBoost:.07,heroTower:true,heroType:'score',scoreMultBonus:3.30},
+    '8A':{t:CT.BUFF,cost:44000,hp:760,rng:258,dmg:0,cd:0,col:'#990033',name:'SCORE NEXUS III', buffType:'combat',dmgBoost:.21,spdBoost:.13,rngBoost:.08,heroTower:true,heroType:'score',scoreMultBonus:4.95},
+    '9A':{t:CT.BUFF,cost:62000,hp:900,rng:280,dmg:0,cd:0,col:'#770022',name:'APEX SCORE CORE', buffType:'combat',dmgBoost:.26,spdBoost:.17,rngBoost:.11,heroTower:true,heroType:'score',scoreMultBonus:7.15},
+    '10A':{t:CT.BUFF,cost:88000,hp:1080,rng:310,dmg:0,cd:0,col:'#ff99dd',name:'ETERNAL SCORE MACHINE',buffType:'combat',dmgBoost:.33,spdBoost:.22,rngBoost:.14,heroTower:true,heroType:'score',scoreMultBonus:11.0},
+    '2B':{t:CT.BUFF,cost:4800, hp:340,rng:170,dmg:0,cd:0,col:'#ffaa00',name:'AURA FOCUS I',    buffType:'combat',dmgBoost:.13,spdBoost:.08,rngBoost:.07,heroTower:true,heroType:'score',scoreMultBonus:.06},
+    '3B':{t:CT.BUFF,cost:8000, hp:400,rng:190,dmg:0,cd:0,col:'#ff9900',name:'AURA FOCUS II',   buffType:'combat',dmgBoost:.21,spdBoost:.13,rngBoost:.10,heroTower:true,heroType:'score',scoreMultBonus:.08},
+    '4B':{t:CT.BUFF,cost:13000, hp:470,rng:215,dmg:0,cd:0,col:'#ff8800',name:'AURA FOCUS III',  buffType:'combat',dmgBoost:.31,spdBoost:.20,rngBoost:.16,heroTower:true,heroType:'score',scoreMultBonus:.10},
+    '5B':{t:CT.BUFF,cost:21000,hp:560,rng:245,dmg:0,cd:0,col:'#ff6600',name:'PRIME WAR BEACON',buffType:'combat',dmgBoost:.46,spdBoost:.29,rngBoost:.23,heroTower:true,heroType:'score',scoreMultBonus:.13},
+    '6B':{t:CT.BUFF,cost:32000,hp:660,rng:268,dmg:0,cd:0,col:'#ee5500',name:'WAR NEXUS I',     buffType:'combat',dmgBoost:.62,spdBoost:.40,rngBoost:.30,heroTower:true,heroType:'score',scoreMultBonus:.18},
+    '7B':{t:CT.BUFF,cost:30000,hp:780,rng:294,dmg:0,cd:0,col:'#dd4400',name:'WAR NEXUS II',    buffType:'combat',dmgBoost:.81,spdBoost:.53,rngBoost:.39,heroTower:true,heroType:'score',scoreMultBonus:.40},
+    '8B':{t:CT.BUFF,cost:44000,hp:920,rng:322,dmg:0,cd:0,col:'#cc3300',name:'WAR NEXUS III',   buffType:'combat',dmgBoost:1.04,spdBoost:.68,rngBoost:.49,heroTower:true,heroType:'score',scoreMultBonus:.51},
+    '9B':{t:CT.BUFF,cost:62000,hp:1100,rng:354,dmg:0,cd:0,col:'#bb2200',name:'APEX WAR BEACON', buffType:'combat',dmgBoost:1.30,spdBoost:.86,rngBoost:.62,heroTower:true,heroType:'score',scoreMultBonus:.63},
+    '10B':{t:CT.BUFF,cost:88000,hp:1320,rng:390,dmg:0,cd:0,col:'#ff8844',name:'ETERNAL WAR BEACON',buffType:'combat',dmgBoost:1.63,spdBoost:1.07,rngBoost:.78,heroTower:true,heroType:'score',scoreMultBonus:.80}
   },
   // HERO: SACRIFICE TEMPLE — unlocked at Player Level 50. Deals zero damage itself;
   // it exists purely to pour a massive combat aura into nearby towers.
@@ -2385,8 +2409,8 @@ const TS={
   },
 };
 
-const PATH_NAMES={railgun_cannon:{A:'SIEGE (slow/heavy)',B:'RAPID (fast/light)'},basic:{A:'MINIGUN',B:'SHOCKWAVE'},sniper:{A:'OVERCHARGE',B:'EXPLOSIVE'},cannon:{A:'RAPID FIRE',B:'DEVASTATOR'},electric:{A:'STORM',B:'PLASMA BALL'},healer:{A:'BASE MEDIC',B:'REGEN+'},spike:{A:'RAPID STRIKE',B:'WARHAMMER'},buff:{A:'BASS BOOST',B:'DJ BOOTH'},mine:{A:'BIG FARM',B:'BANK'},heli:{A:'MISSILE+BULLETS',B:'MINIGUN SPEED'},flame:{A:'INFERNO',B:'CORROSION'},ice:{A:'FROST WAVE',B:'CRYO BULLET'},bhole:{A:'EVENT HORIZON',B:'SINGULARITY'},laser:{A:'FOCUS BEAM',B:'CRYSTAL FORGE'},barracks:{A:'DEMOLISHER',B:'GUNNER',C:'TANK DEPOT'},silo:{A:'NUKE',B:'LASER STRIKE'},hero_accel:{A:'OVERCHARGE BEAM'},hero_score:{A:'SCORE FOCUS',B:'AURA FOCUS'},hero_sacrifice:{A:'BLOOD ALTAR',B:'SOUL BEACON'},mech_base:{A:'THE TITAN',B:'WALKING ARSENAL',C:'SWARM PROTOCOL'},admindrone:{A:'SWARM PROTOCOL',B:'MULTI-ROLE'},barbwire:{A:'LONG WIRE',B:'RAZOR WIRE'},cowboy:{A:'GUNSLINGER',B:'POSSE CALLER'},necromancer:{A:'DEATH CALLER',B:'BONE WARDEN'}};
-const PATH_COLORS={railgun_cannon:{A:'#33bbff',B:'#99eeff'},basic:{A:'#33aaff',B:'#55ddff'},sniper:{A:'#cc55ff',B:'#ff44bb'},cannon:{A:'#ff9900',B:'#ff6600'},electric:{A:'#aaff00',B:'#88ff44'},healer:{A:'#00ccff',B:'#00ffcc'},spike:{A:'#ff4488',B:'#ff2255'},buff:{A:'#ffd700',B:'#ff8800'},mine:{A:'#ffe066',B:'#ffd700'},heli:{A:'#00ffaa',B:'#44ffcc'},flame:{A:'#ff4400',B:'#44ff88'},ice:{A:'#44ccff',B:'#4488ff'},bhole:{A:'#cc66ff',B:'#ff44aa'},laser:{A:'#00ccff',B:'#ff88ff'},barracks:{A:'#ff8844',B:'#33ccff',C:'#cc8800'},silo:{A:'#ff4400',B:'#cc55ff'},hero_accel:{A:'#ffe066'},hero_score:{A:'#ff44aa',B:'#ffaa00'},hero_sacrifice:{A:'#ff1144',B:'#aa22ff'},mech_base:{A:'#ff3311',B:'#2299ee',C:'#44ee77'},admindrone:{A:'#ff44ff',B:'#44ffee'},barbwire:{A:'#c8a874',B:'#ff5533'},cowboy:{A:'#ffdca8',B:'#c8955a'},necromancer:{A:'#bb8fff',B:'#6a4a9a'}};
+const PATH_NAMES={railgun_cannon:{A:'SIEGE (slow/heavy)',B:'RAPID (fast/light)'},blaster_cannon:{A:'GATLING FORTRESS (5-barrel/no charge)',B:'SHOCK CANNON (charge/massive dmg+stun)'},basic:{A:'MINIGUN',B:'SHOCKWAVE'},sniper:{A:'OVERCHARGE',B:'EXPLOSIVE'},cannon:{A:'RAPID FIRE',B:'DEVASTATOR'},electric:{A:'STORM',B:'PLASMA BALL'},healer:{A:'BASE MEDIC',B:'REGEN+'},spike:{A:'RAPID STRIKE',B:'WARHAMMER'},buff:{A:'BASS BOOST',B:'DJ BOOTH'},mine:{A:'BIG FARM',B:'BANK'},heli:{A:'MISSILE+BULLETS',B:'MINIGUN SPEED'},flame:{A:'INFERNO',B:'CORROSION'},ice:{A:'FROST WAVE',B:'CRYO BULLET'},bhole:{A:'EVENT HORIZON',B:'SINGULARITY'},laser:{A:'FOCUS BEAM',B:'CRYSTAL FORGE'},barracks:{A:'DEMOLISHER',B:'GUNNER',C:'TANK DEPOT'},silo:{A:'NUKE',B:'LASER STRIKE'},hero_accel:{A:'OVERCHARGE BEAM'},hero_score:{A:'SCORE FOCUS',B:'AURA FOCUS'},hero_sacrifice:{A:'BLOOD ALTAR',B:'SOUL BEACON'},mech_base:{A:'THE TITAN',B:'WALKING ARSENAL',C:'SWARM PROTOCOL'},admindrone:{A:'SWARM PROTOCOL',B:'MULTI-ROLE'},barbwire:{A:'LONG WIRE',B:'RAZOR WIRE'},cowboy:{A:'GUNSLINGER',B:'POSSE CALLER'},necromancer:{A:'DEATH CALLER',B:'BONE WARDEN'}};
+const PATH_COLORS={railgun_cannon:{A:'#33bbff',B:'#99eeff'},blaster_cannon:{A:'#ffcc33',B:'#ff5511'},basic:{A:'#33aaff',B:'#55ddff'},sniper:{A:'#cc55ff',B:'#ff44bb'},cannon:{A:'#ff9900',B:'#ff6600'},electric:{A:'#aaff00',B:'#88ff44'},healer:{A:'#00ccff',B:'#00ffcc'},spike:{A:'#ff4488',B:'#ff2255'},buff:{A:'#ffd700',B:'#ff8800'},mine:{A:'#ffe066',B:'#ffd700'},heli:{A:'#00ffaa',B:'#44ffcc'},flame:{A:'#ff4400',B:'#44ff88'},ice:{A:'#44ccff',B:'#4488ff'},bhole:{A:'#cc66ff',B:'#ff44aa'},laser:{A:'#00ccff',B:'#ff88ff'},barracks:{A:'#ff8844',B:'#33ccff',C:'#cc8800'},silo:{A:'#ff4400',B:'#cc55ff'},hero_accel:{A:'#ffe066'},hero_score:{A:'#ff44aa',B:'#ffaa00'},hero_sacrifice:{A:'#ff1144',B:'#aa22ff'},mech_base:{A:'#ff3311',B:'#2299ee',C:'#44ee77'},admindrone:{A:'#ff44ff',B:'#44ffee'},barbwire:{A:'#c8a874',B:'#ff5533'},cowboy:{A:'#ffdca8',B:'#c8955a'},necromancer:{A:'#bb8fff',B:'#6a4a9a'}};
 
 function getCfg(key,lvl,path){if(key==='wall') return TS.wall[Math.min(lvl,5)]||TS.wall[1];if(lvl===1) return TS[key][1];return TS[key][lvl+(path||'')]||TS[key][1];}
 function upgCost(key,toLvl,path){if(key==='wall'){const s=TS.wall[Math.min(toLvl,5)];return s?s.cost:TS.wall[1].cost;}if(toLvl===2){const lk2='2'+(path||'A');const s2=TS[key]&&TS[key][lk2];if(s2) return s2.cost;const sA=TS[key]&&TS[key]['2A'];return sA?sA.cost:Math.round(TS[key][1].cost*0.6);}const lk=toLvl+(path||'A');const s=TS[key]&&TS[key][lk];if(s) return s.cost;const base=TS[key][1].cost;if(toLvl===3) return Math.round(base*1.0);if(toLvl===4) return Math.round(base*1.45);if(toLvl===5) return Math.round(base*2.0);if(toLvl===6) return Math.round(base*3.2);if(toLvl===7) return Math.round(base*4.5);if(toLvl===8) return Math.round(base*6.2);if(toLvl===9) return Math.round(base*8.5);if(toLvl===10) return Math.round(base*12.0);return Math.round(base*1.2);}
@@ -4242,8 +4266,13 @@ function showPanel(t){
     const dps=cycle>0?Math.round((c.dmg*_dpsBf.dmgMult)/cycle):0;
     s+=`\nBEAM DMG: ${c.dmg} (hits every enemy in line, once)\nCHARGE: ${(c.chargeTime/60).toFixed(1)}s  RECOVER: ${(c.cd/60).toFixed(1)}s\nDPS (per enemy hit): ${dps}`;
   }
+  else if(c.chargeShockwave){
+    const cycle=(c.chargeTime+c.cd)/60;
+    const dps=cycle>0?Math.round((c.dmg*_dpsBf.dmgMult)/cycle):0;
+    s+=`\nBLAST DMG: ${c.dmg} + STUN ${(((c.stunDur||150)/60).toFixed(1))}s (hits ALL enemies in blast radius)\nCHARGE: ${(c.chargeTime/60).toFixed(1)}s  RECOVER: ${(c.cd/60).toFixed(1)}s\nDPS (per enemy hit): ${dps}`;
+  }
   else{if(c.dmg) s+=`  DMG:${c.dmg}`;if(c.rng) s+=`  RNG:${c.rng}`;if(c.cd) s+=`  CD:${c.cd}`;
-    if(c.dmg&&c.cd){const shots=c.minigun?3:(c.rapidStrike?2:1);const effCd=c.cd/_dpsBf.cdDiv;const dps=Math.round((c.dmg*_dpsBf.dmgMult*shots*60)/effCd);
+    if(c.dmg&&c.cd){const shots=c.minigun?(c.shots||3):(c.rapidStrike?2:1);const effCd=c.cd/_dpsBf.cdDiv;const dps=Math.round((c.dmg*_dpsBf.dmgMult*shots*60)/effCd);
       let dpsLbl=`\nDPS: ${dps}`;
       if(shots>1) dpsLbl+=` (×${shots} shots/burst, single-target)`;
       if(c.aoe||c.shockwave) dpsLbl+=` per enemy — hits ALL enemies in ${c.shockwave?'blast':'AoE'} radius`;
@@ -4303,6 +4332,10 @@ function showPanel(t){
   const railgunGrp=findRailgunGroup(t);
   mergeBtn.style.display='none';
   if(railgunGrp){mergeBtn.style.display='';mergeBtn.disabled=false;}
+  const mergeBtn2=document.getElementById('up-merge-btn2');
+  const blasterGrp=findBlasterGroup(t);
+  mergeBtn2.style.display='none';
+  if(blasterGrp){mergeBtn2.style.display='';mergeBtn2.disabled=false;}
   if(isSacTemple){
     // Temple never uses path/upgrade buttons
     pr.style.display='none';ub.style.display='none';
@@ -4416,6 +4449,16 @@ document.getElementById('up-merge-btn').addEventListener('click',()=>{
   const nt={row:ar,col:ac,size:2,key:'railgun_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.sniper[1].cost),0)};
   towers.push(nt);bfs();hidePanel();msg('⚡ RAILGUN CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:railgunMerge',{pid:MP.playerId,row:ar,col:ac});
+});
+document.getElementById('up-merge-btn2').addEventListener('click',()=>{
+  if(!selTower) return;const grp=findBlasterGroup(selTower);if(!grp) return;
+  const{anchorRow:ar,anchorCol:ac,members}=grp;
+  for(const m of members){const idx=towers.indexOf(m);if(idx!==-1) towers.splice(idx,1);}
+  const cfg=getCfg('blaster_cannon',1,null);
+  grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
+  const nt={row:ar,col:ac,size:2,key:'blaster_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.basic[1].cost),0)};
+  towers.push(nt);bfs();hidePanel();msg('🔫 BLASTER CANNON ASSEMBLED!',2200);syncUI();
+  if(MP.active) MP.broadcast('tower:blasterMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-sell-btn').addEventListener('click',()=>{if(!selTower) return;const t=selTower;const ti=towers.indexOf(t);if(ti===-1) return;if(MP.active&&!MP.canInteractTower(t)){msg(MP.getTowerOwnerMsg(t)||'Not your tower',2000);return;}const ref=Math.floor((t.totalGoldSpent||TS[t.key][1].cost)*.5);if(t.key==='healer'&&t.path==='A'&&t.level>=2){const bon=t.level===2?25:t.level===3?55:t.level===4?90:140;baseMaxHP=Math.max(150,baseMaxHP-bon);baseHP=Math.min(baseHP,baseMaxHP);}if(t.key==='heli'){const hi=helicopters.findIndex(h=>h.towerId===t.id);if(hi!==-1) helicopters.splice(hi,1);}if(t.key==='barracks'||t.key==='mech_base'||t.key==='cowboy'||t.key==='necromancer'){for(let ai=allies.length-1;ai>=0;ai--){if(allies[ai]&&allies[ai].towerId===t.id){sparks(allies[ai].x,allies[ai].y,'#ff4444',5,2);allies.splice(ai,1);}}}gold+=ref;const row=t.row,col=t.col;towers.splice(ti,1);clearTowerGrid(t);bfs();ft(col*CS+CS/2,row*CS,'+'+ref+'g');hidePanel();syncUI();if(MP.active){MP.broadcast('tower:sell',{pid:MP.playerId,row,col});MP.updatePlayerGold();}});
 document.getElementById('sbtn').addEventListener('click',()=>{
@@ -5325,6 +5368,47 @@ function update(){
   ft(rtx,rty-30,hitCount>0?('⚡ RAILGUN! x'+hitCount):'⚡ RAILGUN!',cfg.col);
   continue;
 }
+if(cfg.chargeShockwave){
+  if(t.cd>0){t.cd--;t.railCharge=0;continue;}
+  const bsz=(t.size===2?CS*2:CS);
+  const btx2=t.col*CS+bsz/2,bty2=t.row*CS+bsz/2;
+  const bfxB=getBuffsAt(t.col,t.row);
+  const effRngB=cfg.rng*bfxB.rngMult;
+  let bTgt=null,bbd=Infinity;
+  for(const e of enemies){const dx=e.x-btx2,dy=e.y-bty2,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRngB*effRngB&&dEff<bbd){bbd=dEff;bTgt=e;}}
+  if(!bTgt){t.railCharge=0;continue;}
+  t.angle=Math.atan2(bTgt.y-bty2,bTgt.x-btx2);
+  t.railCharge=(t.railCharge||0)+1;
+  if(t.railCharge%5===0){
+    const cp=t.railCharge/(cfg.chargeTime||1);
+    const na=Math.random()*Math.PI*2,nr=bsz*0.32*(1-cp*.3);
+    sparks(btx2+Math.cos(na)*nr,bty2+Math.sin(na)*nr,cfg.col,Math.ceil(2+cp*4),1.3+cp*1.6);
+    if(cp>.5&&t.railCharge%10===0) sparks(btx2,bty2,'#ffffff',3,1.2);
+  }
+  if(t.railCharge<cfg.chargeTime) continue;
+  t.railCharge=0;t.cd=cfg.cd;
+  const effDmgB=Math.round(cfg.dmg*bfxB.dmgMult);
+  const blastR=cfg.blastRadius||effRngB;
+  let hitCountB=0;
+  for(const e of enemies){
+    const dx=e.x-btx2,dy=e.y-bty2;
+    if(dx*dx+dy*dy>blastR*blastR) continue;
+    if(mirrorBlocked(e,t.key)) continue;
+    const dd=applyArmor(e,effDmgB);e.hp-=dd;mirrorTrack(e,t.key,dd);
+    applyStun(e,cfg.stunDur||150);
+    hitCountB++;
+    sparks(e.x,e.y,cfg.col,10,3);sparks(e.x,e.y,'#ffffff',4,2.5);
+  }
+  shockwaves.push({ox:btx2,oy:bty2,r:10,maxR:blastR,spd:10,dmg:0,col:cfg.col,life:1,hit:new Set(),width:5});
+  shockwaves.push({ox:btx2,oy:bty2,r:5,maxR:blastR*.6,spd:7,dmg:0,col:'#ffffff',life:1,hit:new Set(),width:3});
+  shockwaves.push({ox:btx2,oy:bty2,r:2,maxR:blastR*.35,spd:5,dmg:0,col:'#ffee88',life:1,hit:new Set(),width:2});
+  flashes.push({x:btx2,y:bty2,r:bsz*.9,life:16,ml:16,col:cfg.col});
+  sparks(btx2,bty2,'#ffffff',24,5);
+  sparks(btx2,bty2,cfg.col,30,5.5);
+  addShake(12);
+  ft(btx2,bty2-32,hitCountB>0?('💥 SHOCK CANNON! x'+hitCountB+' STUNNED'):'💥 SHOCK CANNON!',cfg.col);
+  continue;
+}
 if(cfg.t===CT.WALL&&cfg.wallRegen&&t.hp<t.maxHp){t.hp=Math.min(t.maxHp,t.hp+cfg.wallRegen/60);}if(cfg.t===CT.SILO&&cfg.siloTower){t.cd=0;
   if(!t.siloTarget||!enemies.includes(t.siloTarget)||t.siloTarget.hp<=0){t.siloTarget=null;t.siloManual=false;
     // Laser keeps its frozen beam position — only nuke resets on target loss
@@ -5486,12 +5570,29 @@ if(cfg.t===CT.NECRO&&cfg.necroTower){
     }
   }
   continue;
-}if(cfg.t===CT.FLAME&&cfg.flameTower){if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effRng=cfg.rng*bfx.rngMult;const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const ftx=t.col*CS+CS/2,fty=t.row*CS+CS/2;let fTgt=null,fbd=Infinity;for(const e of enemies){const dx=e.x-ftx,dy=e.y-fty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<fbd){fbd=dEff;fTgt=e;}}if(!fTgt) continue;t.angle=Math.atan2(fTgt.y-fty,fTgt.x-ftx);t.cd=effCd;const flameHits=enemies.filter(e=>{const dx=e.x-ftx,dy=e.y-fty;return dx*dx+dy*dy<=cfg.aoe*cfg.aoe*bfx.rngMult*bfx.rngMult;});for(const e of flameHits){if(mirrorBlocked(e,t.key)) continue;const d=applyArmor(e,effDmg);e.hp-=d;mirrorTrack(e,t.key,d);if(cfg.burnDmg&&cfg.burnDur){e.burnDmg=Math.max(e.burnDmg,cfg.burnDmg);e.burnDur=Math.max(e.burnDur,cfg.burnDur);}if(cfg.armorShred){e.armorShred=Math.max(e.armorShred,cfg.armorShred);e.shredDur=Math.max(e.shredDur,cfg.shredDur||150);}}for(let fi=0;fi<8;fi++){const fa=t.angle+(Math.random()-.5)*.7,fs=2+Math.random()*3.5,fd=8+Math.random()*12;parts.push({x:ftx+Math.cos(t.angle)*fd,y:fty+Math.sin(t.angle)*fd,vx:Math.cos(fa)*fs,vy:Math.sin(fa)*fs,life:14+Math.random()*10,ml:24,col:['#ff4400','#ff6600','#ff8800','#ffaa00','#ffcc00'][Math.floor(Math.random()*5)],sz:3+Math.random()*3});}if(flameHits.length>0){for(let fj=0;fj<4;fj++){const fdx=fTgt.x-ftx,fdy=fTgt.y-fty,fdist=Math.sqrt(fdx*fdx+fdy*fdy)||1;const fmid=.3+Math.random()*.5;parts.push({x:ftx+fdx*fmid+(Math.random()-.5)*12,y:fty+fdy*fmid+(Math.random()-.5)*12,vx:(Math.random()-.5)*1.2,vy:-Math.random()*1.5,life:10+Math.random()*8,ml:18,col:['#ff4400','#ff8800','#ffcc00'][Math.floor(Math.random()*3)],sz:2+Math.random()*2.5});}}continue;}if(cfg.t===CT.BHOLE&&cfg.bhTower){t.angle+=.015;if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effRng=cfg.rng*bfx.rngMult;const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const btx=t.col*CS+CS/2,bty=t.row*CS+CS/2;const pDist=cfg.pullDist||28;const maxExp=cfg.bhMaxExp||300;t.cd=effCd;let pulled=0;for(const e of enemies){const dx=e.x-btx,dy=e.y-bty,dist=Math.sqrt(dx*dx+dy*dy);if(dist>effRng||dist<5) continue;if(e.bhImmune) continue;const resist=Math.max(0,1-e.bhExposure/maxExp);if(resist<=0){e.bhImmune=true;ft(e.x,e.y-e.sz-6,'IMMUNE!','#aa44ff');continue;}const yank=Math.min(dist-5,pDist*resist);e.x-=dx/dist*yank;e.y-=dy/dist*yank;e.bhExposure+=8+(e.isBoss?12:0);if(mirrorBlocked(e,t.key)){pulled++;sparks(e.x,e.y,'#aa44ff',3,1.2);continue;}const dmg=applyArmor(e,effDmg);e.hp-=dmg;mirrorTrack(e,t.key,dmg);pulled++;sparks(e.x,e.y,'#aa44ff',3,1.2);}if(pulled>0){sparks(btx,bty,'#cc66ff',16,3.5);ft(btx,bty-18,'PULL!','#aa44ff');shockwaves.push({ox:btx,oy:bty,r:10,maxR:effRng,spd:8,dmg:0,col:'#aa44ff',life:1,hit:new Set(),width:2});}continue;}if(cfg.t===CT.LASER&&cfg.laserTower){const bfx=getBuffsAt(t.col,t.row);const effRng=cfg.rng*bfx.rngMult;const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const ltx=t.col*CS+CS/2,lty=t.row*CS+CS/2;let curTgt=t.laserTarget;if(curTgt&&(!enemies.includes(curTgt)||curTgt.hp<=0)){curTgt=null;t.laserTarget=null;t.laserStacks=Math.floor(t.laserStacks*.6);t.laserFiring=0;}if(curTgt){const dx=curTgt.x-ltx,dy=curTgt.y-lty;if(dx*dx+dy*dy>effRng*effRng){curTgt=null;t.laserTarget=null;t.laserStacks=Math.floor(t.laserStacks*.6);t.laserFiring=0;}}if(!curTgt){let bd=Infinity;for(const e of enemies){const dx=e.x-ltx,dy=e.y-lty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;curTgt=e;}}if(curTgt){t.laserTarget=curTgt;t.laserStacks=0;t.laserFiring=0;if(cfg.heroTower){t.laserCharge=(t.laserWasIdle!==false)?(cfg.chargeTime||60):0;}t.laserWasIdle=false;}else{t.laserWasIdle=true;}}if(curTgt){t.angle=Math.atan2(curTgt.y-lty,curTgt.x-ltx);if(t.laserCharge>0){t.laserCharge--;continue;}t.laserFiring++;if(t.laserFiring%Math.max(1,cfg.cd)===0&&t.laserStacks<(cfg.maxStacks||15)) t.laserStacks++;const sDmg=effDmg+t.laserStacks*(cfg.stackDmg||2);if(mirrorBlocked(curTgt,t.key)){}else{const finalD=applyArmor(curTgt,Math.round(sDmg*bfx.dmgMult));curTgt.hp-=finalD;mirrorTrack(curTgt,t.key,finalD);}if(cfg.crystalMax&&cfg.crystalMax>0&&t.laserFiring>0&&t.laserFiring%(cfg.crystalCharge||100)===0){const myCrystals=crystals.filter(cr=>cr.ownerId===t.id);if(myCrystals.length<cfg.crystalMax){const ca=Math.random()*Math.PI*2,cd2=22+Math.random()*14;crystals.push({ownerId:t.id,x:ltx+Math.cos(ca)*cd2,y:lty+Math.sin(ca)*cd2,life:cfg.crystalLife||360,maxLife:cfg.crystalLife||360,dmg:Math.max(2,Math.round(sDmg*(cfg.crystalDmgR||.4))),rng:effRng*.6,angle:0,target:null,col:cfg.col,bobPhase:Math.random()*Math.PI*2});ft(ltx,lty-14,'💎 CRYSTAL!',cfg.col);sparks(ltx+Math.cos(ca)*cd2,lty+Math.sin(ca)*cd2,cfg.col,10,2);}}}continue;}if(cfg.t===CT.HEALER){if(!t.healCd) t.healCd=0;t.healCd--;if(t.healCd<=0){t.healCd=cfg.healTick||60;const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;for(const ot of towers){if(ot===t) continue;const ddx=ot.col*CS+CS/2-tx,ddy=ot.row*CS+CS/2-ty;if(ddx*ddx+ddy*ddy<=(cfg.rng||110)**2){if(ot.hp<ot.maxHp){ot.hp=Math.min(ot.maxHp,ot.hp+(cfg.healAmt||7));addBeam(tx,ty,ot.col*CS+CS/2,ot.row*CS+CS/2);}if((cfg.healStunReduce||0)>0&&ot.stunned>0) ot.stunned=Math.max(0,ot.stunned-cfg.healStunReduce);}}if(t.path==='A'&&cfg.baseHealAmt&&baseHP<baseMaxHP){baseHP=Math.min(baseMaxHP,baseHP+cfg.baseHealAmt);syncUI();}}continue;}if(!cfg.rng){t.cd=0;continue;}if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effRng=cfg.rng*bfx.rngMult;const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;if(cfg.shockwave){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;closest=e;}}if(!closest) continue;t.cd=effCd;
+}if(cfg.t===CT.FLAME&&cfg.flameTower){if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effRng=cfg.rng*bfx.rngMult;const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const ftx=t.col*CS+CS/2,fty=t.row*CS+CS/2;let fTgt=null,fbd=Infinity;for(const e of enemies){const dx=e.x-ftx,dy=e.y-fty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<fbd){fbd=dEff;fTgt=e;}}if(!fTgt) continue;t.angle=Math.atan2(fTgt.y-fty,fTgt.x-ftx);t.cd=effCd;const flameHits=enemies.filter(e=>{const dx=e.x-ftx,dy=e.y-fty;return dx*dx+dy*dy<=cfg.aoe*cfg.aoe*bfx.rngMult*bfx.rngMult;});for(const e of flameHits){if(mirrorBlocked(e,t.key)) continue;const d=applyArmor(e,effDmg);e.hp-=d;mirrorTrack(e,t.key,d);if(cfg.burnDmg&&cfg.burnDur){e.burnDmg=Math.max(e.burnDmg,cfg.burnDmg);e.burnDur=Math.max(e.burnDur,cfg.burnDur);}if(cfg.armorShred){e.armorShred=Math.max(e.armorShred,cfg.armorShred);e.shredDur=Math.max(e.shredDur,cfg.shredDur||150);}}for(let fi=0;fi<8;fi++){const fa=t.angle+(Math.random()-.5)*.7,fs=2+Math.random()*3.5,fd=8+Math.random()*12;parts.push({x:ftx+Math.cos(t.angle)*fd,y:fty+Math.sin(t.angle)*fd,vx:Math.cos(fa)*fs,vy:Math.sin(fa)*fs,life:14+Math.random()*10,ml:24,col:['#ff4400','#ff6600','#ff8800','#ffaa00','#ffcc00'][Math.floor(Math.random()*5)],sz:3+Math.random()*3});}if(flameHits.length>0){for(let fj=0;fj<4;fj++){const fdx=fTgt.x-ftx,fdy=fTgt.y-fty,fdist=Math.sqrt(fdx*fdx+fdy*fdy)||1;const fmid=.3+Math.random()*.5;parts.push({x:ftx+fdx*fmid+(Math.random()-.5)*12,y:fty+fdy*fmid+(Math.random()-.5)*12,vx:(Math.random()-.5)*1.2,vy:-Math.random()*1.5,life:10+Math.random()*8,ml:18,col:['#ff4400','#ff8800','#ffcc00'][Math.floor(Math.random()*3)],sz:2+Math.random()*2.5});}}continue;}if(cfg.t===CT.BHOLE&&cfg.bhTower){t.angle+=.015;if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effRng=cfg.rng*bfx.rngMult;const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const btx=t.col*CS+CS/2,bty=t.row*CS+CS/2;const pDist=cfg.pullDist||28;const maxExp=cfg.bhMaxExp||300;t.cd=effCd;let pulled=0;for(const e of enemies){const dx=e.x-btx,dy=e.y-bty,dist=Math.sqrt(dx*dx+dy*dy);if(dist>effRng||dist<5) continue;if(e.bhImmune) continue;const resist=Math.max(0,1-e.bhExposure/maxExp);if(resist<=0){e.bhImmune=true;ft(e.x,e.y-e.sz-6,'IMMUNE!','#aa44ff');continue;}const yank=Math.min(dist-5,pDist*resist);e.x-=dx/dist*yank;e.y-=dy/dist*yank;e.bhExposure+=8+(e.isBoss?12:0);if(mirrorBlocked(e,t.key)){pulled++;sparks(e.x,e.y,'#aa44ff',3,1.2);continue;}const dmg=applyArmor(e,effDmg);e.hp-=dmg;mirrorTrack(e,t.key,dmg);pulled++;sparks(e.x,e.y,'#aa44ff',3,1.2);}if(pulled>0){sparks(btx,bty,'#cc66ff',16,3.5);ft(btx,bty-18,'PULL!','#aa44ff');shockwaves.push({ox:btx,oy:bty,r:10,maxR:effRng,spd:8,dmg:0,col:'#aa44ff',life:1,hit:new Set(),width:2});}continue;}if(cfg.t===CT.LASER&&cfg.laserTower){const bfx=getBuffsAt(t.col,t.row);const effRng=cfg.rng*bfx.rngMult;const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const ltx=t.col*CS+CS/2,lty=t.row*CS+CS/2;let curTgt=t.laserTarget;if(curTgt&&(!enemies.includes(curTgt)||curTgt.hp<=0)){curTgt=null;t.laserTarget=null;t.laserStacks=Math.floor(t.laserStacks*.6);t.laserFiring=0;}if(curTgt){const dx=curTgt.x-ltx,dy=curTgt.y-lty;if(dx*dx+dy*dy>effRng*effRng){curTgt=null;t.laserTarget=null;t.laserStacks=Math.floor(t.laserStacks*.6);t.laserFiring=0;}}if(!curTgt){let bd=Infinity;for(const e of enemies){const dx=e.x-ltx,dy=e.y-lty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;curTgt=e;}}if(curTgt){t.laserTarget=curTgt;t.laserStacks=0;t.laserFiring=0;if(cfg.heroTower){t.laserCharge=(t.laserWasIdle!==false)?(cfg.chargeTime||60):0;}t.laserWasIdle=false;}else{t.laserWasIdle=true;}}if(curTgt){t.angle=Math.atan2(curTgt.y-lty,curTgt.x-ltx);if(t.laserCharge>0){t.laserCharge--;continue;}t.laserFiring++;if(t.laserFiring%Math.max(1,cfg.cd)===0&&t.laserStacks<(cfg.maxStacks||15)) t.laserStacks++;const sDmg=effDmg+t.laserStacks*(cfg.stackDmg||2);if(mirrorBlocked(curTgt,t.key)){}else{const finalD=applyArmor(curTgt,Math.round(sDmg*bfx.dmgMult));curTgt.hp-=finalD;mirrorTrack(curTgt,t.key,finalD);}if(cfg.crystalMax&&cfg.crystalMax>0&&t.laserFiring>0&&t.laserFiring%(cfg.crystalCharge||100)===0){const myCrystals=crystals.filter(cr=>cr.ownerId===t.id);if(myCrystals.length<cfg.crystalMax){const ca=Math.random()*Math.PI*2,cd2=22+Math.random()*14;crystals.push({ownerId:t.id,x:ltx+Math.cos(ca)*cd2,y:lty+Math.sin(ca)*cd2,life:cfg.crystalLife||360,maxLife:cfg.crystalLife||360,dmg:Math.max(2,Math.round(sDmg*(cfg.crystalDmgR||.4))),rng:effRng*.6,angle:0,target:null,col:cfg.col,bobPhase:Math.random()*Math.PI*2});ft(ltx,lty-14,'💎 CRYSTAL!',cfg.col);sparks(ltx+Math.cos(ca)*cd2,lty+Math.sin(ca)*cd2,cfg.col,10,2);}}}continue;}if(cfg.t===CT.HEALER){if(!t.healCd) t.healCd=0;t.healCd--;if(t.healCd<=0){t.healCd=cfg.healTick||60;const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;for(const ot of towers){if(ot===t) continue;const ddx=ot.col*CS+CS/2-tx,ddy=ot.row*CS+CS/2-ty;if(ddx*ddx+ddy*ddy<=(cfg.rng||110)**2){if(ot.hp<ot.maxHp){ot.hp=Math.min(ot.maxHp,ot.hp+(cfg.healAmt||7));addBeam(tx,ty,ot.col*CS+CS/2,ot.row*CS+CS/2);}if((cfg.healStunReduce||0)>0&&ot.stunned>0) ot.stunned=Math.max(0,ot.stunned-cfg.healStunReduce);}}if(t.path==='A'&&cfg.baseHealAmt&&baseHP<baseMaxHP){baseHP=Math.min(baseMaxHP,baseHP+cfg.baseHealAmt);syncUI();}}continue;}if(!cfg.rng){t.cd=0;continue;}if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effRng=cfg.rng*bfx.rngMult;const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const tx=t.col*CS+(t.size===2?CS:CS/2),ty=t.row*CS+(t.size===2?CS:CS/2);if(cfg.shockwave){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;closest=e;}}if(!closest) continue;t.cd=effCd;
   // Update shockwave tower angle to face closest target (for cannon barrel visual)
   t.angle=Math.atan2(closest.y-ty,closest.x-tx);
   shockwaves.push({ox:tx,oy:ty,r:CS*.3,maxR:cfg.shockMaxR||200,spd:cfg.shockSpd||3.2,dmg:effDmg,col:cfg.col,life:1,hit:new Set(),width:3,srcKey:t.key});sparks(tx,ty,cfg.col,6,1);continue;}
   if(cfg.iceTower&&cfg.iceShockwave){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;closest=e;}}if(!closest) continue;t.cd=effCd;t.angle=Math.atan2(closest.y-ty,closest.x-tx);shockwaves.push({ox:tx,oy:ty,r:CS*.3,maxR:cfg.shockMaxR||180,spd:cfg.shockSpd||3.0,dmg:effDmg,col:cfg.col,life:1,hit:new Set(),width:3,isIce:true,slowFactor:cfg.slowFactor||.40,slowDur:cfg.slowDur||120,srcKey:t.key});sparks(tx,ty,'#88ddff',6,1);continue;}
-  if(cfg.iceTower&&cfg.iceBullet){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;closest=e;}}if(!closest) continue;t.cd=effCd;t.angle=Math.atan2(closest.y-ty,closest.x-tx);projs.push({x:tx,y:ty,tgt:closest,lastX:closest.x,lastY:closest.y,spd:cfg.bulletSpd||12,dmg:effDmg,col:cfg.col,src:t,type:'iceBullet',slowFactor:cfg.slowFactor||.25,slowDur:cfg.slowDur||90,armorShred:cfg.armorShred||.15,shredDur:cfg.shredDur||130,flyFreeze:cfg.flyFreeze||.80,flySpdCap:cfg.flySpdCap||.25});sparks(tx,ty,'#4488ff',4,1.5);continue;}let tgt=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;tgt=e;}}if(!tgt) continue;t.angle=Math.atan2(tgt.y-ty,tgt.x-tx);t.cd=effCd;if(cfg.t===CT.ELECTRIC){if(cfg.burst&&cfg.burst>1){const inR=enemies.filter(e=>{const dx=e.x-tx,dy=e.y-ty;return dx*dx+dy*dy<=effRng*effRng;});inR.sort((a,b)=>(a.x-tx)**2+(a.y-ty)**2-(b.x-tx)**2-(b.y-ty)**2);for(const bt of inR.slice(0,cfg.burst)) fireElectric(tx,ty,bt,effDmg,cfg.chn);}else if(cfg.elecBall){projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:2.6,dmg:effDmg,aoe:cfg.aoe||0,chn:cfg.chn||3,chainRng:105,col:cfg.col,sz:8,type:'elecBall'});}else fireElectric(tx,ty,tgt,effDmg,cfg.chn);}else if(cfg.t===CT.SPIKE){if(cfg.hammer) projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:6,dmg:effDmg,aoe:cfg.aoe||45,chn:0,col:cfg.col,sz:6,type:'hammer',stunDur:cfg.stunDur||45});else if(cfg.rapidStrike){for(let rb=0;rb<2;rb++) projs.push({x:tx+(Math.random()-.5)*3,y:ty+(Math.random()-.5)*3,tgt,lastX:tgt.x,lastY:tgt.y,spd:8,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:3,type:'normal',src:t});}else projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:4,type:'normal'});}else if(cfg.minigun){for(let b=0;b<3;b++) projs.push({x:tx+(Math.random()-.5)*4,y:ty+(Math.random()-.5)*4,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:2,type:'normal',src:t});}else{if(cfg.t===CT.CANNON){sparks(tx,ty,'#ffcc00',5,2.5);sparks(tx,ty,cfg.col,4,3);flashes.push({x:tx,y:ty,r:12,life:6,ml:6,col:'#ffcc00'});}else if(cfg.t===CT.SNIPER){sparks(tx,ty,'#ffffff',3,4);flashes.push({x:tx,y:ty,r:9,life:5,ml:5,col:cfg.col});}projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:cfg.t===CT.SNIPER?10:5.5,dmg:effDmg,aoe:cfg.aoe||0,chn:0,col:cfg.col,sz:cfg.t===CT.CANNON?5:3,type:'normal',src:t});}}
+  if(cfg.iceTower&&cfg.iceBullet){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;closest=e;}}if(!closest) continue;t.cd=effCd;t.angle=Math.atan2(closest.y-ty,closest.x-tx);projs.push({x:tx,y:ty,tgt:closest,lastX:closest.x,lastY:closest.y,spd:cfg.bulletSpd||12,dmg:effDmg,col:cfg.col,src:t,type:'iceBullet',slowFactor:cfg.slowFactor||.25,slowDur:cfg.slowDur||90,armorShred:cfg.armorShred||.15,shredDur:cfg.shredDur||130,flyFreeze:cfg.flyFreeze||.80,flySpdCap:cfg.flySpdCap||.25});sparks(tx,ty,'#4488ff',4,1.5);continue;}let tgt=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;tgt=e;}}if(!tgt) continue;t.angle=Math.atan2(tgt.y-ty,tgt.x-tx);t.cd=effCd;if(cfg.t===CT.ELECTRIC){if(cfg.burst&&cfg.burst>1){const inR=enemies.filter(e=>{const dx=e.x-tx,dy=e.y-ty;return dx*dx+dy*dy<=effRng*effRng;});inR.sort((a,b)=>(a.x-tx)**2+(a.y-ty)**2-(b.x-tx)**2-(b.y-ty)**2);for(const bt of inR.slice(0,cfg.burst)) fireElectric(tx,ty,bt,effDmg,cfg.chn);}else if(cfg.elecBall){projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:2.6,dmg:effDmg,aoe:cfg.aoe||0,chn:cfg.chn||3,chainRng:105,col:cfg.col,sz:8,type:'elecBall'});}else fireElectric(tx,ty,tgt,effDmg,cfg.chn);}else if(cfg.t===CT.SPIKE){if(cfg.hammer) projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:6,dmg:effDmg,aoe:cfg.aoe||45,chn:0,col:cfg.col,sz:6,type:'hammer',stunDur:cfg.stunDur||45});else if(cfg.rapidStrike){for(let rb=0;rb<2;rb++) projs.push({x:tx+(Math.random()-.5)*3,y:ty+(Math.random()-.5)*3,tgt,lastX:tgt.x,lastY:tgt.y,spd:8,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:3,type:'normal',src:t});}else projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:4,type:'normal'});}else if(cfg.minigun){
+  const _mgShots=cfg.shots||3;
+  if(cfg.blasterCannon){
+    const _bsz=(t.size===2?CS*2:CS);
+    const _off=_bsz*0.27;
+    const _muz=[[tx-_bsz/2+_off,ty-_bsz/2+_off],[tx+_bsz/2-_off,ty-_bsz/2+_off],[tx-_bsz/2+_off,ty+_bsz/2-_off],[tx+_bsz/2-_off,ty+_bsz/2-_off],[tx,ty]];
+    for(let b=0;b<_mgShots;b++){
+      const[mx,my]=_muz[b%_muz.length];
+      projs.push({x:mx,y:my,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:2,type:'normal',src:t});
+      sparks(mx,my,cfg.col,4,2.2);
+      sparks(mx,my,'#ffffff',2,1.4);
+      flashes.push({x:mx,y:my,r:7,life:6,ml:6,col:'#ffffff'});
+      flashes.push({x:mx,y:my,r:10,life:8,ml:8,col:cfg.col});
+    }
+  } else {
+    for(let b=0;b<_mgShots;b++) projs.push({x:tx+(Math.random()-.5)*4,y:ty+(Math.random()-.5)*4,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:cfg.col,sz:2,type:'normal',src:t});
+  }
+}else{if(cfg.t===CT.CANNON){sparks(tx,ty,'#ffcc00',5,2.5);sparks(tx,ty,cfg.col,4,3);flashes.push({x:tx,y:ty,r:12,life:6,ml:6,col:'#ffcc00'});}else if(cfg.t===CT.SNIPER){sparks(tx,ty,'#ffffff',3,4);flashes.push({x:tx,y:ty,r:9,life:5,ml:5,col:cfg.col});}projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:cfg.t===CT.SNIPER?10:5.5,dmg:effDmg,aoe:cfg.aoe||0,chn:0,col:cfg.col,sz:cfg.t===CT.CANNON?5:3,type:'normal',src:t});}}
   // === BARBWIRE CONNECTIONS === (every barbwire tower links to every other barbwire tower in range, no chain limit)
   barbWireSegs.length=0;
   {
@@ -6016,6 +6117,68 @@ function drawTower(t){
     ctx.fillStyle=chPct>=1?'#ffffff':rcol;ctx.fillRect(rx+6,ry+rs-9,(rs-12)*chPct,4);
 
     if(selTower===t){ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.strokeRect(rx+1,ry+1,rs-2,rs-2);}
+    return;
+  }
+  if(t.cfg&&t.cfg.blasterCannon){
+    const bs=CS*(t.size===2?2:1),bx=t.col*CS,by=t.row*CS,bcx=bx+bs/2,bcy=by+bs/2;
+    const bcfg=t.cfg,bfl=t.hitFlash>0,bcol=bfl?'#ff4444':bcfg.col;
+    const bpulse=(Math.sin(_frm*.08)+1)*.5;
+    // base armor plate
+    ctx.fillStyle=bfl?'#1a0808':'#160a02';ctx.fillRect(bx+2,by+2,bs-4,bs-4);
+    ctx.strokeStyle=bcol+'55';ctx.lineWidth=1;ctx.strokeRect(bx+6,by+6,bs-12,bs-12);
+    ctx.strokeStyle=bcol;ctx.lineWidth=2;ctx.strokeRect(bx+3,by+3,bs-6,bs-6);
+    const brivets=[[bx+7,by+7],[bx+bs-7,by+7],[bx+7,by+bs-7],[bx+bs-7,by+bs-7]];
+    for(const[vx,vy] of brivets){ctx.beginPath();ctx.arc(vx,vy,2.4,0,Math.PI*2);ctx.fillStyle=bcol+'aa';ctx.fill();ctx.strokeStyle='#000';ctx.lineWidth=0.6;ctx.stroke();}
+    if(bcfg.chargeShockwave){
+      // ── SHOCK CANNON: single bulky charging barrel ──
+      const chPctB=Math.min(1,(t.railCharge||0)/(bcfg.chargeTime||1));
+      const RB=bs*0.34;
+      if(chPctB>0.05){ctx.save();const haloR=RB*(1.3+chPctB*.7);const halo=ctx.createRadialGradient(bcx,bcy,RB*.6,bcx,bcy,haloR);halo.addColorStop(0,bcol+'00');halo.addColorStop(.7,bcol+Math.floor(20+chPctB*55).toString(16).padStart(2,'0'));halo.addColorStop(1,'transparent');ctx.fillStyle=halo;ctx.beginPath();ctx.arc(bcx,bcy,haloR,0,Math.PI*2);ctx.fill();ctx.restore();}
+      ctx.save();ctx.translate(bcx,bcy);
+      ctx.beginPath();ctx.arc(0,0,RB,0,Math.PI*2);ctx.fillStyle='#1a0f02';ctx.fill();ctx.strokeStyle=bcol;ctx.lineWidth=2.4;ctx.stroke();
+      if(chPctB>0.35){ctx.save();ctx.globalAlpha=Math.min(1,(chPctB-0.35)*1.4);ctx.strokeStyle='#ffffff';ctx.lineWidth=1.1;const arcN=2+Math.floor(chPctB*3);for(let ai=0;ai<arcN;ai++){const seed=_frm*1.7+ai*97.3+t.id*13.1;const a0=(Math.sin(seed)*.5+.5)*Math.PI*2,a1=a0+0.5+Math.sin(seed*1.3)*.4;const p0x=Math.cos(a0)*RB*1.05,p0y=Math.sin(a0)*RB*1.05,p1x=Math.cos(a1)*RB*1.05,p1y=Math.sin(a1)*RB*1.05;ctx.beginPath();ctx.moveTo(p0x,p0y);ctx.lineTo((p0x+p1x)/2+Math.sin(seed*2)*RB*.3,(p0y+p1y)/2+Math.cos(seed*2)*RB*.3);ctx.lineTo(p1x,p1y);ctx.stroke();}ctx.restore();}
+      ctx.rotate(t.angle||0);
+      const bl=RB*2.1;
+      ctx.fillStyle='#0c0800';ctx.fillRect(RB*0.15,-bs*.09,bl-RB*0.15,bs*.18);
+      ctx.strokeStyle=bcol;ctx.lineWidth=2;ctx.strokeRect(RB*0.15,-bs*.09,bl-RB*0.15,bs*.18);
+      ctx.save();ctx.globalAlpha=.4+chPctB*.5+bpulse*.1;const cGrad=ctx.createLinearGradient(RB*0.3,0,bl,0);cGrad.addColorStop(0,bcol+'00');cGrad.addColorStop(.6,bcol);cGrad.addColorStop(1,'#ffffff');ctx.strokeStyle=cGrad;ctx.lineWidth=Math.max(2,bs*.05);ctx.beginPath();ctx.moveTo(RB*0.3,0);ctx.lineTo(bl,0);ctx.stroke();ctx.restore();
+      if(chPctB>0){ctx.save();ctx.globalAlpha=Math.min(1,chPctB*.9);const mg=ctx.createRadialGradient(bl,0,0,bl,0,bs*.24*(0.5+chPctB*.8));mg.addColorStop(0,'#ffffff');mg.addColorStop(.5,bcol);mg.addColorStop(1,'transparent');ctx.fillStyle=mg;ctx.beginPath();ctx.arc(bl,0,bs*.24*(0.5+chPctB*.8),0,Math.PI*2);ctx.fill();ctx.restore();}
+      ctx.restore();
+      const coreRB=bs*0.075;ctx.save();ctx.globalAlpha=.5+bpulse*.3;const cGlow=ctx.createRadialGradient(bcx,bcy,0,bcx,bcy,coreRB*2.5);cGlow.addColorStop(0,bcol);cGlow.addColorStop(1,'transparent');ctx.fillStyle=cGlow;ctx.beginPath();ctx.arc(bcx,bcy,coreRB*2.5,0,Math.PI*2);ctx.fill();ctx.restore();
+      ctx.beginPath();ctx.arc(bcx,bcy,coreRB,0,Math.PI*2);ctx.fillStyle='#ffffff';ctx.fill();ctx.strokeStyle=bcol;ctx.lineWidth=1.5;ctx.stroke();
+      if(chPctB>0){ctx.save();ctx.translate(bcx,bcy);ctx.rotate(-Math.PI/2);ctx.strokeStyle='#201000';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,RB+7,0,Math.PI*2);ctx.stroke();ctx.strokeStyle=chPctB>=1?'#ffffff':bcol;ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,RB+7,0,Math.PI*2*chPctB);ctx.stroke();ctx.restore();}
+      ctx.fillStyle='#201000';ctx.fillRect(bx+6,by+bs-9,bs-12,4);
+      ctx.fillStyle=chPctB>=1?'#ffffff':bcol;ctx.fillRect(bx+6,by+bs-9,(bs-12)*chPctB,4);
+    } else {
+      // ── GATLING FORTRESS: big central minigun + 4 small corner miniguns ──
+      const drawGat=(gx,gy,gR,gAngle,spinSpeed)=>{
+        ctx.save();ctx.translate(gx,gy);
+        ctx.beginPath();ctx.arc(0,0,gR,0,Math.PI*2);ctx.fillStyle='#0a0500';ctx.fill();ctx.strokeStyle=bcol;ctx.lineWidth=Math.max(1.2,gR*.14);ctx.stroke();
+        ctx.rotate(gAngle);
+        const barrelN=5,bLen=gR*1.9;
+        ctx.save();ctx.rotate(_frm*spinSpeed);
+        for(let bi=0;bi<barrelN;bi++){
+          const ba=bi/barrelN*Math.PI*2;
+          ctx.save();ctx.rotate(ba);
+          ctx.strokeStyle=bcol;ctx.lineWidth=Math.max(1.4,gR*.16);ctx.lineCap='round';
+          ctx.beginPath();ctx.moveTo(gR*.18,0);ctx.lineTo(gR*.18+ (gR*.18),0);ctx.stroke();
+          ctx.restore();
+        }
+        ctx.restore();
+        ctx.strokeStyle=bcol;ctx.lineWidth=Math.max(1.6,gR*.2);ctx.lineCap='round';
+        ctx.beginPath();ctx.moveTo(gR*.3,0);ctx.lineTo(bLen,0);ctx.stroke();
+        ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(0,0,gR*.22,0,Math.PI*2);ctx.fill();
+        ctx.restore();
+      };
+      const cornerOff=bs*0.27;
+      drawGat(bx+cornerOff,by+cornerOff,bs*.11,t.angle||0,.05);
+      drawGat(bx+bs-cornerOff,by+cornerOff,bs*.11,t.angle||0,-.05);
+      drawGat(bx+cornerOff,by+bs-cornerOff,bs*.11,t.angle||0,-.05);
+      drawGat(bx+bs-cornerOff,by+bs-cornerOff,bs*.11,t.angle||0,.05);
+      drawGat(bcx,bcy,bs*.24,t.angle||0,.09);
+      ctx.save();ctx.globalAlpha=.4+bpulse*.3;const bGlow=ctx.createRadialGradient(bcx,bcy,0,bcx,bcy,bs*.3);bGlow.addColorStop(0,bcol+'55');bGlow.addColorStop(1,'transparent');ctx.fillStyle=bGlow;ctx.beginPath();ctx.arc(bcx,bcy,bs*.3,0,Math.PI*2);ctx.fill();ctx.restore();
+    }
+    if(selTower===t){ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.strokeRect(bx+1,by+1,bs-2,bs-2);}
     return;
   }
   const x=t.col*CS,y=t.row*CS,cx=x+CS/2,cy=y+CS/2;
