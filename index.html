@@ -1717,6 +1717,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     <button id="up-merge-btn" style="display:none;background:#001a2a;border:1px solid #00eeff;color:#00eeff;font-family:'Share Tech Mono',monospace;font-size:10px;padding:8px;cursor:pointer;letter-spacing:1px;margin-bottom:6px;">⚡ MERGE 2x2 INTO RAILGUN CANNON</button>
     <button id="up-merge-btn2" style="display:none;background:#1a1200;border:1px solid #ffaa00;color:#ffaa00;font-family:'Share Tech Mono',monospace;font-size:10px;padding:8px;cursor:pointer;letter-spacing:1px;margin-bottom:6px;">🔫 MERGE 2x2 INTO BLASTER CANNON</button>
     <button id="up-merge-btn3" style="display:none;background:#1a0a00;border:1px solid #ff8800;color:#ff8800;font-family:'Share Tech Mono',monospace;font-size:10px;padding:8px;cursor:pointer;letter-spacing:1px;margin-bottom:6px;">💣 MERGE 2x2 INTO SIEGE CANNON</button>
+    <button id="up-merge-btn4" style="display:none;background:#001824;border:1px solid #33bbff;color:#33bbff;font-family:'Share Tech Mono',monospace;font-size:10px;padding:8px;cursor:pointer;letter-spacing:1px;margin-bottom:6px;">🛡 MERGE 2x2 INTO BARRIER CANNON</button>
     <button id="silo-mark-btn" style="display:none;background:#0a0500;border:1px solid #ff6600;color:#ff6600;font-family:'Share Tech Mono',monospace;font-size:11px;padding:8px;cursor:pointer;width:100%;text-align:left;letter-spacing:1px;transition:all .15s;">🎯 MANUAL TARGET</button>
     <div id="silo-target-info" style="display:none;font-size:9px;color:#ff8800;padding:2px 0 4px 0;letter-spacing:1px;"></div>
     <!-- SACRIFICE TEMPLE PANEL -->
@@ -2216,7 +2217,7 @@ const BASE_R=7,BASE_C=COLS-1,SPAWN_R=1,SPAWN_C=0;
 const CT={EMPTY:0,WALL:1,BASIC:2,SNIPER:3,CANNON:4,BASE:5,SPAWN:6,ELECTRIC:7,HEALER:8,SPIKE:9,BUFF:10,MINE:11,HELI:12,FLAME:13,BHOLE:14,LASER:15,DRONE:16,ICE:17,BARRACKS:18,SILO:19,MECH_BASE:20,BARBWIRE:21,PATH:22,COWBOY:23,NECRO:24};
 const ML=5;
 const HERO_ML=10; // Hero towers have 10 levels
-function getML(key){if(key==='hero_score')return 6;if(key==='railgun_cannon'||key==='blaster_cannon'||key==='siege_cannon')return 5;return(key==='hero_accel'||key==='hero_sacrifice')?HERO_ML:ML;}
+function getML(key){if(key==='hero_score')return 6;if(key==='railgun_cannon'||key==='blaster_cannon'||key==='siege_cannon'||key==='barrier_cannon')return 5;return(key==='hero_accel'||key==='hero_sacrifice')?HERO_ML:ML;}
 function towerAt(r,c){for(const t of towers){if(t.size===2){if(r>=t.row&&r<=t.row+1&&c>=t.col&&c<=t.col+1) return t;}else if(t.row===r&&t.col===c) return t;}return null;}
 function clearTowerGrid(t){if(t.size===2){grid[t.row][t.col]=CT.EMPTY;grid[t.row][t.col+1]=CT.EMPTY;grid[t.row+1][t.col]=CT.EMPTY;grid[t.row+1][t.col+1]=CT.EMPTY;}else{grid[t.row][t.col]=CT.EMPTY;}}
 function findRailgunGroup(t){
@@ -2261,6 +2262,40 @@ function findSiegeGroup(t){
   }
   return null;
 }
+function findBarrierGroup(t){
+  if(!t||t.key!=='wall'||t.level!==1) return null;
+  for(const[dr,dc] of[[0,0],[0,-1],[-1,0],[-1,-1]]){
+    const ar=t.row+dr,ac=t.col+dc;
+    if(ar<0||ac<0||ar+1>=ROWS||ac+1>=COLS) continue;
+    const cells=[[ar,ac],[ar,ac+1],[ar+1,ac],[ar+1,ac+1]];
+    const members=cells.map(([r,c])=>towerAt(r,c));
+    if(members.every(m=>m&&m.key==='wall'&&m.level===1&&m.size!==2)){
+      if(MP.active&&!members.every(m=>MP.canInteractTower(m))) continue;
+      return{anchorRow:ar,anchorCol:ac,members:[...new Set(members)]};
+    }
+  }
+  return null;
+}
+function applyBarrierAbsorb(targetTower,atkEnemy,dmgAmount){
+  if(!targetTower) return dmgAmount;
+  const tx=targetTower.col*CS+(targetTower.size===2?CS:CS/2),ty=targetTower.row*CS+(targetTower.size===2?CS:CS/2);
+  for(const bt of towers){
+    if(bt===targetTower||!bt.cfg||!bt.cfg.barrierCannon||bt.stunned>0||bt.hp<=0) continue;
+    const bx=bt.col*CS+CS,by=bt.row*CS+CS;
+    const dx=tx-bx,dy=ty-by;
+    if(dx*dx+dy*dy<=bt.cfg.absorbRadius*bt.cfg.absorbRadius){
+      const absorbed=dmgAmount*bt.cfg.absorbPct;
+      const selfDmg=absorbed*bt.cfg.selfDmgPct;
+      bt.hp-=selfDmg;bt.hitFlash=10;
+      sparks(bx,by,'#66ccff',6,1.5);
+      if(atkEnemy&&!atkEnemy.robot&&!atkEnemy.stunImmune) applyStun(atkEnemy,bt.cfg.stunDur||60);
+      if(atkEnemy&&bt.cfg.thorns) atkEnemy.hp-=bt.cfg.thorns;
+      if(bt.hp<=0) destroyTower(bt);
+      return Math.max(0,dmgAmount-absorbed);
+    }
+  }
+  return dmgAmount;
+}
 const BSET=new Set([CT.WALL,CT.BASIC,CT.SNIPER,CT.CANNON,CT.ELECTRIC,CT.HEALER,CT.SPIKE,CT.BUFF,CT.MINE,CT.HELI,CT.FLAME,CT.BHOLE,CT.LASER,CT.ICE,CT.BARRACKS,CT.SILO,CT.MECH_BASE,CT.BARBWIRE,CT.COWBOY,CT.NECRO]);
 // ── MAP SYSTEM ──
 const LAST_LIGHT_PATH=[[1,0],[1,1],[1,2],[1,3],[1,4],[2,4],[3,4],[4,4],[5,4],[5,3],[5,2],[5,1],[6,1],[7,1],[8,1],[9,1],[9,2],[9,3],[9,4],[9,5],[9,6],[9,7],[9,8],[8,8],[7,8],[6,8],[5,8],[4,8],[3,8],[3,9],[3,10],[3,11],[3,12],[3,13],[4,13],[5,13],[6,13],[7,13],[8,13],[9,13],[10,13],[11,13],[11,14],[11,15],[11,16],[11,17],[11,18],[10,18],[9,18],[8,18],[7,18],[7,19],[7,20],[7,21]];
@@ -2294,7 +2329,7 @@ const TS={
     '5B':{t:CT.SNIPER,cost:9500,hp:1300,rng:9999,dmg:1422, cd:75, chargeTime:35, col:'#eeffff',name:'ANNIHILATOR RAILGUN',railgunTower:true,beamWidth:17}
   },
   blaster_cannon:{
-    1  :{t:CT.BASIC,cost:0,   hp:450, rng:220,dmg:25,  cd:90, aoe:0,chn:0,col:'#ffaa00',name:'BLASTER CANNON',blasterCannon:true,minigun:true,shots:5},
+    1  :{t:CT.BASIC,cost:0,   hp:450, rng:250,dmg:45,  cd:60, aoe:0,chn:0,col:'#ffaa00',name:'BLASTER CANNON',blasterCannon:true,minigun:true,shots:5},
     '2A':{t:CT.BASIC,cost:1200,hp:600, rng:260,dmg:68,  cd:36, aoe:0,chn:0,col:'#ffbb22',name:'GATLING FORTRESS',blasterCannon:true,minigun:true,shots:5},
     '2B':{t:CT.BASIC,cost:1200,hp:550, rng:260,dmg:175, cd:120,chargeTime:180,col:'#ff6622',name:'SHOCK CANNON',blasterCannon:true,chargeShockwave:true,stunDur:110,blastRadius:150},
     '3A':{t:CT.BASIC,cost:3100,hp:800, rng:300,dmg:91,  cd:27, aoe:0,chn:0,col:'#ffcc33',name:'GATLING FORTRESS+',blasterCannon:true,minigun:true,shots:5},
@@ -2314,6 +2349,13 @@ const TS={
     '4B':{t:CT.CANNON,cost:5200,hp:860, rng:325,dmg:900, cd:60, aoe:330,chn:0,col:'#ff3300',name:'DEVASTATOR SIEGE++',siegeCannon:true,ballistic:true},
     '5A':{t:CT.CANNON,cost:6200,hp:1150,rng:430,dmg:420, cd:8,  aoe:200,chn:0,col:'#ffdd44',name:'ARTILLERY PRIME',siegeCannon:true,ballistic:true},
     '5B':{t:CT.CANNON,cost:12000,hp:1150,rng:380,dmg:2200,cd:170,aoe:460,chn:0,col:'#ff2200',name:'OBLITERATOR PRIME',siegeCannon:true,ballistic:true}
+  },
+  barrier_cannon:{
+    1:{t:CT.WALL,cost:0,   hp:1500,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#4a90c4',name:'BARRIER CANNON',barrierCannon:true,absorbRadius:110,absorbPct:1,selfDmgPct:.5,stunDur:35,thorns:0,wallRegen:0},
+    2:{t:CT.WALL,cost:900, hp:2200,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#3fb0e8',name:'BULWARK PROTOCOL',barrierCannon:true,absorbRadius:140,absorbPct:1,selfDmgPct:.45,stunDur:50,thorns:0,wallRegen:0},
+    3:{t:CT.WALL,cost:1800,hp:3400,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#33bbff',name:'BULWARK PROTOCOL+',barrierCannon:true,absorbRadius:175,absorbPct:1,selfDmgPct:.35,stunDur:70,thorns:40,wallRegen:20},
+    4:{t:CT.WALL,cost:3200,hp:5000,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#2299ff',name:'BULWARK PROTOCOL++',barrierCannon:true,absorbRadius:215,absorbPct:1,selfDmgPct:.28,stunDur:90,thorns:65,wallRegen:32},
+    5:{t:CT.WALL,cost:5200,hp:7200,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#1188ff',name:'ABSOLUTE BULWARK',barrierCannon:true,absorbRadius:255,absorbPct:1,selfDmgPct:.2,stunDur:115,thorns:95,wallRegen:48}
   },
   sniper:{1:{t:CT.SNIPER,cost:160,hp:60,rng:285,dmg:42,cd:100,aoe:0,chn:0,col:'#bb44ff',name:'RAILGUN'},'2A':{t:CT.SNIPER,cost:275,hp:92,rng:302,dmg:112,cd:108,aoe:0,chn:0,col:'#cc55ff',name:'OVERCHARGE'},'2B':{t:CT.SNIPER,cost:375,hp:92,rng:278,dmg:50,cd:98,aoe:72,chn:0,col:'#ff44bb',name:'EXPLOSIVE'},'3A':{t:CT.SNIPER,cost:375,hp:125,rng:325,dmg:224,cd:105,aoe:0,chn:0,col:'#dd66ff',name:'OVERCHARGE+'},'3B':{t:CT.SNIPER,cost:475,hp:125,rng:295,dmg:66,cd:88,aoe:115,chn:0,col:'#ff55cc',name:'EXPLOSIVE+'},'4A':{t:CT.SNIPER,cost:575,hp:168,rng:355,dmg:350,cd:102,aoe:0,chn:0,col:'#ee88ff',name:'OVERCHARGE++'},'4B':{t:CT.SNIPER,cost:675,hp:168,rng:315,dmg:92,cd:78,aoe:150,chn:0,col:'#ff77dd',name:'EXPLOSIVE++'},'5A':{t:CT.SNIPER,cost:775,hp:225,rng:410,dmg:560,cd:98,aoe:0,chn:0,col:'#ffaaff',name:'RAILGUN MK5'},'5B':{t:CT.SNIPER,cost:1200,hp:225,rng:345,dmg:200,cd:65,aoe:205,chn:0,col:'#ff88ff',name:'NOVA CANNON'}},
   cannon:{1:{t:CT.CANNON,cost:200,hp:100,rng:175,dmg:35,cd:75,aoe:55,chn:0,col:'#ff8800',name:'CANNON'},'2A':{t:CT.CANNON,cost:250,hp:138,rng:232,dmg:42,cd:45,aoe:62,chn:0,col:'#ff9900',name:'RAPID FIRE'},'2B':{t:CT.CANNON,cost:400,hp:138,rng:198,dmg:78,cd:78,aoe:105,chn:0,col:'#ff6600',name:'DEVASTATOR'},'3A':{t:CT.CANNON,cost:350,hp:180,rng:280,dmg:50,cd:30,aoe:68,chn:0,col:'#ffaa00',name:'RAPID FIRE+'},'3B':{t:CT.CANNON,cost:600,hp:180,rng:218,dmg:125,cd:68,aoe:152,chn:0,col:'#ff4400',name:'DEVASTATOR+'},'4A':{t:CT.CANNON,cost:450,hp:240,rng:330,dmg:68,cd:20,aoe:80,chn:0,col:'#ffcc00',name:'RAPID FIRE++'},'4B':{t:CT.CANNON,cost:900,hp:240,rng:248,dmg:200,cd:58,aoe:210,chn:0,col:'#ff3300',name:'DEVASTATOR++'},'5A':{t:CT.CANNON,cost:1000,hp:320,rng:400,dmg:100,cd:14,aoe:95,chn:0,col:'#ffdd44',name:'ARTILLERY'},'5B':{t:CT.CANNON,cost:2000,hp:320,rng:275,dmg:420,cd:248,aoe:480,chn:1,col:'#ff2200',name:'OBLITERATOR'}},
@@ -2439,7 +2481,7 @@ const PATH_NAMES={railgun_cannon:{A:'SIEGE (slow/heavy)',B:'RAPID (fast/light)'}
 const PATH_COLORS={railgun_cannon:{A:'#33bbff',B:'#99eeff'},blaster_cannon:{A:'#ffcc33',B:'#ff5511'},siege_cannon:{A:'#ff9900',B:'#ff3300'},basic:{A:'#33aaff',B:'#55ddff'},sniper:{A:'#cc55ff',B:'#ff44bb'},cannon:{A:'#ff9900',B:'#ff6600'},electric:{A:'#aaff00',B:'#88ff44'},healer:{A:'#00ccff',B:'#00ffcc'},spike:{A:'#ff4488',B:'#ff2255'},buff:{A:'#ffd700',B:'#ff8800'},mine:{A:'#ffe066',B:'#ffd700'},heli:{A:'#00ffaa',B:'#44ffcc'},flame:{A:'#ff4400',B:'#44ff88'},ice:{A:'#44ccff',B:'#4488ff'},bhole:{A:'#cc66ff',B:'#ff44aa'},laser:{A:'#00ccff',B:'#ff88ff'},barracks:{A:'#ff8844',B:'#33ccff',C:'#cc8800'},silo:{A:'#ff4400',B:'#cc55ff'},hero_accel:{A:'#ffe066'},hero_score:{A:'#ff44aa',B:'#ffaa00'},hero_sacrifice:{A:'#ff1144',B:'#aa22ff'},mech_base:{A:'#ff3311',B:'#2299ee',C:'#44ee77'},admindrone:{A:'#ff44ff',B:'#44ffee'},barbwire:{A:'#c8a874',B:'#ff5533'},cowboy:{A:'#ffdca8',B:'#c8955a'},necromancer:{A:'#bb8fff',B:'#6a4a9a'}};
 
 function getCfg(key,lvl,path){if(key==='wall') return TS.wall[Math.min(lvl,5)]||TS.wall[1];if(lvl===1) return TS[key][1];return TS[key][lvl+(path||'')]||TS[key][1];}
-function upgCost(key,toLvl,path){if(key==='wall'){const s=TS.wall[Math.min(toLvl,5)];return s?s.cost:TS.wall[1].cost;}if(toLvl===2){const lk2='2'+(path||'A');const s2=TS[key]&&TS[key][lk2];if(s2) return s2.cost;const sA=TS[key]&&TS[key]['2A'];return sA?sA.cost:Math.round(TS[key][1].cost*0.6);}const lk=toLvl+(path||'A');const s=TS[key]&&TS[key][lk];if(s) return s.cost;const base=TS[key][1].cost;if(toLvl===3) return Math.round(base*1.0);if(toLvl===4) return Math.round(base*1.45);if(toLvl===5) return Math.round(base*2.0);if(toLvl===6) return Math.round(base*3.2);if(toLvl===7) return Math.round(base*4.5);if(toLvl===8) return Math.round(base*6.2);if(toLvl===9) return Math.round(base*8.5);if(toLvl===10) return Math.round(base*12.0);return Math.round(base*1.2);}
+function upgCost(key,toLvl,path){if(key==='wall'){const s=TS.wall[Math.min(toLvl,5)];return s?s.cost:TS.wall[1].cost;}if(TS[key]&&TS[key][toLvl]&&!TS[key][toLvl+'A']&&!TS[key][toLvl+'B']) return TS[key][toLvl].cost;if(toLvl===2){const lk2='2'+(path||'A');const s2=TS[key]&&TS[key][lk2];if(s2) return s2.cost;const sA=TS[key]&&TS[key]['2A'];return sA?sA.cost:Math.round(TS[key][1].cost*0.6);}const lk=toLvl+(path||'A');const s=TS[key]&&TS[key][lk];if(s) return s.cost;const base=TS[key][1].cost;if(toLvl===3) return Math.round(base*1.0);if(toLvl===4) return Math.round(base*1.45);if(toLvl===5) return Math.round(base*2.0);if(toLvl===6) return Math.round(base*3.2);if(toLvl===7) return Math.round(base*4.5);if(toLvl===8) return Math.round(base*6.2);if(toLvl===9) return Math.round(base*8.5);if(toLvl===10) return Math.round(base*12.0);return Math.round(base*1.2);}
 
 const BASE_UPG={A:{1:{cost:200,hpBonus:50,turretDmg:25,turretRng:180,turretCd:75,name:'FORTRESS I'},2:{cost:600,hpBonus:100,turretDmg:50,turretRng:200,turretCd:40,name:'FORTRESS II'},3:{cost:2200,hpBonus:600,turretDmg:90,turretRng:220,turretCd:30,name:'FORTRESS III'},4:{cost:4500,hpBonus:2000,turretDmg:160,turretRng:250,turretCd:22,name:'CITADEL'},5:{cost:8000,hpBonus:5000,turretDmg:280,turretRng:300,turretCd:14,name:'FORTRESS MAX'}},B:{1:{cost:250,goldPerWave:30,name:'TREASURY I'},2:{cost:500,goldPerWave:65,name:'TREASURY II'},3:{cost:900,goldPerWave:110,name:'TREASURY III'},4:{cost:1800,goldPerWave:180,name:'VAULT'},5:{cost:3500,goldPerWave:300,name:'TREASURY MAX'}}};
 const BASE_ML=5;
@@ -4366,6 +4408,10 @@ function showPanel(t){
   const siegeGrp=findSiegeGroup(t);
   mergeBtn3.style.display='none';
   if(siegeGrp){mergeBtn3.style.display='';mergeBtn3.disabled=false;}
+  const mergeBtn4=document.getElementById('up-merge-btn4');
+  const barrierGrp=findBarrierGroup(t);
+  mergeBtn4.style.display='none';
+  if(barrierGrp){mergeBtn4.style.display='';mergeBtn4.disabled=false;}
   if(isSacTemple){
     // Temple never uses path/upgrade buttons
     pr.style.display='none';ub.style.display='none';
@@ -4499,6 +4545,16 @@ document.getElementById('up-merge-btn3').addEventListener('click',()=>{
   const nt={row:ar,col:ac,size:2,key:'siege_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.cannon[1].cost),0)};
   towers.push(nt);bfs();hidePanel();msg('💣 SIEGE CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:siegeMerge',{pid:MP.playerId,row:ar,col:ac});
+});
+document.getElementById('up-merge-btn4').addEventListener('click',()=>{
+  if(!selTower) return;const grp=findBarrierGroup(selTower);if(!grp) return;
+  const{anchorRow:ar,anchorCol:ac,members}=grp;
+  for(const m of members){const idx=towers.indexOf(m);if(idx!==-1) towers.splice(idx,1);}
+  const cfg=getCfg('barrier_cannon',1,null);
+  grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
+  const nt={row:ar,col:ac,size:2,key:'barrier_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.wall[1].cost),0)};
+  towers.push(nt);bfs();hidePanel();msg('🛡 BARRIER CANNON ASSEMBLED!',2200);syncUI();
+  if(MP.active) MP.broadcast('tower:barrierMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-sell-btn').addEventListener('click',()=>{if(!selTower) return;const t=selTower;const ti=towers.indexOf(t);if(ti===-1) return;if(MP.active&&!MP.canInteractTower(t)){msg(MP.getTowerOwnerMsg(t)||'Not your tower',2000);return;}const ref=Math.floor((t.totalGoldSpent||TS[t.key][1].cost)*.5);if(t.key==='healer'&&t.path==='A'&&t.level>=2){const bon=t.level===2?25:t.level===3?55:t.level===4?90:140;baseMaxHP=Math.max(150,baseMaxHP-bon);baseHP=Math.min(baseHP,baseMaxHP);}if(t.key==='heli'){const hi=helicopters.findIndex(h=>h.towerId===t.id);if(hi!==-1) helicopters.splice(hi,1);}if(t.key==='barracks'||t.key==='mech_base'||t.key==='cowboy'||t.key==='necromancer'){for(let ai=allies.length-1;ai>=0;ai--){if(allies[ai]&&allies[ai].towerId===t.id){sparks(allies[ai].x,allies[ai].y,'#ff4444',5,2);allies.splice(ai,1);}}}gold+=ref;const row=t.row,col=t.col;towers.splice(ti,1);clearTowerGrid(t);bfs();ft(col*CS+CS/2,row*CS,'+'+ref+'g');hidePanel();syncUI();if(MP.active){MP.broadcast('tower:sell',{pid:MP.playerId,row,col});MP.updatePlayerGold();}});
 document.getElementById('sbtn').addEventListener('click',()=>{
@@ -5053,7 +5109,7 @@ function update(){
       e.mirrorImmCd--;
       if(e.mirrorImmCd<=0){e.mirrorImmCd=90;let bestK=null,bestV=0;for(const k in e.dmgByType){if(e.dmgByType[k]>bestV){bestV=e.dmgByType[k];bestK=k;}}e.mirrorImmuneType=bestK;}
     }
-    if(e.flying){e.flyWob+=.04;const dx=bx-e.x,dy=(by-e.altitude)-e.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<CS*.7){baseHP-=e.atkDmg*2.5;if(baseHP<=0){baseHP=0;doGameOver();}enemies.splice(i,1);sparks(e.x,e.y,e.col,10,2.5);ft(bx,by-16,`-${Math.round(e.atkDmg*2.5)}`,'#ff4444');syncUI();continue;}e.x+=dx/dist*e.spd;e.y+=dy/dist*e.spd;continue;}if(e.mode==='attackBase'){const dx=bx-e.x,dy=by-e.y,d=Math.sqrt(dx*dx+dy*dy);if(d>CS*.45){e.x+=dx/d*e.spd*.55;e.y+=dy/d*e.spd*.55;}if(e.atkCd<=0){e.atkCd=e.atkCdB;baseHP-=e.atkDmg*.6*(e.guardianBuffed?1.5:1);sparks(bx+(Math.random()-.5)*18,by+(Math.random()-.5)*18,'#ff4444',3,1.2);addLx(e.x,e.y,bx,by,'#ff3300');if(baseHP<=0){baseHP=0;doGameOver();}syncUI();}else e.atkCd--;continue;}if(e.mode==='attack'){if(!e.atkTarget||!towers.includes(e.atkTarget)){e.mode='move';e.atkTarget=null;continue;}const tx=e.atkTarget.col*CS+CS/2,ty=e.atkTarget.row*CS+CS/2;const dx=tx-e.x,dy=ty-e.y,d=Math.sqrt(dx*dx+dy*dy);if(d>CS*.55){e.x+=dx/d*e.spd*.8;e.y+=dy/d*e.spd*.8;}else{if(e.atkCd<=0){e.atkCd=e.atkCdB;e.atkTarget.hp-=e.atkDmg*(e.guardianBuffed?1.5:1);e.atkTarget.hitFlash=9;sparks(tx,ty,e.col,4,1.2);addLx(e.x,e.y,tx,ty,'#ff4444');if(e.atkTarget.cfg.thorns) e.hp-=e.atkTarget.cfg.thorns;if(e.atkTarget.hp<=0) destroyTower(e.atkTarget);}else e.atkCd--;}continue;}if(e.isBoss&&e.bossType==='commander'){if(!e.cmdHealCd) e.cmdHealCd=0;if(!e.cmdStrikeCd) e.cmdStrikeCd=0;e.cmdHealCd--;e.cmdStrikeCd--;if(e.cmdHealCd<=0){e.cmdHealCd=180;let healed=0;for(const oe of enemies){if(oe===e) continue;const hdx=oe.x-e.x,hdy=oe.y-e.y;if(hdx*hdx+hdy*hdy<=120*120&&oe.hp<oe.mhp){const heal=Math.round(oe.mhp*.15);oe.hp=Math.min(oe.mhp,oe.hp+heal);healed++;addBeam(e.x,e.y,oe.x,oe.y);sparks(oe.x,oe.y,'#ffdd00',5,1.5);}}if(healed>0){ft(e.x,e.y-e.sz-14,'HEAL +'+(healed),'#ffdd00');sparks(e.x,e.y,'#ffdd00',10,2);}}if(e.cmdStrikeCd<=0){e.cmdStrikeCd=360;let strikeTgt=null,bestD=Infinity;for(const t of towers){if(t.cfg.t===CT.WALL) continue;const tdx=t.col*CS+CS/2-e.x,tdy=t.row*CS+CS/2-e.y,td=tdx*tdx+tdy*tdy;if(td<bestD){bestD=td;strikeTgt=t;}}if(strikeTgt){const sx=strikeTgt.col*CS+CS/2,sy=strikeTgt.row*CS+CS/2;for(const t of towers){const adx=t.col*CS+CS/2-sx,ady=t.row*CS+CS/2-sy;if(adx*adx+ady*ady<=85*85){t.hp-=35;t.hitFlash=18;t.stunned=Math.max(t.stunned||0,90);sparks(t.col*CS+CS/2,t.row*CS+CS/2,'#ff4400',12,3);if(t.hp<=0) destroyTower(t);}}ft(sx,sy-20,'⚡ AIRSTRIKE!','#ff4400');sparks(sx,sy,'#ff6600',20,4);lxfx.push({x1:sx,y1:0,x2:sx,y2:sy,col:'#ff4400',life:15,ml:15});}}}
+    if(e.flying){e.flyWob+=.04;const dx=bx-e.x,dy=(by-e.altitude)-e.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<CS*.7){baseHP-=e.atkDmg*2.5;if(baseHP<=0){baseHP=0;doGameOver();}enemies.splice(i,1);sparks(e.x,e.y,e.col,10,2.5);ft(bx,by-16,`-${Math.round(e.atkDmg*2.5)}`,'#ff4444');syncUI();continue;}e.x+=dx/dist*e.spd;e.y+=dy/dist*e.spd;continue;}if(e.mode==='attackBase'){const dx=bx-e.x,dy=by-e.y,d=Math.sqrt(dx*dx+dy*dy);if(d>CS*.45){e.x+=dx/d*e.spd*.55;e.y+=dy/d*e.spd*.55;}if(e.atkCd<=0){e.atkCd=e.atkCdB;baseHP-=e.atkDmg*.6*(e.guardianBuffed?1.5:1);sparks(bx+(Math.random()-.5)*18,by+(Math.random()-.5)*18,'#ff4444',3,1.2);addLx(e.x,e.y,bx,by,'#ff3300');if(baseHP<=0){baseHP=0;doGameOver();}syncUI();}else e.atkCd--;continue;}if(e.mode==='attack'){if(!e.atkTarget||!towers.includes(e.atkTarget)){e.mode='move';e.atkTarget=null;continue;}const tx=e.atkTarget.col*CS+CS/2,ty=e.atkTarget.row*CS+CS/2;const dx=tx-e.x,dy=ty-e.y,d=Math.sqrt(dx*dx+dy*dy);if(d>CS*.55){e.x+=dx/d*e.spd*.8;e.y+=dy/d*e.spd*.8;}else{if(e.atkCd<=0){e.atkCd=e.atkCdB;const _rawAtkDmg=e.atkDmg*(e.guardianBuffed?1.5:1);const _finalAtkDmg=applyBarrierAbsorb(e.atkTarget,e,_rawAtkDmg);e.atkTarget.hp-=_finalAtkDmg;e.atkTarget.hitFlash=9;sparks(tx,ty,e.col,4,1.2);addLx(e.x,e.y,tx,ty,'#ff4444');if(e.atkTarget.cfg.thorns) e.hp-=e.atkTarget.cfg.thorns;if(e.atkTarget.hp<=0) destroyTower(e.atkTarget);}else e.atkCd--;}continue;}if(e.isBoss&&e.bossType==='commander'){if(!e.cmdHealCd) e.cmdHealCd=0;if(!e.cmdStrikeCd) e.cmdStrikeCd=0;e.cmdHealCd--;e.cmdStrikeCd--;if(e.cmdHealCd<=0){e.cmdHealCd=180;let healed=0;for(const oe of enemies){if(oe===e) continue;const hdx=oe.x-e.x,hdy=oe.y-e.y;if(hdx*hdx+hdy*hdy<=120*120&&oe.hp<oe.mhp){const heal=Math.round(oe.mhp*.15);oe.hp=Math.min(oe.mhp,oe.hp+heal);healed++;addBeam(e.x,e.y,oe.x,oe.y);sparks(oe.x,oe.y,'#ffdd00',5,1.5);}}if(healed>0){ft(e.x,e.y-e.sz-14,'HEAL +'+(healed),'#ffdd00');sparks(e.x,e.y,'#ffdd00',10,2);}}if(e.cmdStrikeCd<=0){e.cmdStrikeCd=360;let strikeTgt=null,bestD=Infinity;for(const t of towers){if(t.cfg.t===CT.WALL) continue;const tdx=t.col*CS+CS/2-e.x,tdy=t.row*CS+CS/2-e.y,td=tdx*tdx+tdy*tdy;if(td<bestD){bestD=td;strikeTgt=t;}}if(strikeTgt){const sx=strikeTgt.col*CS+CS/2,sy=strikeTgt.row*CS+CS/2;for(const t of towers){const adx=t.col*CS+CS/2-sx,ady=t.row*CS+CS/2-sy;if(adx*adx+ady*ady<=85*85){t.hp-=35;t.hitFlash=18;t.stunned=Math.max(t.stunned||0,90);sparks(t.col*CS+CS/2,t.row*CS+CS/2,'#ff4400',12,3);if(t.hp<=0) destroyTower(t);}}ft(sx,sy-20,'⚡ AIRSTRIKE!','#ff4400');sparks(sx,sy,'#ff6600',20,4);lxfx.push({x1:sx,y1:0,x2:sx,y2:sy,col:'#ff4400',life:15,ml:15});}}}
     if(e.isSummoner){if(!e.summonCd)e.summonCd=110;e.summonCd--;if(e.summonCd<=0&&enemies.length<400){e.summonCd=110+Math.floor(Math.random()*30);const sVariant=Math.random()<.55?'void_lost':'void_phantom';const minion=spawnE({variant:sVariant,sizeMult:.85});minion.x=e.x+(Math.random()-.5)*24;minion.y=e.y+(Math.random()-.5)*24;minion.hp=Math.max(1,Math.round(minion.hp*.55));minion.mhp=minion.hp;enemies.push(minion);sparks(e.x,e.y,'#cc44ff',10,2.2);ft(e.x,e.y-e.sz-10,'⚠ SUMMON!','#cc44ff');}}
     // === VOID CHAMPION — periodically grants nearby void enemies a defense buff (reduces incoming damage) ===
     if(e.isChampion){if(!e.champBuffCd)e.champBuffCd=60;e.champBuffCd--;if(e.champBuffCd<=0){e.champBuffCd=150;let buffed=0;for(const oe of enemies){const bdx=oe.x-e.x,bdy=oe.y-e.y;if(bdx*bdx+bdy*bdy<=160*160){oe.champBuffed=true;oe.champBuffDur=Math.max(oe.champBuffDur||0,210);if(oe!==e){buffed++;sparks(oe.x,oe.y,'#b060ff',4,1.2);}}}if(buffed>0){ft(e.x,e.y-e.sz-14,'🛡 WARD!','#b060ff');sparks(e.x,e.y,'#b060ff',12,2.2);}}}
@@ -6314,6 +6370,41 @@ function drawTower(t){
 
     if(selTower===t){ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.strokeRect(hx+1,hy+1,hs-2,hs-2);
       if(hcfg.rng&&hcfg.rng<9999){ctx.save();ctx.strokeStyle='rgba(255,215,0,0.55)';ctx.lineWidth=1.5;ctx.setLineDash([6,4]);ctx.beginPath();ctx.arc(hcx,hcy,hcfg.rng,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(255,215,0,0.06)';ctx.beginPath();ctx.arc(hcx,hcy,hcfg.rng,0,Math.PI*2);ctx.fill();ctx.restore();}}
+    return;
+  }
+  if(t.cfg&&t.cfg.barrierCannon){
+    const ws=CS*(t.size===2?2:1),wx=t.col*CS,wy=t.row*CS,wcx=wx+ws/2,wcy=wy+ws/2;
+    const wcfg=t.cfg,wfl=t.hitFlash>0,wcol=wfl?'#ff4444':wcfg.col;
+    const wpulse=(Math.sin(_frm*.06)+1)*.5;
+    // base armor plate
+    ctx.fillStyle=wfl?'#1a0808':'#04141e';ctx.fillRect(wx+2,wy+2,ws-4,ws-4);
+    ctx.strokeStyle=wcol+'55';ctx.lineWidth=1;ctx.strokeRect(wx+6,wy+6,ws-12,ws-12);
+    ctx.strokeStyle=wcol;ctx.lineWidth=2;ctx.strokeRect(wx+3,wy+3,ws-6,ws-6);
+    const wrivets=[[wx+7,wy+7],[wx+ws-7,wy+7],[wx+7,wy+ws-7],[wx+ws-7,wy+ws-7]];
+    for(const[vx,vy] of wrivets){ctx.beginPath();ctx.arc(vx,vy,2.4,0,Math.PI*2);ctx.fillStyle=wcol+'aa';ctx.fill();ctx.strokeStyle='#000';ctx.lineWidth=0.6;ctx.stroke();}
+    // outer pulsing absorb-aura ring
+    ctx.save();ctx.globalAlpha=.18+wpulse*.14;const aGlow=ctx.createRadialGradient(wcx,wcy,ws*.2,wcx,wcy,ws*.62);aGlow.addColorStop(0,wcol+'00');aGlow.addColorStop(1,wcol);ctx.fillStyle=aGlow;ctx.beginPath();ctx.arc(wcx,wcy,ws*.62,0,Math.PI*2);ctx.fill();ctx.restore();
+    // central shield emblem
+    const SR=ws*0.3;
+    ctx.save();ctx.translate(wcx,wcy);
+    ctx.beginPath();ctx.moveTo(0,-SR);ctx.lineTo(SR*.82,-SR*.35);ctx.lineTo(SR*.82,SR*.35);ctx.lineTo(0,SR);ctx.lineTo(-SR*.82,SR*.35);ctx.lineTo(-SR*.82,-SR*.35);ctx.closePath();
+    ctx.fillStyle='#08222e';ctx.fill();ctx.strokeStyle=wcol;ctx.lineWidth=2.2;ctx.stroke();
+    ctx.save();ctx.rotate(_frm*.012);ctx.strokeStyle=wcol+'66';ctx.lineWidth=1;
+    ctx.beginPath();for(let i=0;i<6;i++){const a=i/6*Math.PI*2;ctx.moveTo(Math.cos(a)*SR*.4,Math.sin(a)*SR*.4);ctx.lineTo(Math.cos(a)*SR*.68,Math.sin(a)*SR*.68);}ctx.stroke();
+    ctx.restore();
+    // inner core (brighter as HP fraction, dims as it takes self-damage)
+    const hpFrac=Math.max(0,t.hp/t.maxHp);
+    ctx.save();ctx.globalAlpha=.5+wpulse*.3;const cGlow=ctx.createRadialGradient(0,0,0,0,0,SR*.5);cGlow.addColorStop(0,wcol);cGlow.addColorStop(1,'transparent');ctx.fillStyle=cGlow;ctx.beginPath();ctx.arc(0,0,SR*.5,0,Math.PI*2);ctx.fill();ctx.restore();
+    ctx.beginPath();ctx.arc(0,0,SR*.16,0,Math.PI*2);ctx.fillStyle=hpFrac>.3?'#ffffff':'#ff6666';ctx.fill();ctx.strokeStyle=wcol;ctx.lineWidth=1.4;ctx.stroke();
+    ctx.restore();
+    // crackling stun sparks around the rim when actively absorbing (visual flourish tied to hit-flash)
+    if(wfl){ctx.save();ctx.globalAlpha=.8;ctx.strokeStyle='#ffffff';ctx.lineWidth=1;for(let ai=0;ai<3;ai++){const a0=Math.random()*Math.PI*2;ctx.beginPath();ctx.moveTo(wcx+Math.cos(a0)*SR*.9,wcy+Math.sin(a0)*SR*.9);ctx.lineTo(wcx+Math.cos(a0)*SR*1.3,wcy+Math.sin(a0)*SR*1.3);ctx.stroke();}ctx.restore();}
+    // bottom HP readout bar
+    ctx.fillStyle='#001820';ctx.fillRect(wx+6,wy+ws-9,ws-12,4);
+    ctx.fillStyle=hpFrac>.3?wcol:'#ff4444';ctx.fillRect(wx+6,wy+ws-9,(ws-12)*hpFrac,4);
+    if((t.level||1)>1){ctx.fillStyle='#000a';ctx.fillRect(wx+4,wy+4,ws*0.16,ws*0.11);ctx.fillStyle='#ffd700';ctx.font='bold '+Math.max(7,ws*0.075)+'px Share Tech Mono';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('L'+t.level,wx+6,wy+5);}
+    if(selTower===t){ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.strokeRect(wx+1,wy+1,ws-2,ws-2);
+      if(wcfg.absorbRadius){ctx.save();ctx.strokeStyle='rgba(80,200,255,0.55)';ctx.lineWidth=1.5;ctx.setLineDash([6,4]);ctx.beginPath();ctx.arc(wcx,wcy,wcfg.absorbRadius,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(80,200,255,0.06)';ctx.beginPath();ctx.arc(wcx,wcy,wcfg.absorbRadius,0,Math.PI*2);ctx.fill();ctx.restore();}}
     return;
   }
   const x=t.col*CS,y=t.row*CS,cx=x+CS/2,cy=y+CS/2;
