@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>BASE SIEGE v29.6</title>
+<title>BASE SIEGE v29.7</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -1252,6 +1252,37 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 .ach-prog.done .ach-prog-bar{background:linear-gradient(90deg,#ffd70044,#ffd70088);}
 .ach-prog-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:7px;color:#4a8a6a;letter-spacing:1px;}
 .ach-prog.done .ach-prog-txt{color:#ffd700;}
+/* ═══ PLAYER STATS MENU ═══ */
+#stats-modal{display:none;position:fixed;inset:0;background:#04080fee;z-index:10001;align-items:center;justify-content:center;}
+#stats-modal.vis{display:flex;}
+.stats-box{--stats-accent:#00ccff;background:#060c18;border:1px solid var(--stats-accent);padding:20px 24px;min-width:340px;max-width:420px;max-height:80vh;overflow-y:auto;transition:border-color .2s;}
+.stats-modal-title{font-family:'Orbitron',sans-serif;font-size:14px;letter-spacing:4px;color:var(--stats-accent);text-align:center;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;transition:color .2s;}
+.stats-close{background:none;border:none;color:#2a4a6a;font-family:'Share Tech Mono',monospace;font-size:14px;cursor:pointer;}
+.stats-close:hover{color:var(--stats-accent);}
+.stats-hdr{font-size:9px;color:#4a8a9a;letter-spacing:2px;margin:14px 0 6px;border-bottom:1px solid #0e2030;padding-bottom:4px;}
+.stats-hdr:first-of-type{margin-top:0;}
+.stats-name{font-family:'Share Tech Mono',monospace;font-size:13px;color:#fff;text-align:center;margin-bottom:2px;}
+.stats-sync{font-size:8px;text-align:center;letter-spacing:1px;margin-bottom:10px;}
+.stats-sync.on{color:#00ff88;}
+.stats-sync.off{color:#ff8844;}
+.stats-lvl-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px;}
+.stats-lvl-badge{font-family:'Orbitron',sans-serif;font-size:16px;color:#ffd700;letter-spacing:2px;}
+.stats-bar-wrap{width:100%;height:10px;background:#0a1520;border:1px solid #1a2a3a;border-radius:5px;overflow:hidden;margin-bottom:2px;}
+.stats-bar-fill{height:100%;background:linear-gradient(90deg,var(--stats-accent),#44ffcc);border-radius:5px;transition:width .4s ease,background .2s;}
+.stats-xp-txt{font-size:8px;color:#4a8a6a;text-align:center;letter-spacing:1px;margin-bottom:4px;}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.stats-cell{background:#04090f;border:1px solid #0e2030;padding:8px;text-align:center;}
+.stats-cell .sc-v{font-family:'Orbitron',sans-serif;font-size:14px;color:var(--stats-accent);transition:color .2s;}
+.stats-cell .sc-l{font-size:7px;color:#4a6a5a;letter-spacing:1px;margin-top:3px;}
+.stats-ach-row{display:flex;align-items:center;justify-content:space-between;background:#04090f;border:1px solid #0e2030;padding:8px 10px;margin-top:4px;cursor:pointer;transition:all .1s;}
+.stats-ach-row:hover{border-color:#ffd700;}
+.stats-ach-row .sa-l{font-size:10px;color:#ffd700;letter-spacing:1px;}
+.stats-ach-row .sa-v{font-size:10px;color:#c8d8e8;}
+.stats-theme-row{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.stats-swatch{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid #0e2030;transition:transform .1s,border-color .1s;}
+.stats-swatch:hover{transform:scale(1.15);}
+.stats-swatch.on{border-color:#fff;}
+.stats-swatch-custom{width:20px;height:20px;border-radius:50%;padding:0;border:2px solid #0e2030;cursor:pointer;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);}
 /* ═══ SUGGESTION / VOTING SYSTEM ═══ */
 #sug-modal{position:fixed;inset:0;background:#04080fee;z-index:999;display:none;align-items:center;justify-content:center;}
 #sug-modal.vis{display:flex;}
@@ -1442,17 +1473,35 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     <div class="ach-count" id="ach-count">0 / 0 UNLOCKED</div>
   </div>
 </div>
+<div id="stats-modal">
+  <div class="stats-box">
+    <div class="stats-modal-title">
+      <span>📊 PLAYER STATS</span>
+      <span class="stats-close" id="stats-close">✕</span>
+    </div>
+    <div id="stats-content"></div>
+  </div>
+</div>
 <div id="lvl-up-toast">LEVEL UP!<div class="lvl-sub" id="lvl-up-sub"></div></div>
 <div id="update-popup-overlay">
 <div id="update-popup">
 <div class="up-header">
 <div class="up-title">PATCH NOTES</div>
-<div class="up-ver">BASE SIEGE v29.6 — Merge Cannons &amp; Hero Balance Update</div>
+<div class="up-ver">BASE SIEGE v29.7 — Mace Tower &amp; Player Privacy Update</div>
 </div>
 <div class="up-body">
 <div class="up-section">
-<div class="up-section-title">🔫 new: blaster cannon</div>
-<div class="up-item new">🔫 New 2×2 merge tower! Surround/build 4 level-1 BLASTER towers in a square, then hit "MERGE 2x2 INTO BLASTER CANNON" to fuse them</div>
+<div class="up-section-title">🔮 new: mace tower</div>
+<div class="up-item new">🔮 New MACE TOWER (280g)! A splash-damage tower that swings an enchanted mace down onto enemies in an arc, with armor-piercing that scales up each upgrade tier</div>
+<div class="up-item new">💪 Path A — CRUSHER/ANNIHILATOR: slower swings but massive damage and the highest armor pierce in the game at max tier</div>
+<div class="up-item new">🌀 Path B — TEMPEST/WHIRLWIND MACE: much faster swing speed and longer range, trading raw damage for consistent DPS</div>
+<div class="up-section-title">🔒 new: player privacy</div>
+<div class="up-item new">🔒 New PRIVACY setting (⚙ Settings menu): toggle your profile between PUBLIC and PRIVATE</div>
+<div class="up-item new">👁 PUBLIC (default) — other players can click your name on the leaderboard to view your level, stats and achievements</div>
+<div class="up-item new">🙈 PRIVATE — your stats are hidden from other players entirely, and your email is no longer shared with anyone viewing your profile</div>
+<div class="up-item new">📧 Your email now displays beside your name in the top bar and in the stats panel, so you can see at a glance which account you're signed into</div>
+<div class="up-section-title">🔫 blaster cannon</div>
+<div class="up-item new">🔫 2×2 merge tower! Surround/build 4 level-1 BLASTER towers in a square, then hit "MERGE 2x2 INTO BLASTER CANNON" to fuse them</div>
 <div class="up-item new">🔫 Path A — GATLING FORTRESS: one big central minigun plus 4 smaller corner guns, all firing in 5-barrel bursts with no charge-up, for relentless sustained DPS</div>
 <div class="up-item new">💥 Path B — SHOCK CANNON: charges up like a railgun, then unleashes one massive circular blast that damages AND stuns every enemy caught in it</div>
 <div class="up-section-title">⚖ balance</div>
@@ -1495,6 +1544,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
   <button id="name-btn" style="background:#04090f;border:1px solid #0e2030;color:#ffaa33;font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 10px;cursor:pointer;transition:all .1s;letter-spacing:1px;white-space:nowrap;display:none">✏ NAME</button>
   <button id="sug-btn" style="font-size:9px;background:#04090f;border:1px solid #ffaa33;color:#ffaa33;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-right:4px;transition:all .1s;" onclick="openSugModal()">💡 IDEAS</button>
   <button id="ach-btn" style="display:none;font-size:9px;background:#04090f;border:1px solid #ffd700;color:#ffd700;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-right:4px;transition:all .1s;">🏅 ACHIEVEMENTS</button>
+  <button id="stats-btn" style="font-size:9px;background:#04090f;border:1px solid #00ccff;color:#00ccff;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-right:4px;transition:all .1s;">📊 STATS</button>
   <button id="lb-btn">🏆 LEADERBOARD</button>
   <button id="auth-sign-btn">SIGN IN</button>
 </div>
@@ -1561,7 +1611,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 <div id="lb-toast">✓ SCORE SUBMITTED</div>
 
 <div id="autoskip-toast">⚡ AUTO-SKIP ON</div>
-<header><h1>BASE SIEGE</h1><span class="ver">v29.6</span></header>
+<header><h1>BASE SIEGE</h1><span class="ver">v29.7</span></header>
 
 
 <!-- START SCREEN -->
@@ -1574,7 +1624,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     </div>
   </div>
   <div class="ss-title">BASE SIEGE</div>
-  <div class="ss-ver">v29.6</div>
+  <div class="ss-ver">v29.7</div>
   <div class="ss-sub">SELECT YOUR DIFFICULTY AND DEFEND THE BASE</div>
   <div class="ss-box">
     <div class="ss-sh">── SELECT MODE ─────────────────</div>
@@ -1671,6 +1721,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
   <button class="bb"    data-t="basic"   style="--a:#33aaff"><span class="bl"><span class="bd"></span>BLASTER</span><span class="bc">75g</span></button>
   <button class="bb"    data-t="sniper"  style="--a:#bb44ff"><span class="bl"><span class="bd"></span>RAILGUN</span><span class="bc">160g</span></button>
   <button class="bb"    data-t="cannon"  style="--a:#ff8800"><span class="bl"><span class="bd"></span>CANNON</span><span class="bc">200g</span></button>
+  <button class="bb"    data-t="mace"    style="--a:#7766cc"><span class="bl"><span class="bd"></span>MACE 🔮</span><span class="bc">280g</span></button>
   <button class="bb"    data-t="electric"style="--a:#aaff00"><span class="bl"><span class="bd"></span>TESLA ⚡</span><span class="bc">175g</span></button>
   <button class="bb"    data-t="healer"  style="--a:#00ffcc"><span class="bl"><span class="bd"></span>MEDIC ✚</span><span class="bc">250g</span></button>
   <button class="bb"    data-t="spike"   style="--a:#ff4488"><span class="bl"><span class="bd"></span>SPIKE 🔨</span><span class="bc">175g</span></button>
@@ -1829,8 +1880,8 @@ let currentUser=null;
 const MODE_MAP={easy:0,normal:1,hard:2,hardcore:3};
 const MODE_LABEL=['EASY','NORMAL','HARD','HCORE'];
 
-sb.auth.onAuthStateChange((_,session)=>{const wasNull=!currentUser;currentUser=session?.user??null;updateAuthBar();if(currentUser&&wasNull)syncSavesOnLogin();});
-(async()=>{const{data:{session}}=await sb.auth.getSession();currentUser=session?.user??null;updateAuthBar();if(currentUser)syncSavesOnLogin();})();
+sb.auth.onAuthStateChange((_,session)=>{const wasNull=!currentUser;currentUser=session?.user??null;updateAuthBar();if(currentUser&&wasNull){syncSavesOnLogin();if(typeof pullProgressFromCloud==='function')pullProgressFromCloud();}});
+(async()=>{const{data:{session}}=await sb.auth.getSession();currentUser=session?.user??null;updateAuthBar();if(currentUser){syncSavesOnLogin();if(typeof pullProgressFromCloud==='function')pullProgressFromCloud();}})();
 
 // updateAuthBar replaced by name system below
 
@@ -1844,7 +1895,8 @@ function updateAuthBar(){
   const u=document.getElementById('auth-user'),b=document.getElementById('auth-sign-btn'),nb=document.getElementById('name-btn');
   if(currentUser){
     const displayName=playerName||currentUser.email||currentUser.id.slice(0,8);
-    u.textContent='✓ '+displayName;u.style.color='#00ff88';b.textContent='SIGN OUT';
+    const emailSuffix=(currentUser.email&&displayName!==currentUser.email)?' ('+currentUser.email+')':'';
+    u.textContent='✓ '+displayName+emailSuffix;u.style.color='#00ff88';b.textContent='SIGN OUT';
     nb.style.display='inline-block';nb.textContent='✏ '+(playerName||'SET NAME');
   } else {
     u.textContent='NOT SIGNED IN — scores won\'t be saved';u.style.color='#2a5a4a';b.textContent='SIGN IN';nb.style.display='none';
@@ -1939,6 +1991,9 @@ document.getElementById('lb-btn').addEventListener('click',openLeaderboard);
 document.getElementById('ach-btn').addEventListener('click',openAchievementModal);document.getElementById('ach-btn').style.display='inline-block';
 document.getElementById('ach-close').addEventListener('click',()=>document.getElementById('ach-modal').classList.remove('vis'));
 document.getElementById('ach-modal').addEventListener('click',e=>{if(e.target===document.getElementById('ach-modal'))document.getElementById('ach-modal').classList.remove('vis');});
+document.getElementById('stats-btn').addEventListener('click',openStatsModal);
+document.getElementById('stats-close').addEventListener('click',()=>document.getElementById('stats-modal').classList.remove('vis'));
+document.getElementById('stats-modal').addEventListener('click',e=>{if(e.target===document.getElementById('stats-modal'))document.getElementById('stats-modal').classList.remove('vis');});
 document.getElementById('lb-close').addEventListener('click',()=>document.getElementById('lb-modal').classList.remove('vis'));
 document.getElementById('lb-modal').addEventListener('click',e=>{if(e.target===document.getElementById('lb-modal'))document.getElementById('lb-modal').classList.remove('vis');});
 let lbFilter='all';
@@ -2047,6 +2102,8 @@ async function loadLeaderboard(){
       data.forEach((row,i)=>{const isMe=currentUser&&row.id===currentUser.id;const tr=document.createElement('tr');if(isMe) tr.className='me';
       const pid=isMe?(playerName||currentUser.email||row.id?.slice(0,8)+'…'):(row.name||(row.id?row.id.slice(0,8)+'…':'—'));
       tr.innerHTML=`<td class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</td><td>${pid}</td><td class="lb-score-val">🎖 LV ${row.level}</td>`;
+      tr.style.cursor='pointer';tr.title='View player stats';
+      tr.addEventListener('click',()=>openPlayerStatsById(row.id,pid));
       tbody.appendChild(tr);});
     }catch(e){loading.style.display='none';empty.style.display='block';}
     return;
@@ -2068,6 +2125,8 @@ async function loadLeaderboard(){
   data.forEach((row,i)=>{const isMe=currentUser&&row.id===currentUser.id;const tr=document.createElement('tr');if(isMe) tr.className='me';
   const pid=isMe?(playerName||currentUser.email||row.id?.slice(0,8)+'…'):(row.name||(row.id?row.id.slice(0,8)+'…':'—'));
   tr.innerHTML=`<td class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</td><td>${pid}</td><td class="lb-score-val">${Number(row.score).toLocaleString()}</td><td class="lb-wave-val">${row.wave}</td><td style="color:${['#00ff88','#ffcc00','#ff8800','#ff2244'][row.mode]??'#aaa'}">${MODE_LABEL[row.mode]??'?'}</td><td style="color:#00aaff;font-size:10px">${formatPlayTime(row.play_time)}</td>`;
+  tr.style.cursor='pointer';tr.title='View player stats';
+  tr.addEventListener('click',()=>openPlayerStatsById(row.id,pid));
   tbody.appendChild(tr);});}catch(e){loading.style.display='none';empty.style.display='block';}
 }
 function showLbToast(msg){const t=document.getElementById('lb-toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
@@ -2214,7 +2273,7 @@ function deserializeGameState(data){
 // GAME CONSTANTS
 const COLS=22,ROWS=14,CS=38,W=COLS*CS,H=ROWS*CS;
 const BASE_R=7,BASE_C=COLS-1,SPAWN_R=1,SPAWN_C=0;
-const CT={EMPTY:0,WALL:1,BASIC:2,SNIPER:3,CANNON:4,BASE:5,SPAWN:6,ELECTRIC:7,HEALER:8,SPIKE:9,BUFF:10,MINE:11,HELI:12,FLAME:13,BHOLE:14,LASER:15,DRONE:16,ICE:17,BARRACKS:18,SILO:19,MECH_BASE:20,BARBWIRE:21,PATH:22,COWBOY:23,NECRO:24};
+const CT={EMPTY:0,WALL:1,BASIC:2,SNIPER:3,CANNON:4,BASE:5,SPAWN:6,ELECTRIC:7,HEALER:8,SPIKE:9,BUFF:10,MINE:11,HELI:12,FLAME:13,BHOLE:14,LASER:15,DRONE:16,ICE:17,BARRACKS:18,SILO:19,MECH_BASE:20,BARBWIRE:21,PATH:22,COWBOY:23,NECRO:24,MACE:25};
 const ML=5;
 const HERO_ML=10; // Hero towers have 10 levels
 function getML(key){if(key==='hero_score')return 6;if(key==='railgun_cannon'||key==='blaster_cannon'||key==='siege_cannon'||key==='barrier_cannon')return 5;return(key==='hero_accel'||key==='hero_sacrifice')?HERO_ML:ML;}
@@ -2296,7 +2355,7 @@ function applyBarrierAbsorb(targetTower,atkEnemy,dmgAmount){
   }
   return dmgAmount;
 }
-const BSET=new Set([CT.WALL,CT.BASIC,CT.SNIPER,CT.CANNON,CT.ELECTRIC,CT.HEALER,CT.SPIKE,CT.BUFF,CT.MINE,CT.HELI,CT.FLAME,CT.BHOLE,CT.LASER,CT.ICE,CT.BARRACKS,CT.SILO,CT.MECH_BASE,CT.BARBWIRE,CT.COWBOY,CT.NECRO]);
+const BSET=new Set([CT.WALL,CT.BASIC,CT.SNIPER,CT.CANNON,CT.ELECTRIC,CT.HEALER,CT.SPIKE,CT.BUFF,CT.MINE,CT.HELI,CT.FLAME,CT.BHOLE,CT.LASER,CT.ICE,CT.BARRACKS,CT.SILO,CT.MECH_BASE,CT.BARBWIRE,CT.COWBOY,CT.NECRO,CT.MACE]);
 // ── MAP SYSTEM ──
 const LAST_LIGHT_PATH=[[1,0],[1,1],[1,2],[1,3],[1,4],[2,4],[3,4],[4,4],[5,4],[5,3],[5,2],[5,1],[6,1],[7,1],[8,1],[9,1],[9,2],[9,3],[9,4],[9,5],[9,6],[9,7],[9,8],[8,8],[7,8],[6,8],[5,8],[4,8],[3,8],[3,9],[3,10],[3,11],[3,12],[3,13],[4,13],[5,13],[6,13],[7,13],[8,13],[9,13],[10,13],[11,13],[11,14],[11,15],[11,16],[11,17],[11,18],[10,18],[9,18],[8,18],[7,18],[7,19],[7,20],[7,21]];
 const PATH_INDEX_MAP=new Map();LAST_LIGHT_PATH.forEach((p,i)=>PATH_INDEX_MAP.set(p[0]+','+p[1],i));
@@ -2397,6 +2456,17 @@ const TS={
   '3B':{t:CT.NECRO,cost:2600,hp:200,rng:150,dmg:21,cd:18,aoe:0,chn:0,col:'#6a4a9a',name:'SKELETON KING',necroTower:true,energyMax:240,energyPerHit:12,allyMax:14,skelBatch:6,skelHp:52,skelSpd:0.95,skelDmg:19,skelAtkCd:35,bigSkelEnergyMax:550,bigSkelHp:150,bigSkelDmg:45,bigSkelSpd:0.7,bigSkelAtkCd:55},
   '4B':{t:CT.NECRO,cost:4200,hp:250,rng:158,dmg:26,cd:16,aoe:0,chn:0,col:'#6a4a9a',name:'GRAVE MASTER',necroTower:true,energyMax:220,energyPerHit:13,allyMax:18,skelBatch:7,skelHp:58,skelSpd:0.98,skelDmg:22,skelAtkCd:32,bigSkelEnergyMax:480,bigSkelHp:190,bigSkelDmg:58,bigSkelSpd:0.75,bigSkelAtkCd:50},
   '5B':{t:CT.NECRO,cost:7200,hp:320,rng:170,dmg:32,cd:13,aoe:0,chn:0,col:'#6a4a9a',name:'UNDEAD SOVEREIGN',necroTower:true,energyMax:200,energyPerHit:15,allyMax:24,skelBatch:8,skelHp:66,skelSpd:1.02,skelDmg:26,skelAtkCd:28,bigSkelEnergyMax:380,bigSkelHp:240,bigSkelDmg:75,bigSkelSpd:0.8,bigSkelAtkCd:44}},
+  mace:{
+    1:{t:CT.MACE,cost:950,hp:490,rng:170,dmg:325,cd:180,aoe:118,chn:0,col:'#7766cc',name:'MACE TOWER',maceTower:true,macePath:'base',armorPierce:0.25,maceSpd:3.2},
+    '2A':{t:CT.MACE,cost:1900,hp:650,rng:175,dmg:570,cd:210,aoe:138,chn:0,col:'#9955ee',name:'HEAVY MACE',maceTower:true,macePath:'A',armorPierce:0.40,maceSpd:3.0},
+    '2B':{t:CT.MACE,cost:1750,hp:610,rng:195,dmg:265,cd:110,aoe:108,chn:0,col:'#5588ff',name:'SWIFT MACE',maceTower:true,macePath:'B',armorPierce:0.20,maceSpd:4.5},
+    '3A':{t:CT.MACE,cost:3500,hp:810,rng:182,dmg:890,cd:240,aoe:168,chn:0,col:'#aa44ff',name:'CRUSHER',maceTower:true,macePath:'A',armorPierce:0.55,maceSpd:2.8},
+    '3B':{t:CT.MACE,cost:3400,hp:750,rng:220,dmg:385,cd:80,aoe:128,chn:0,col:'#33aaff',name:'WHIRLWIND MACE',maceTower:true,macePath:'B',armorPierce:0.25,maceSpd:5.5},
+    '4A':{t:CT.MACE,cost:6200,hp:1050,rng:190,dmg:1540,cd:270,aoe:207,chn:0,col:'#cc22ff',name:'VOID CRUSHER',maceTower:true,macePath:'A',armorPierce:0.70,maceSpd:2.5},
+    '4B':{t:CT.MACE,cost:5900,hp:970,rng:250,dmg:570,cd:55,aoe:154,chn:0,col:'#2299ff',name:'STORM MACE',maceTower:true,macePath:'B',armorPierce:0.30,maceSpd:6.5},
+    '5A':{t:CT.MACE,cost:10800,hp:1420,rng:200,dmg:2630,cd:300,aoe:256,chn:0,col:'#ff22ff',name:'ANNIHILATOR',maceTower:true,macePath:'A',armorPierce:0.90,maceSpd:2.2},
+    '5B':{t:CT.MACE,cost:10250,hp:1300,rng:290,dmg:810,cd:35,aoe:187,chn:0,col:'#00aaff',name:'TEMPEST MACE',maceTower:true,macePath:'B',armorPierce:0.35,maceSpd:7.5},
+  },
   barracks:{1:{t:CT.BARRACKS,cost:350,hp:100,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#44aa44',name:'BARRACKS',barracksTower:true,allyHp:60,allySpd:0.8,allyDmg:15,allyAtkCd:30,allyMax:3,allySpawnCd:300},
   '2A':{t:CT.BARRACKS,cost:600,hp:170,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#ff8844',name:'DEMOLISHER II',barracksTower:true,allyHp:110,allySpd:0.9,allyDmg:35,allyAtkCd:28,allyMax:4,allySpawnCd:250,allyExplode:true,allyExplodeDmg:55,allyExplodeAoe:70},
   '2B':{t:CT.BARRACKS,cost:750,hp:160,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#33ccff',name:'GUNNER II',barracksTower:true,allyHp:95,allySpd:0.7,allyDmg:18,allyAtkCd:35,allyMax:3,allySpawnCd:280,allyGun:true,allyGunDmg:16,allyGunRng:120,allyGunCd:36},
@@ -2477,8 +2547,8 @@ const TS={
   },
 };
 
-const PATH_NAMES={railgun_cannon:{A:'SIEGE (slow/heavy)',B:'RAPID (fast/light)'},blaster_cannon:{A:'GATLING FORTRESS (5-barrel/no charge)',B:'SHOCK CANNON (charge/massive dmg+stun)'},siege_cannon:{A:'RAPID SIEGE (fast attack)',B:'DEVASTATOR SIEGE (high damage)'},basic:{A:'MINIGUN',B:'SHOCKWAVE'},sniper:{A:'OVERCHARGE',B:'EXPLOSIVE'},cannon:{A:'RAPID FIRE',B:'DEVASTATOR'},electric:{A:'STORM',B:'PLASMA BALL'},healer:{A:'BASE MEDIC',B:'REGEN+'},spike:{A:'RAPID STRIKE',B:'WARHAMMER'},buff:{A:'BASS BOOST',B:'DJ BOOTH'},mine:{A:'BIG FARM',B:'BANK'},heli:{A:'MISSILE+BULLETS',B:'MINIGUN SPEED'},flame:{A:'INFERNO',B:'CORROSION'},ice:{A:'FROST WAVE',B:'CRYO BULLET'},bhole:{A:'EVENT HORIZON',B:'SINGULARITY'},laser:{A:'FOCUS BEAM',B:'CRYSTAL FORGE'},barracks:{A:'DEMOLISHER',B:'GUNNER',C:'TANK DEPOT'},silo:{A:'NUKE',B:'LASER STRIKE'},hero_accel:{A:'OVERCHARGE BEAM'},hero_score:{A:'SCORE FOCUS',B:'AURA FOCUS'},hero_sacrifice:{A:'BLOOD ALTAR',B:'SOUL BEACON'},mech_base:{A:'THE TITAN',B:'WALKING ARSENAL',C:'SWARM PROTOCOL'},admindrone:{A:'SWARM PROTOCOL',B:'MULTI-ROLE'},barbwire:{A:'LONG WIRE',B:'RAZOR WIRE'},cowboy:{A:'GUNSLINGER',B:'POSSE CALLER'},necromancer:{A:'DEATH CALLER',B:'BONE WARDEN'}};
-const PATH_COLORS={railgun_cannon:{A:'#33bbff',B:'#99eeff'},blaster_cannon:{A:'#ffcc33',B:'#ff5511'},siege_cannon:{A:'#ff9900',B:'#ff3300'},basic:{A:'#33aaff',B:'#55ddff'},sniper:{A:'#cc55ff',B:'#ff44bb'},cannon:{A:'#ff9900',B:'#ff6600'},electric:{A:'#aaff00',B:'#88ff44'},healer:{A:'#00ccff',B:'#00ffcc'},spike:{A:'#ff4488',B:'#ff2255'},buff:{A:'#ffd700',B:'#ff8800'},mine:{A:'#ffe066',B:'#ffd700'},heli:{A:'#00ffaa',B:'#44ffcc'},flame:{A:'#ff4400',B:'#44ff88'},ice:{A:'#44ccff',B:'#4488ff'},bhole:{A:'#cc66ff',B:'#ff44aa'},laser:{A:'#00ccff',B:'#ff88ff'},barracks:{A:'#ff8844',B:'#33ccff',C:'#cc8800'},silo:{A:'#ff4400',B:'#cc55ff'},hero_accel:{A:'#ffe066'},hero_score:{A:'#ff44aa',B:'#ffaa00'},hero_sacrifice:{A:'#ff1144',B:'#aa22ff'},mech_base:{A:'#ff3311',B:'#2299ee',C:'#44ee77'},admindrone:{A:'#ff44ff',B:'#44ffee'},barbwire:{A:'#c8a874',B:'#ff5533'},cowboy:{A:'#ffdca8',B:'#c8955a'},necromancer:{A:'#bb8fff',B:'#6a4a9a'}};
+const PATH_NAMES={mace:{A:'CRUSHER (high dmg/pierce)',B:'TEMPEST (fast/range)'},railgun_cannon:{A:'SIEGE (slow/heavy)',B:'RAPID (fast/light)'},blaster_cannon:{A:'GATLING FORTRESS (5-barrel/no charge)',B:'SHOCK CANNON (charge/massive dmg+stun)'},siege_cannon:{A:'RAPID SIEGE (fast attack)',B:'DEVASTATOR SIEGE (high damage)'},basic:{A:'MINIGUN',B:'SHOCKWAVE'},sniper:{A:'OVERCHARGE',B:'EXPLOSIVE'},cannon:{A:'RAPID FIRE',B:'DEVASTATOR'},electric:{A:'STORM',B:'PLASMA BALL'},healer:{A:'BASE MEDIC',B:'REGEN+'},spike:{A:'RAPID STRIKE',B:'WARHAMMER'},buff:{A:'BASS BOOST',B:'DJ BOOTH'},mine:{A:'BIG FARM',B:'BANK'},heli:{A:'MISSILE+BULLETS',B:'MINIGUN SPEED'},flame:{A:'INFERNO',B:'CORROSION'},ice:{A:'FROST WAVE',B:'CRYO BULLET'},bhole:{A:'EVENT HORIZON',B:'SINGULARITY'},laser:{A:'FOCUS BEAM',B:'CRYSTAL FORGE'},barracks:{A:'DEMOLISHER',B:'GUNNER',C:'TANK DEPOT'},silo:{A:'NUKE',B:'LASER STRIKE'},hero_accel:{A:'OVERCHARGE BEAM'},hero_score:{A:'SCORE FOCUS',B:'AURA FOCUS'},hero_sacrifice:{A:'BLOOD ALTAR',B:'SOUL BEACON'},mech_base:{A:'THE TITAN',B:'WALKING ARSENAL',C:'SWARM PROTOCOL'},admindrone:{A:'SWARM PROTOCOL',B:'MULTI-ROLE'},barbwire:{A:'LONG WIRE',B:'RAZOR WIRE'},cowboy:{A:'GUNSLINGER',B:'POSSE CALLER'},necromancer:{A:'DEATH CALLER',B:'BONE WARDEN'}};
+const PATH_COLORS={mace:{A:'#cc44ff',B:'#3399ff'},railgun_cannon:{A:'#33bbff',B:'#99eeff'},blaster_cannon:{A:'#ffcc33',B:'#ff5511'},siege_cannon:{A:'#ff9900',B:'#ff3300'},basic:{A:'#33aaff',B:'#55ddff'},sniper:{A:'#cc55ff',B:'#ff44bb'},cannon:{A:'#ff9900',B:'#ff6600'},electric:{A:'#aaff00',B:'#88ff44'},healer:{A:'#00ccff',B:'#00ffcc'},spike:{A:'#ff4488',B:'#ff2255'},buff:{A:'#ffd700',B:'#ff8800'},mine:{A:'#ffe066',B:'#ffd700'},heli:{A:'#00ffaa',B:'#44ffcc'},flame:{A:'#ff4400',B:'#44ff88'},ice:{A:'#44ccff',B:'#4488ff'},bhole:{A:'#cc66ff',B:'#ff44aa'},laser:{A:'#00ccff',B:'#ff88ff'},barracks:{A:'#ff8844',B:'#33ccff',C:'#cc8800'},silo:{A:'#ff4400',B:'#cc55ff'},hero_accel:{A:'#ffe066'},hero_score:{A:'#ff44aa',B:'#ffaa00'},hero_sacrifice:{A:'#ff1144',B:'#aa22ff'},mech_base:{A:'#ff3311',B:'#2299ee',C:'#44ee77'},admindrone:{A:'#ff44ff',B:'#44ffee'},barbwire:{A:'#c8a874',B:'#ff5533'},cowboy:{A:'#ffdca8',B:'#c8955a'},necromancer:{A:'#bb8fff',B:'#6a4a9a'}};
 
 function getCfg(key,lvl,path){if(key==='wall') return TS.wall[Math.min(lvl,5)]||TS.wall[1];if(lvl===1) return TS[key][1];return TS[key][lvl+(path||'')]||TS[key][1];}
 function upgCost(key,toLvl,path){if(key==='wall'){const s=TS.wall[Math.min(toLvl,5)];return s?s.cost:TS.wall[1].cost;}if(TS[key]&&TS[key][toLvl]&&!TS[key][toLvl+'A']&&!TS[key][toLvl+'B']) return TS[key][toLvl].cost;if(toLvl===2){const lk2='2'+(path||'A');const s2=TS[key]&&TS[key][lk2];if(s2) return s2.cost;const sA=TS[key]&&TS[key]['2A'];return sA?sA.cost:Math.round(TS[key][1].cost*0.6);}const lk=toLvl+(path||'A');const s=TS[key]&&TS[key][lk];if(s) return s.cost;const base=TS[key][1].cost;if(toLvl===3) return Math.round(base*1.0);if(toLvl===4) return Math.round(base*1.45);if(toLvl===5) return Math.round(base*2.0);if(toLvl===6) return Math.round(base*3.2);if(toLvl===7) return Math.round(base*4.5);if(toLvl===8) return Math.round(base*6.2);if(toLvl===9) return Math.round(base*8.5);if(toLvl===10) return Math.round(base*12.0);return Math.round(base*1.2);}
@@ -2640,6 +2710,28 @@ function renderMusicTracklist(){
   }
 }
 
+/* ---- Profile privacy (show/hide your stats & email from other players) ---- */
+let profilePublic = (localStorage.getItem('sug_profile_public') ?? 'true') === 'true';
+function updatePrivacyUI(){
+  var btn=document.getElementById('sett-privacy-tog');
+  if(!btn) return;
+  btn.classList.toggle('on', !profilePublic);
+  btn.innerHTML = profilePublic
+    ? '&#128065; PROFILE: PUBLIC — others can view your stats'
+    : '&#128274; PROFILE: PRIVATE — hidden from other players';
+  var info=document.getElementById('privacy-info');
+  if(info) info.textContent = profilePublic
+    ? 'Your name, level, achievements and stats can be viewed by anyone clicking your leaderboard row.'
+    : 'Other players cannot open your stats from the leaderboard, and your email is not shared.';
+}
+function setProfilePublic(val){
+  profilePublic=!!val;
+  localStorage.setItem('sug_profile_public', profilePublic?'true':'false');
+  updatePrivacyUI();
+  if(typeof queueProgressCloudSync==='function') queueProgressCloudSync();
+}
+function togglePrivacy(){ setProfilePublic(!profilePublic); }
+
 /* ---- Auto-save functions ---- */
 function setAutoSaveEnabled(val){
   autoSaveEnabled=val;
@@ -2696,6 +2788,7 @@ function openSettings(){
   if(p)p.textContent=Math.round(musicVolume*100)+'%';
   updateMusicUI();
   updateAutoSaveUI();
+  updatePrivacyUI();
   renderMusicTracklist();
 }
 
@@ -2867,7 +2960,7 @@ const UNLOCK_MAP = {
 };
 
 // FREE items (always unlocked regardless of level)
-const FREE_TOWERS = new Set(['wall','basic','sniper','cannon']);
+const FREE_TOWERS = new Set(['wall','basic','sniper','cannon','mace']);
 const FREE_SPEEDS = new Set(['1','2']);
 const FREE_MODES  = new Set(['easy','normal','hard','sandbox']);
 const FREE_SLOTS  = new Set(['0','1','2','3','4','5','6','7']);
@@ -2892,6 +2985,7 @@ function loadPlayerLevel() {
 function savePlayerLevel() {
   try { localStorage.setItem(XP_SAVE_KEY, JSON.stringify({level: playerLevel, xp: playerXP})); } catch(e) {}
   if(typeof saveTotalPlayTime==='function') saveTotalPlayTime();
+  queueProgressCloudSync();
 }
 
 function grantXP(amount) {
@@ -3053,6 +3147,18 @@ loadPlayerLevel();
 // ACHIEVEMENT SYSTEM
 // ═══════════════════════════════════════════════
 const ACH_SAVE_KEY = 'bs_achievements';
+const STATS_THEME_KEY = 'bs_stats_theme';
+const STATS_THEME_SWATCHES = ['#00ccff','#00ff88','#ffd700','#ff8800','#ff4444','#ff44aa','#aa44ff','#ffffff'];
+let statsThemeColor = '#00ccff';
+function loadStatsTheme() {
+  try { const v = localStorage.getItem(STATS_THEME_KEY); if (v) statsThemeColor = v; } catch(e) {}
+}
+function saveStatsTheme(color) {
+  statsThemeColor = color;
+  try { localStorage.setItem(STATS_THEME_KEY, color); } catch(e) {}
+  queueProgressCloudSync();
+}
+loadStatsTheme();
 const ACHIEVEMENTS = [
   {id:'drone_operator', icon:'🛸', name:'DRONE OPERATOR', desc:'Place your first Drone Pad tower', secret:false},
   {id:'hardcore_100', icon:'💀', name:'HARDCORE SURVIVOR', desc:'Reach Wave 100 in Hardcore mode', secret:false, progress:{stat:'maxWaveHardcore',target:100}},
@@ -3128,6 +3234,7 @@ function loadAchievements() {
 
 function saveAchievements() {
   try { localStorage.setItem(ACH_SAVE_KEY, JSON.stringify([...earnedAchievements])); } catch(e) {}
+  queueProgressCloudSync();
 }
 
 function unlockAchievement(id) {
@@ -3216,6 +3323,153 @@ function openAchievementModal() {
 }
 
 loadAchievements();
+
+// ═══════════════════════════════════════════════
+// PLAYER STATS MENU
+// ═══════════════════════════════════════════════
+function fmtPlayTime(sec) {
+  sec = sec || 0;
+  const d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600), m = Math.floor((sec % 3600) / 60);
+  if (d > 0) return d + 'd ' + h + 'h';
+  if (h > 0) return h + 'h ' + m + 'm';
+  return m + 'm';
+}
+
+function renderStatsModal(viewData) {
+  const el = document.getElementById('stats-content');
+  if (!el) return;
+  const titleEl = document.querySelector('#stats-modal .stats-modal-title span:first-child');
+  const box = document.querySelector('#stats-modal .stats-box');
+
+  if (viewData) {
+    // Read-only view of another player's cloud progress
+    if (titleEl) titleEl.textContent = '📊 ' + (viewData.name || 'PLAYER') + "'S STATS";
+    if (box) box.style.setProperty('--stats-accent', viewData.theme_color || '#00ccff');
+    const lvl = viewData.level || 1, xp = viewData.xp || 0;
+    const needed = xpToNextLevel(lvl);
+    const pct = Math.min(100, Math.round((xp / needed) * 100));
+    const stats = viewData.ach_stats || {};
+    const achIds = Array.isArray(viewData.achievements) ? viewData.achievements : [];
+    el.innerHTML = `
+      <div class="stats-name">${viewData.name || 'Anonymous'}${viewData.email ? ` <span style="font-size:11px;color:#4a8ab0;font-weight:normal;">(${viewData.email})</span>` : ''}</div>
+      <div class="stats-sync on">☁ CLOUD PROGRESS</div>
+      <div class="stats-lvl-row"><span class="stats-lvl-badge">LV ${lvl}</span></div>
+      <div class="stats-bar-wrap"><div class="stats-bar-fill" style="width:${pct}%"></div></div>
+      <div class="stats-xp-txt">${xp.toLocaleString()} / ${needed.toLocaleString()} XP (${pct}%)</div>
+
+      <div class="stats-hdr">LIFETIME STATS</div>
+      <div class="stats-grid">
+        <div class="stats-cell"><div class="sc-v">${(stats.totalBuilt||0).toLocaleString()}</div><div class="sc-l">TOWERS BUILT</div></div>
+        <div class="stats-cell"><div class="sc-v">${(stats.totalKills||0).toLocaleString()}</div><div class="sc-l">ENEMIES KILLED</div></div>
+        <div class="stats-cell"><div class="sc-v">${(stats.maxWave||0).toLocaleString()}</div><div class="sc-l">BEST WAVE</div></div>
+        <div class="stats-cell"><div class="sc-v">${(stats.maxWaveHardcore||0).toLocaleString()}</div><div class="sc-l">BEST HARDCORE WAVE</div></div>
+        <div class="stats-cell"><div class="sc-v">${(stats.totalGoldSpent||0).toLocaleString()}</div><div class="sc-l">GOLD SPENT (LIFETIME)</div></div>
+        <div class="stats-cell"><div class="sc-v">${(stats.maxSingleGameGold||0).toLocaleString()}</div><div class="sc-l">BEST SINGLE-GAME GOLD</div></div>
+        <div class="stats-cell"><div class="sc-v">${(stats.voidReaverLevel||0)}/4</div><div class="sc-l">VOID REAVER STAGE</div></div>
+        <div class="stats-cell"><div class="sc-v">${achIds.length} / ${ACHIEVEMENTS.length}</div><div class="sc-l">ACHIEVEMENTS</div></div>
+      </div>
+    `;
+    return;
+  }
+
+  if (titleEl) titleEl.textContent = '📊 PLAYER STATS';
+  if (box) box.style.setProperty('--stats-accent', statsThemeColor);
+  const name = (typeof playerName !== 'undefined' && playerName) || (typeof currentUser !== 'undefined' && currentUser && currentUser.email) || 'Guest';
+  const signedIn = typeof currentUser !== 'undefined' && !!currentUser;
+  const needed = xpToNextLevel(playerLevel);
+  const pct = Math.min(100, Math.round((playerXP / needed) * 100));
+  const earned = earnedAchievements.size, total = ACHIEVEMENTS.length;
+  const tpt = (typeof totalPlayTimeSeconds !== 'undefined') ? totalPlayTimeSeconds : 0;
+  const swatchesHtml = STATS_THEME_SWATCHES.map(c =>
+    `<span class="stats-swatch${c.toLowerCase()===statsThemeColor.toLowerCase()?' on':''}" style="background:${c}" data-c="${c}" title="${c}"></span>`
+  ).join('');
+
+  const myEmail = signedIn && currentUser.email ? currentUser.email : '';
+  el.innerHTML = `
+    <div class="stats-name">${name}${myEmail ? ` <span style="font-size:11px;color:#4a8ab0;font-weight:normal;">(${myEmail})</span>` : ''}</div>
+    <div class="stats-sync ${signedIn ? 'on' : 'off'}">${signedIn ? '☁ CLOUD SYNCED — progress follows you across devices' : '⚠ NOT SIGNED IN — progress saved to this browser only'}</div>
+    <div class="stats-lvl-row"><span class="stats-lvl-badge">LV ${playerLevel}</span></div>
+    <div class="stats-bar-wrap"><div class="stats-bar-fill" style="width:${pct}%"></div></div>
+    <div class="stats-xp-txt">${playerXP.toLocaleString()} / ${needed.toLocaleString()} XP (${pct}%)</div>
+
+    <div class="stats-hdr">LIFETIME STATS</div>
+    <div class="stats-grid">
+      <div class="stats-cell"><div class="sc-v">${(achStats.totalBuilt||0).toLocaleString()}</div><div class="sc-l">TOWERS BUILT</div></div>
+      <div class="stats-cell"><div class="sc-v">${(achStats.totalKills||0).toLocaleString()}</div><div class="sc-l">ENEMIES KILLED</div></div>
+      <div class="stats-cell"><div class="sc-v">${(achStats.maxWave||0).toLocaleString()}</div><div class="sc-l">BEST WAVE</div></div>
+      <div class="stats-cell"><div class="sc-v">${(achStats.maxWaveHardcore||0).toLocaleString()}</div><div class="sc-l">BEST HARDCORE WAVE</div></div>
+      <div class="stats-cell"><div class="sc-v">${(achStats.totalGoldSpent||0).toLocaleString()}</div><div class="sc-l">GOLD SPENT (LIFETIME)</div></div>
+      <div class="stats-cell"><div class="sc-v">${(achStats.maxSingleGameGold||0).toLocaleString()}</div><div class="sc-l">BEST SINGLE-GAME GOLD</div></div>
+      <div class="stats-cell"><div class="sc-v">${fmtPlayTime(tpt)}</div><div class="sc-l">TOTAL PLAY TIME</div></div>
+      <div class="stats-cell"><div class="sc-v">${(achStats.voidReaverLevel||0)}/4</div><div class="sc-l">VOID REAVER STAGE</div></div>
+    </div>
+
+    <div class="stats-hdr">ACHIEVEMENTS</div>
+    <div class="stats-ach-row" id="stats-ach-open"><span class="sa-l">🏅 ${earned} / ${total} UNLOCKED</span><span class="sa-v">VIEW ➜</span></div>
+
+    <div class="stats-hdr">THEME COLOR</div>
+    <div class="stats-theme-row" id="stats-theme-row">
+      ${swatchesHtml}
+      <input type="color" class="stats-swatch-custom" id="stats-theme-custom" value="${statsThemeColor}" title="Custom color">
+    </div>
+  `;
+
+  const achRow = document.getElementById('stats-ach-open');
+  if (achRow) achRow.onclick = () => { document.getElementById('stats-modal').classList.remove('vis'); openAchievementModal(); };
+
+  const themeRow = document.getElementById('stats-theme-row');
+  if (themeRow) {
+    themeRow.querySelectorAll('.stats-swatch').forEach(sw => {
+      sw.addEventListener('click', () => {
+        saveStatsTheme(sw.dataset.c);
+        if (box) box.style.setProperty('--stats-accent', sw.dataset.c);
+        themeRow.querySelectorAll('.stats-swatch').forEach(s => s.classList.toggle('on', s.dataset.c === sw.dataset.c));
+      });
+    });
+  }
+  const customPicker = document.getElementById('stats-theme-custom');
+  if (customPicker) {
+    customPicker.addEventListener('input', () => {
+      const c = customPicker.value;
+      saveStatsTheme(c);
+      if (box) box.style.setProperty('--stats-accent', c);
+      if (themeRow) themeRow.querySelectorAll('.stats-swatch').forEach(s => s.classList.remove('on'));
+    });
+  }
+}
+
+function openStatsModal() {
+  renderStatsModal();
+  document.getElementById('stats-modal').classList.add('vis');
+}
+
+// ── View ANOTHER player's stats (called from leaderboard row clicks) ──
+async function openPlayerStatsById(uid, fallbackName) {
+  if (!uid) return;
+  // Signed-in viewer, looking at their own row — just show the live local view
+  if (typeof currentUser !== 'undefined' && currentUser && uid === currentUser.id) { openStatsModal(); return; }
+  const el = document.getElementById('stats-content');
+  const titleEl = document.querySelector('#stats-modal .stats-modal-title span:first-child');
+  if (titleEl) titleEl.textContent = '📊 ' + (fallbackName || 'PLAYER') + "'S STATS";
+  if (el) el.innerHTML = '<div class="stats-name">Loading…</div>';
+  document.getElementById('stats-modal').classList.add('vis');
+  try {
+    const { data, error } = await sb.from('player_progress').select('*').eq('user_id', uid).maybeSingle();
+    if (error || !data) {
+      if (el) el.innerHTML = `<div class="stats-name">${fallbackName || 'Anonymous'}</div><div class="stats-sync off">No stats data available for this player yet.</div>`;
+      return;
+    }
+    if (data.public === false) {
+      if (titleEl) titleEl.textContent = '🔒 ' + (fallbackName || data.name || 'PLAYER') + "'S STATS";
+      if (el) el.innerHTML = `<div class="stats-name">${fallbackName || data.name || 'Anonymous'}</div><div class="stats-sync off">🔒 This player has set their profile to private. Their stats are hidden.</div>`;
+      return;
+    }
+    if (!data.name && fallbackName) data.name = fallbackName;
+    renderStatsModal(data);
+  } catch (e) {
+    if (el) el.innerHTML = `<div class="stats-name">${fallbackName || 'Anonymous'}</div><div class="stats-sync off">Failed to load stats.</div>`;
+  }
+}
 
 // ═══════════════════════════════════════════════
 // SUGGESTION SYSTEM (Like + Admin)
@@ -3325,8 +3579,111 @@ function loadAchStats() {
 }
 function saveAchStats() {
   try { localStorage.setItem(STAT_KEY, JSON.stringify(achStats)); } catch(e) {}
+  queueProgressCloudSync();
 }
 loadAchStats();
+
+// ═══════════════════════════════════════════════
+// CLOUD SYNC — level, XP, achievements, ach stats
+// Mirrors the save_slots cloud-save pattern; syncs to the
+// `player_progress` table keyed by the signed-in user's id so
+// progress follows the player across devices/browsers.
+// ═══════════════════════════════════════════════
+let _progressSyncTimer = null;
+let _progressSyncInFlight = false;
+let _progressSyncDirtyAgain = false;
+
+function queueProgressCloudSync() {
+  if (typeof currentUser === 'undefined' || !currentUser) return;
+  clearTimeout(_progressSyncTimer);
+  _progressSyncTimer = setTimeout(pushProgressToCloud, 1500);
+}
+
+async function pushProgressToCloud() {
+  if (typeof currentUser === 'undefined' || !currentUser) return;
+  if (_progressSyncInFlight) { _progressSyncDirtyAgain = true; return; }
+  _progressSyncInFlight = true;
+  try {
+    const isPublic = (typeof profilePublic === 'undefined') ? true : profilePublic;
+    const payload = {
+      user_id: currentUser.id,
+      level: playerLevel,
+      xp: playerXP,
+      name: playerName || (currentUser.email ? currentUser.email.split('@')[0] : 'guest'),
+      achievements: [...earnedAchievements],
+      ach_stats: achStats,
+      theme_color: statsThemeColor,
+      updated_at: new Date().toISOString(),
+      public: isPublic,
+      email: isPublic ? (currentUser.email || null) : null
+    };
+    let { error } = await sb.from('player_progress').upsert(payload, { onConflict: 'user_id' });
+    // If the DB doesn't have public/email columns yet, retry without them so sync still works
+    if (error && (error.message?.includes('public') || error.message?.includes('email') || error.code === '42703')) {
+      const { public: _p, email: _e, ...fallbackPayload } = payload;
+      const r2 = await sb.from('player_progress').upsert(fallbackPayload, { onConflict: 'user_id' });
+      error = r2.error;
+    }
+    if (error) console.warn('Cloud progress sync failed:', error.message);
+    else if (typeof showCloudStatus === 'function') showCloudStatus('PROGRESS SYNCED');
+  } catch (e) {
+    console.warn('Cloud progress sync error:', e);
+  } finally {
+    _progressSyncInFlight = false;
+    if (_progressSyncDirtyAgain) { _progressSyncDirtyAgain = false; queueProgressCloudSync(); }
+  }
+}
+
+// Pulls cloud progress on login and merges with local (take the higher/larger
+// of each so nothing is ever lost, whether local or cloud is ahead).
+async function pullProgressFromCloud() {
+  if (typeof currentUser === 'undefined' || !currentUser) return;
+  try {
+    const { data, error } = await sb.from('player_progress').select('*').eq('user_id', currentUser.id).maybeSingle();
+    if (error) { console.warn('Cloud progress fetch failed:', error.message); return; }
+    if (!data) { pushProgressToCloud(); return; } // no cloud row yet — seed it from local
+    let changed = false;
+    // Level/XP: prefer whichever is further along
+    const localTotalXP = xpToNextLevel ? (playerLevel * 100000 + playerXP) : 0; // rough comparator
+    const cloudTotalXP = (data.level||1) * 100000 + (data.xp||0);
+    if (cloudTotalXP > localTotalXP) {
+      playerLevel = data.level || playerLevel;
+      playerXP = data.xp || playerXP;
+      changed = true;
+    }
+    // Achievements: union of local + cloud
+    if (Array.isArray(data.achievements)) {
+      const before = earnedAchievements.size;
+      data.achievements.forEach(id => earnedAchievements.add(id));
+      if (earnedAchievements.size !== before) changed = true;
+    }
+    // Ach stats: keep the max of each numeric counter, OR of booleans
+    if (data.ach_stats && typeof data.ach_stats === 'object') {
+      for (const k in data.ach_stats) {
+        const cv = data.ach_stats[k], lv = achStats[k];
+        if (typeof cv === 'number') { if ((lv||0) < cv) { achStats[k] = cv; changed = true; } }
+        else if (typeof cv === 'boolean') { if (cv && !lv) { achStats[k] = true; changed = true; } }
+      }
+    }
+    // Theme color: pull cloud's choice if this device hasn't set one locally yet
+    if (data.theme_color && !localStorage.getItem(STATS_THEME_KEY)) {
+      statsThemeColor = data.theme_color;
+      changed = true;
+    }
+    if (changed) {
+      try { localStorage.setItem(XP_SAVE_KEY, JSON.stringify({level: playerLevel, xp: playerXP})); } catch(e) {}
+      try { localStorage.setItem(ACH_SAVE_KEY, JSON.stringify([...earnedAchievements])); } catch(e) {}
+      try { localStorage.setItem(STAT_KEY, JSON.stringify(achStats)); } catch(e) {}
+      try { localStorage.setItem(STATS_THEME_KEY, statsThemeColor); } catch(e) {}
+      if (typeof updateXPHud === 'function') updateXPHud();
+      if (typeof applyLevelUnlocks === 'function') applyLevelUnlocks();
+      if (typeof renderAchievementList === 'function') renderAchievementList();
+      pushProgressToCloud(); // reconcile cloud row with the merged result
+    }
+  } catch (e) {
+    console.warn('Cloud progress pull error:', e);
+  }
+}
 
 
 
@@ -4349,6 +4706,17 @@ function showPanel(t){
   }
   if(c.chn) s+=`  CHN:${c.chn}`;if(c.aoe) s+=`  AOE:${c.aoe}`;
   if(!c.buffType&&t.col!==undefined){const _bf=getBuffsAt(t.col,t.row);if(_bf.dmgMult!==1||_bf.cdDiv!==1||_bf.rngMult!==1){s+='\n--- BUFFED ---';if(c.dmg) s+=`\nDMG: ${c.dmg} → ${Math.round(c.dmg*_bf.dmgMult)}  (+${Math.round((_bf.dmgMult-1)*100)}%)`;if(c.cd) s+=`\nCD: ${c.cd} → ${(c.cd/_bf.cdDiv).toFixed(1)}  (+${Math.round((_bf.cdDiv-1)*100)}% spd)`;if(c.rng) s+=`\nRNG: ${c.rng} → ${Math.round(c.rng*_bf.rngMult)}  (+${Math.round((_bf.rngMult-1)*100)}%)`;}}
+  if(t.key==='mace'||c.maceTower){
+    const cdSec=(c.cd/60).toFixed(1);
+    const piercePct=Math.round((c.armorPierce||0)*100);
+    s+=`\n── MACE TOWER ──`;
+    s+=`\nFires enchanted mace in an arc from sky`;
+    s+=`\nARMOR PIERCE: ${piercePct}%  AOE: ${c.aoe}r`;
+    s+=`\nCOOLDOWN: ${cdSec}s (slow — hits hard!)`;
+    if(t.path==='A') s+=`\nPath A: CRUSHER — max damage & pierce`;
+    else if(t.path==='B') s+=`\nPath B: TEMPEST — fast attacks & wide range`;
+    else s+=`\nUpgrade: Path A=Crusher (dmg), Path B=Tempest (speed)`;
+  }
   if(t.key==='silo'||c.siloTower){s+='\nTYPE: '+(c.siloType?c.siloType.toUpperCase():'BASIC')+' | RANGE: INFINITE';if(c.siloType==='nuke')s+='\nNUKE DMG: '+c.siloDmg+' AoE:'+c.siloAoe+'r  CD:'+Math.round(c.siloCdMax/60)+'s';else if(c.siloType==='laser'){s+='\nLASER DMG: '+c.siloDmg+'/tick  |  CHARGE:'+Math.round((c.siloLaserChargeDur||300)/60)+'s FIRE:'+Math.round((c.siloLaserFireDur||180)/60)+'s';if(t.siloLaserPhase){const tSec=Math.ceil((t.siloLaserPhaseTimer||0)/60);s+='\nPHASE: '+(t.siloLaserPhase==='charge'?'CHARGING ('+tSec+'s)':t.siloLaserPhase==='fire'?'FIRING ('+tSec+'s left)':'RECHARGING ('+tSec+'s)');}}if(c.laserSlow)s+='\nSLOW: '+Math.round(c.laserSlow*100)+'%';if(c.laserShred)s+='\nARMOR SHRED: '+Math.round(c.laserShred*100)+'%';}
   if(t.key==='healer') s+=`\nHEAL:${c.healAmt} T:${c.healTick}\nSTUN REDUCE:-${c.healStunReduce||0}/tick${c.baseHealAmt?`\nBASE+${c.baseHealAmt}`:''}`;
   if(t.key==='mine'){if(c.mineType==='compound'||c.mineType==='basic') s+=`\nGOLD/WAVE: +${c.goldPerWave}g`;if(c.mineType==='bank') s+=`\nINTEREST: ${Math.round(c.interestRate*100)}%/wave\nMAX EARN: ${c.maxInterest}g`;}
@@ -5666,7 +6034,40 @@ if(cfg.t===CT.NECRO&&cfg.necroTower){
     }
   }
   continue;
-}if(cfg.t===CT.FLAME&&cfg.flameTower){if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effRng=cfg.rng*bfx.rngMult;const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const ftx=t.col*CS+CS/2,fty=t.row*CS+CS/2;let fTgt=null,fbd=Infinity;for(const e of enemies){const dx=e.x-ftx,dy=e.y-fty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<fbd){fbd=dEff;fTgt=e;}}if(!fTgt) continue;t.angle=Math.atan2(fTgt.y-fty,fTgt.x-ftx);t.cd=effCd;const flameHits=enemies.filter(e=>{const dx=e.x-ftx,dy=e.y-fty;return dx*dx+dy*dy<=cfg.aoe*cfg.aoe*bfx.rngMult*bfx.rngMult;});for(const e of flameHits){if(mirrorBlocked(e,t.key)) continue;const d=applyArmor(e,effDmg);e.hp-=d;mirrorTrack(e,t.key,d);if(cfg.burnDmg&&cfg.burnDur){e.burnDmg=Math.max(e.burnDmg,cfg.burnDmg);e.burnDur=Math.max(e.burnDur,cfg.burnDur);}if(cfg.armorShred){e.armorShred=Math.max(e.armorShred,cfg.armorShred);e.shredDur=Math.max(e.shredDur,cfg.shredDur||150);}}for(let fi=0;fi<8;fi++){const fa=t.angle+(Math.random()-.5)*.7,fs=2+Math.random()*3.5,fd=8+Math.random()*12;parts.push({x:ftx+Math.cos(t.angle)*fd,y:fty+Math.sin(t.angle)*fd,vx:Math.cos(fa)*fs,vy:Math.sin(fa)*fs,life:14+Math.random()*10,ml:24,col:['#ff4400','#ff6600','#ff8800','#ffaa00','#ffcc00'][Math.floor(Math.random()*5)],sz:3+Math.random()*3});}if(flameHits.length>0){for(let fj=0;fj<4;fj++){const fdx=fTgt.x-ftx,fdy=fTgt.y-fty,fdist=Math.sqrt(fdx*fdx+fdy*fdy)||1;const fmid=.3+Math.random()*.5;parts.push({x:ftx+fdx*fmid+(Math.random()-.5)*12,y:fty+fdy*fmid+(Math.random()-.5)*12,vx:(Math.random()-.5)*1.2,vy:-Math.random()*1.5,life:10+Math.random()*8,ml:18,col:['#ff4400','#ff8800','#ffcc00'][Math.floor(Math.random()*3)],sz:2+Math.random()*2.5});}}continue;}if(cfg.t===CT.BHOLE&&cfg.bhTower){t.angle+=.015;if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effRng=cfg.rng*bfx.rngMult;const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const btx=t.col*CS+CS/2,bty=t.row*CS+CS/2;const pDist=cfg.pullDist||28;const maxExp=cfg.bhMaxExp||300;t.cd=effCd;let pulled=0;for(const e of enemies){const dx=e.x-btx,dy=e.y-bty,dist=Math.sqrt(dx*dx+dy*dy);if(dist>effRng||dist<5) continue;if(e.bhImmune) continue;const resist=Math.max(0,1-e.bhExposure/maxExp);if(resist<=0){e.bhImmune=true;ft(e.x,e.y-e.sz-6,'IMMUNE!','#aa44ff');continue;}const yank=Math.min(dist-5,pDist*resist);e.x-=dx/dist*yank;e.y-=dy/dist*yank;e.bhExposure+=8+(e.isBoss?12:0);if(mirrorBlocked(e,t.key)){pulled++;sparks(e.x,e.y,'#aa44ff',3,1.2);continue;}const dmg=applyArmor(e,effDmg);e.hp-=dmg;mirrorTrack(e,t.key,dmg);pulled++;sparks(e.x,e.y,'#aa44ff',3,1.2);}if(pulled>0){sparks(btx,bty,'#cc66ff',16,3.5);ft(btx,bty-18,'PULL!','#aa44ff');shockwaves.push({ox:btx,oy:bty,r:10,maxR:effRng,spd:8,dmg:0,col:'#aa44ff',life:1,hit:new Set(),width:2});}continue;}if(cfg.t===CT.LASER&&cfg.laserTower){const bfx=getBuffsAt(t.col,t.row);const effRng=cfg.rng*bfx.rngMult;const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const ltx=t.col*CS+CS/2,lty=t.row*CS+CS/2;let curTgt=t.laserTarget;if(curTgt&&(!enemies.includes(curTgt)||curTgt.hp<=0)){curTgt=null;t.laserTarget=null;t.laserStacks=Math.floor(t.laserStacks*.6);t.laserFiring=0;}if(curTgt){const dx=curTgt.x-ltx,dy=curTgt.y-lty;if(dx*dx+dy*dy>effRng*effRng){curTgt=null;t.laserTarget=null;t.laserStacks=Math.floor(t.laserStacks*.6);t.laserFiring=0;}}if(!curTgt){let bd=Infinity;for(const e of enemies){const dx=e.x-ltx,dy=e.y-lty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;curTgt=e;}}if(curTgt){t.laserTarget=curTgt;t.laserStacks=0;t.laserFiring=0;if(cfg.heroTower){t.laserCharge=(t.laserWasIdle!==false)?(cfg.chargeTime||60):0;}t.laserWasIdle=false;}else{t.laserWasIdle=true;}}if(curTgt){t.angle=Math.atan2(curTgt.y-lty,curTgt.x-ltx);if(t.laserCharge>0){t.laserCharge--;continue;}t.laserFiring++;if(t.laserFiring%Math.max(1,cfg.cd)===0&&t.laserStacks<(cfg.maxStacks||15)) t.laserStacks++;const sDmg=effDmg+t.laserStacks*(cfg.stackDmg||2);if(mirrorBlocked(curTgt,t.key)){}else{const finalD=applyArmor(curTgt,Math.round(sDmg*bfx.dmgMult));curTgt.hp-=finalD;mirrorTrack(curTgt,t.key,finalD);}if(cfg.crystalMax&&cfg.crystalMax>0&&t.laserFiring>0&&t.laserFiring%(cfg.crystalCharge||100)===0){const myCrystals=crystals.filter(cr=>cr.ownerId===t.id);if(myCrystals.length<cfg.crystalMax){const ca=Math.random()*Math.PI*2,cd2=22+Math.random()*14;crystals.push({ownerId:t.id,x:ltx+Math.cos(ca)*cd2,y:lty+Math.sin(ca)*cd2,life:cfg.crystalLife||360,maxLife:cfg.crystalLife||360,dmg:Math.max(2,Math.round(sDmg*(cfg.crystalDmgR||.4))),rng:effRng*.6,angle:0,target:null,col:cfg.col,bobPhase:Math.random()*Math.PI*2});ft(ltx,lty-14,'💎 CRYSTAL!',cfg.col);sparks(ltx+Math.cos(ca)*cd2,lty+Math.sin(ca)*cd2,cfg.col,10,2);}}}continue;}if(cfg.t===CT.HEALER){if(!t.healCd) t.healCd=0;t.healCd--;if(t.healCd<=0){t.healCd=cfg.healTick||60;const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;for(const ot of towers){if(ot===t) continue;const ddx=ot.col*CS+CS/2-tx,ddy=ot.row*CS+CS/2-ty;if(ddx*ddx+ddy*ddy<=(cfg.rng||110)**2){if(ot.hp<ot.maxHp){ot.hp=Math.min(ot.maxHp,ot.hp+(cfg.healAmt||7));addBeam(tx,ty,ot.col*CS+CS/2,ot.row*CS+CS/2);}if((cfg.healStunReduce||0)>0&&ot.stunned>0) ot.stunned=Math.max(0,ot.stunned-cfg.healStunReduce);}}if(t.path==='A'&&cfg.baseHealAmt&&baseHP<baseMaxHP){baseHP=Math.min(baseMaxHP,baseHP+cfg.baseHealAmt);syncUI();}}continue;}if(!cfg.rng){t.cd=0;continue;}if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effRng=cfg.rng*bfx.rngMult;const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const tx=t.col*CS+(t.size===2?CS:CS/2),ty=t.row*CS+(t.size===2?CS:CS/2);if(cfg.shockwave){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;closest=e;}}if(!closest) continue;t.cd=effCd;
+}if(cfg.t===CT.MACE&&cfg.maceTower){
+  if(t.cd>0){t.cd--;continue;}
+  const bfx=getBuffsAt(t.col,t.row);
+  const effDmg=Math.round(cfg.dmg*bfx.dmgMult);
+  const effRng=cfg.rng*bfx.rngMult;
+  const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));
+  const mtx=t.col*CS+CS/2,mty=t.row*CS+CS/2;
+  let mTgt=null,mbd=Infinity;
+  for(const e of enemies){const dx=e.x-mtx,dy=e.y-mty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<mbd){mbd=dEff;mTgt=e;}}
+  if(!mTgt) continue;
+  t.angle=Math.atan2(mTgt.y-mty,mTgt.x-mtx);t.cd=effCd;
+  // Create a mace arc projectile
+  const pierce=cfg.armorPierce||0;
+  projs.push({
+    x:mtx,y:mty,
+    tgt:mTgt,lastX:mTgt.x,lastY:mTgt.y,
+    spd:cfg.maceSpd||3.2,
+    dmg:effDmg,aoe:cfg.aoe||60,chn:0,
+    col:cfg.col,sz:9,
+    type:'mace',
+    macePierce:pierce,
+    maceUpgraded:(cfg.macePath==='A'),
+    // Arc physics: starts going up, then falls
+    arcPhase:0, // 0=rising,1=falling
+    arcProgress:0,
+    startX:mtx,startY:mty,
+    peakY:Math.min(mty,mTgt.y)-80, // arc peak
+    src:t
+  });
+  sparks(mtx,mty,cfg.col,6,2);
+  ft(mtx,mty-14,'🔮','#aa66ff');
+  continue;
+}
+if(cfg.t===CT.FLAME&&cfg.flameTower){if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effRng=cfg.rng*bfx.rngMult;const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const ftx=t.col*CS+CS/2,fty=t.row*CS+CS/2;let fTgt=null,fbd=Infinity;for(const e of enemies){const dx=e.x-ftx,dy=e.y-fty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<fbd){fbd=dEff;fTgt=e;}}if(!fTgt) continue;t.angle=Math.atan2(fTgt.y-fty,fTgt.x-ftx);t.cd=effCd;const flameHits=enemies.filter(e=>{const dx=e.x-ftx,dy=e.y-fty;return dx*dx+dy*dy<=cfg.aoe*cfg.aoe*bfx.rngMult*bfx.rngMult;});for(const e of flameHits){if(mirrorBlocked(e,t.key)) continue;const d=applyArmor(e,effDmg);e.hp-=d;mirrorTrack(e,t.key,d);if(cfg.burnDmg&&cfg.burnDur){e.burnDmg=Math.max(e.burnDmg,cfg.burnDmg);e.burnDur=Math.max(e.burnDur,cfg.burnDur);}if(cfg.armorShred){e.armorShred=Math.max(e.armorShred,cfg.armorShred);e.shredDur=Math.max(e.shredDur,cfg.shredDur||150);}}for(let fi=0;fi<8;fi++){const fa=t.angle+(Math.random()-.5)*.7,fs=2+Math.random()*3.5,fd=8+Math.random()*12;parts.push({x:ftx+Math.cos(t.angle)*fd,y:fty+Math.sin(t.angle)*fd,vx:Math.cos(fa)*fs,vy:Math.sin(fa)*fs,life:14+Math.random()*10,ml:24,col:['#ff4400','#ff6600','#ff8800','#ffaa00','#ffcc00'][Math.floor(Math.random()*5)],sz:3+Math.random()*3});}if(flameHits.length>0){for(let fj=0;fj<4;fj++){const fdx=fTgt.x-ftx,fdy=fTgt.y-fty,fdist=Math.sqrt(fdx*fdx+fdy*fdy)||1;const fmid=.3+Math.random()*.5;parts.push({x:ftx+fdx*fmid+(Math.random()-.5)*12,y:fty+fdy*fmid+(Math.random()-.5)*12,vx:(Math.random()-.5)*1.2,vy:-Math.random()*1.5,life:10+Math.random()*8,ml:18,col:['#ff4400','#ff8800','#ffcc00'][Math.floor(Math.random()*3)],sz:2+Math.random()*2.5});}}continue;}if(cfg.t===CT.BHOLE&&cfg.bhTower){t.angle+=.015;if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effRng=cfg.rng*bfx.rngMult;const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const btx=t.col*CS+CS/2,bty=t.row*CS+CS/2;const pDist=cfg.pullDist||28;const maxExp=cfg.bhMaxExp||300;t.cd=effCd;let pulled=0;for(const e of enemies){const dx=e.x-btx,dy=e.y-bty,dist=Math.sqrt(dx*dx+dy*dy);if(dist>effRng||dist<5) continue;if(e.bhImmune) continue;const resist=Math.max(0,1-e.bhExposure/maxExp);if(resist<=0){e.bhImmune=true;ft(e.x,e.y-e.sz-6,'IMMUNE!','#aa44ff');continue;}const yank=Math.min(dist-5,pDist*resist);e.x-=dx/dist*yank;e.y-=dy/dist*yank;e.bhExposure+=8+(e.isBoss?12:0);if(mirrorBlocked(e,t.key)){pulled++;sparks(e.x,e.y,'#aa44ff',3,1.2);continue;}const dmg=applyArmor(e,effDmg);e.hp-=dmg;mirrorTrack(e,t.key,dmg);pulled++;sparks(e.x,e.y,'#aa44ff',3,1.2);}if(pulled>0){sparks(btx,bty,'#cc66ff',16,3.5);ft(btx,bty-18,'PULL!','#aa44ff');shockwaves.push({ox:btx,oy:bty,r:10,maxR:effRng,spd:8,dmg:0,col:'#aa44ff',life:1,hit:new Set(),width:2});}continue;}if(cfg.t===CT.LASER&&cfg.laserTower){const bfx=getBuffsAt(t.col,t.row);const effRng=cfg.rng*bfx.rngMult;const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const ltx=t.col*CS+CS/2,lty=t.row*CS+CS/2;let curTgt=t.laserTarget;if(curTgt&&(!enemies.includes(curTgt)||curTgt.hp<=0)){curTgt=null;t.laserTarget=null;t.laserStacks=Math.floor(t.laserStacks*.6);t.laserFiring=0;}if(curTgt){const dx=curTgt.x-ltx,dy=curTgt.y-lty;if(dx*dx+dy*dy>effRng*effRng){curTgt=null;t.laserTarget=null;t.laserStacks=Math.floor(t.laserStacks*.6);t.laserFiring=0;}}if(!curTgt){let bd=Infinity;for(const e of enemies){const dx=e.x-ltx,dy=e.y-lty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;curTgt=e;}}if(curTgt){t.laserTarget=curTgt;t.laserStacks=0;t.laserFiring=0;if(cfg.heroTower){t.laserCharge=(t.laserWasIdle!==false)?(cfg.chargeTime||60):0;}t.laserWasIdle=false;}else{t.laserWasIdle=true;}}if(curTgt){t.angle=Math.atan2(curTgt.y-lty,curTgt.x-ltx);if(t.laserCharge>0){t.laserCharge--;continue;}t.laserFiring++;if(t.laserFiring%Math.max(1,cfg.cd)===0&&t.laserStacks<(cfg.maxStacks||15)) t.laserStacks++;const sDmg=effDmg+t.laserStacks*(cfg.stackDmg||2);if(mirrorBlocked(curTgt,t.key)){}else{const finalD=applyArmor(curTgt,Math.round(sDmg*bfx.dmgMult));curTgt.hp-=finalD;mirrorTrack(curTgt,t.key,finalD);}if(cfg.crystalMax&&cfg.crystalMax>0&&t.laserFiring>0&&t.laserFiring%(cfg.crystalCharge||100)===0){const myCrystals=crystals.filter(cr=>cr.ownerId===t.id);if(myCrystals.length<cfg.crystalMax){const ca=Math.random()*Math.PI*2,cd2=22+Math.random()*14;crystals.push({ownerId:t.id,x:ltx+Math.cos(ca)*cd2,y:lty+Math.sin(ca)*cd2,life:cfg.crystalLife||360,maxLife:cfg.crystalLife||360,dmg:Math.max(2,Math.round(sDmg*(cfg.crystalDmgR||.4))),rng:effRng*.6,angle:0,target:null,col:cfg.col,bobPhase:Math.random()*Math.PI*2});ft(ltx,lty-14,'💎 CRYSTAL!',cfg.col);sparks(ltx+Math.cos(ca)*cd2,lty+Math.sin(ca)*cd2,cfg.col,10,2);}}}continue;}if(cfg.t===CT.HEALER){if(!t.healCd) t.healCd=0;t.healCd--;if(t.healCd<=0){t.healCd=cfg.healTick||60;const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;for(const ot of towers){if(ot===t) continue;const ddx=ot.col*CS+CS/2-tx,ddy=ot.row*CS+CS/2-ty;if(ddx*ddx+ddy*ddy<=(cfg.rng||110)**2){if(ot.hp<ot.maxHp){ot.hp=Math.min(ot.maxHp,ot.hp+(cfg.healAmt||7));addBeam(tx,ty,ot.col*CS+CS/2,ot.row*CS+CS/2);}if((cfg.healStunReduce||0)>0&&ot.stunned>0) ot.stunned=Math.max(0,ot.stunned-cfg.healStunReduce);}}if(t.path==='A'&&cfg.baseHealAmt&&baseHP<baseMaxHP){baseHP=Math.min(baseMaxHP,baseHP+cfg.baseHealAmt);syncUI();}}continue;}if(!cfg.rng){t.cd=0;continue;}if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effRng=cfg.rng*bfx.rngMult;const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const tx=t.col*CS+(t.size===2?CS:CS/2),ty=t.row*CS+(t.size===2?CS:CS/2);if(cfg.shockwave){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;closest=e;}}if(!closest) continue;t.cd=effCd;
   // Update shockwave tower angle to face closest target (for cannon barrel visual)
   t.angle=Math.atan2(closest.y-ty,closest.x-tx);
   shockwaves.push({ox:tx,oy:ty,r:CS*.3,maxR:cfg.shockMaxR||200,spd:cfg.shockSpd||3.2,dmg:effDmg,col:cfg.col,life:1,hit:new Set(),width:3,srcKey:t.key});sparks(tx,ty,cfg.col,6,1);continue;}
@@ -5751,7 +6152,51 @@ if(cfg.t===CT.NECRO&&cfg.necroTower){
     if(kw.r>=kw.maxR) kingWaves.splice(ki,1);
   }
   for(let i=shockwaves.length-1;i>=0;i--){const sw=shockwaves[i];if(!sw.hit)sw.hit=new Set();const prevR=sw.r;sw.r+=sw.spd;for(const e of enemies){if(sw.hit.has(e)) continue;const dx=e.x-sw.ox,dy=e.y-sw.oy,d=Math.sqrt(dx*dx+dy*dy);if(d>=prevR-e.sz*0.5&&d<=sw.r+e.sz*0.5){sw.hit.add(e);if(mirrorBlocked(e,sw.srcKey)){}else{const swd=applyArmor(e,sw.dmg);e.hp-=swd;mirrorTrack(e,sw.srcKey,swd);}sparks(e.x,e.y,sw.col,4,1.5);if(sw.isIce){const sf=sw.slowFactor||.40;const sd=sw.slowDur||120;if(sf>e.slowFactor){e.slowFactor=sf;e.slowDur=Math.max(e.slowDur,sd);e.spd=e.spdBase*(1-e.slowFactor);if(e.flying&&sf>=.5){e.spd=Math.min(e.spd,e.spdBase*.20);}ft(e.x,e.y-e.sz-6,'❄','#88ddff');}}else{if(!e.robot) applyStun(e,6);}}}if(sw.r>=sw.maxR) shockwaves.splice(i,1);}
-  for(let i=projs.length-1;i>=0;i--){const p=projs[i];if(!p.ballistic&&p.tgt&&enemies.includes(p.tgt)){p.lastX=p.tgt.x;p.lastY=p.tgt.y;}const dx=p.lastX-p.x,dy=p.lastY-p.y,d=Math.sqrt(dx*dx+dy*dy);
+  for(let i=projs.length-1;i>=0;i--){const p=projs[i];if(!p.ballistic&&p.tgt&&enemies.includes(p.tgt)&&p.type!=='mace'){p.lastX=p.tgt.x;p.lastY=p.tgt.y;}const dx=p.lastX-p.x,dy=p.lastY-p.y,d=Math.sqrt(dx*dx+dy*dy);
+  // === MACE ARC PROJECTILE ===
+  if(p.type==='mace'){
+    if(!p.arcProgress) p.arcProgress=0;
+    // Track target for first half of arc
+    if(p.arcProgress<0.5&&p.tgt&&enemies.includes(p.tgt)){p.lastX=p.tgt.x;p.lastY=p.tgt.y;}
+    p.arcProgress+=p.spd*0.012;
+    if(p.arcProgress>=1){
+      // Impact!
+      const ix=p.lastX,iy=p.lastY;
+      const aoe=p.aoe||60;
+      const pierce=p.macePierce||0;
+      sparks(ix,iy,p.col,18,4);sparks(ix,iy,'#ffffff',8,2.5);
+      if(gfxMode<2){shockwaves.push({ox:ix,oy:iy,r:4,maxR:aoe*1.2,spd:8,col:p.col,dmg:0,hit:new Set(),life:1,width:3});}
+      flashes.push({x:ix,y:iy,r:aoe*0.7,life:8,ml:8,col:p.col});
+      let nhit=0;
+      for(const e of enemies){
+        const ex=e.x-ix,ey=e.y-iy;
+        if(ex*ex+ey*ey<=aoe*aoe){
+          if(mirrorBlocked(e,p.src&&p.src.key)) continue;
+          // Armor pierce: bypass a portion of armor
+          const origArmor=e.armor||0;
+          if(pierce>0) e.armor=Math.max(0,origArmor*(1-pierce));
+          const md=applyArmor(e,p.dmg);
+          e.hp-=md;
+          if(pierce>0) e.armor=origArmor;
+          mirrorTrack(e,p.src&&p.src.key,md);
+          sparks(e.x,e.y,p.col,4,2);
+          nhit++;
+        }
+      }
+      ft(ix,iy-14,'🔮 IMPACT!',p.col);
+      if(nhit>1) ft(ix,iy-28,'×'+nhit+' HIT!','#ffffff');
+      projs.splice(i,1);continue;
+    }
+    // Quadratic Bézier arc: startX/Y → peakX/Y (midpoint above) → lastX/Y
+    const t2=p.arcProgress;
+    const midX=(p.startX+p.lastX)/2;
+    const peakY=Math.min(p.startY,p.lastY)-70-Math.abs(p.lastX-p.startX)*0.2;
+    // Bézier: B(t) = (1-t)^2*P0 + 2(1-t)t*P1 + t^2*P2
+    const mt=1-t2;
+    p.x=mt*mt*p.startX+2*mt*t2*midX+t2*t2*p.lastX;
+    p.y=mt*mt*p.startY+2*mt*t2*peakY+t2*t2*p.lastY;
+    continue;
+  }
   if(p.type==='nuke'){if(!p.progress)p.progress=0;p.progress+=0.016;
     // Phase 1 (0-0.4): fly straight UP from silo, keep tracking target
     if(p.progress<0.4){
@@ -6612,6 +7057,64 @@ function drawTower(t){
     ctx.beginPath();ctx.moveTo(cx,y+4);ctx.lineTo(cx,y+CS-4);ctx.stroke();
     ctx.beginPath();ctx.moveTo(x+4,cy);ctx.lineTo(x+CS-4,cy);ctx.stroke();
     if(cfg.thorns){ctx.fillStyle=col;ctx.font='9px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('⚡',cx,cy);}
+  } else if(cfg.t===CT.MACE){
+    // ── MACE TOWER: stone base + orbiting enchanted mace visual ──
+    const isUpgA=t.path==='A';
+    const isUpgB=t.path==='B';
+    const maceOrbit=_frm*0.04*(isUpgB?2:1);
+    const pulse=(Math.sin(_frm*.09)+1)*.5;
+    const mCol=isUpgA?'#cc44ff':(isUpgB?'#3399ff':cfg.col);
+    // Stone base
+    ctx.fillStyle='#1a1230';ctx.fillRect(x+2,y+2,CS-4,CS-4);
+    ctx.strokeStyle=mCol;ctx.lineWidth=1.5;ctx.strokeRect(x+3,y+3,CS-6,CS-6);
+    // Glowing rune circle on ground
+    ctx.save();ctx.globalAlpha=0.25+pulse*0.2;
+    ctx.beginPath();ctx.arc(cx,cy+2,10+pulse*2,0,Math.PI*2);
+    ctx.strokeStyle=mCol;ctx.lineWidth=1;ctx.stroke();
+    ctx.restore();
+    // Cooldown ring indicator (shrinks as tower charges up)
+    const cdMax=cfg.cd||180;
+    const cdPct=Math.max(0,1-(t.cd||0)/cdMax);
+    ctx.save();ctx.globalAlpha=0.5;
+    ctx.beginPath();ctx.arc(cx,cy,13,-.5*Math.PI,-.5*Math.PI+Math.PI*2*cdPct);
+    ctx.strokeStyle=mCol;ctx.lineWidth=2;ctx.stroke();
+    ctx.restore();
+    // Draw the base mace (static, hanging)
+    ctx.save();ctx.translate(cx,cy);
+    // Handle
+    ctx.strokeStyle='#775599';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(0,4);ctx.lineTo(0,-3);ctx.stroke();
+    // Base mace head (not upgraded — single mace)
+    ctx.beginPath();ctx.arc(0,-7,5,0,Math.PI*2);
+    ctx.fillStyle=isUpgA?'#9922cc':(isUpgB?'#2266cc':'#6644aa');ctx.fill();
+    ctx.strokeStyle='#ffffff55';ctx.lineWidth=1;ctx.stroke();
+    // Spikes
+    const sp=isUpgA?4:2;
+    ctx.fillStyle=mCol;
+    for(let si=0;si<sp;si++){const sa=(si/sp)*Math.PI*2+_frm*.03;ctx.save();ctx.rotate(sa);ctx.beginPath();ctx.moveTo(0,-12);ctx.lineTo(-1.5,-16);ctx.lineTo(1.5,-16);ctx.closePath();ctx.fill();ctx.restore();}
+    ctx.restore();
+    // Draw SECOND orbiting mace (upgraded visual)
+    if(isUpgA||isUpgB){
+      const ox2=Math.cos(maceOrbit)*13,oy2=Math.sin(maceOrbit)*13;
+      ctx.save();ctx.translate(cx+ox2,cy+oy2);ctx.rotate(maceOrbit+Math.PI/4);
+      ctx.strokeStyle='#cc88ff';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(0,3);ctx.lineTo(0,-2);ctx.stroke();
+      ctx.beginPath();ctx.arc(0,-5,3.5,0,Math.PI*2);
+      ctx.fillStyle=isUpgA?'#ff44ff':'#44aaff';ctx.fill();
+      ctx.strokeStyle='#ffffff88';ctx.lineWidth=.8;ctx.stroke();
+      ctx.restore();
+    }
+    // Enchantment glow
+    if(gfxMode<1){ctx.save();ctx.globalAlpha=.12+pulse*.1;const mg=ctx.createRadialGradient(cx,cy,0,cx,cy,CS*.55);mg.addColorStop(0,mCol);mg.addColorStop(1,'transparent');ctx.fillStyle=mg;ctx.beginPath();ctx.arc(cx,cy,CS*.55,0,Math.PI*2);ctx.fill();ctx.restore();}
+    // Range / cooldown visual when selected
+    if(sel){ctx.save();ctx.strokeStyle=mCol+'88';ctx.lineWidth=1;ctx.setLineDash([5,4]);const bfxS=getBuffsAt(t.col,t.row);ctx.beginPath();ctx.arc(cx,cy,cfg.rng*bfxS.rngMult,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.restore();}
+    // HP bar
+    const mhpFrac=t.hp/t.maxHp;
+    ctx.fillStyle='#001820';ctx.fillRect(x+6,y+CS-9,CS-12,4);
+    ctx.fillStyle=mhpFrac>.3?mCol:'#ff4444';ctx.fillRect(x+6,y+CS-9,(CS-12)*mhpFrac,4);
+    if((t.level||1)>1){ctx.fillStyle='#000a';ctx.fillRect(x+4,y+4,CS*0.16,CS*0.11);ctx.fillStyle='#ffd700';ctx.font='bold '+Math.max(7,CS*0.075)+'px Share Tech Mono';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('L'+t.level,x+6,y+5);}
+    if(sel){ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.strokeRect(x+1,y+1,CS-2,CS-2);}
+    return;
   } else if(cfg.t===CT.BASIC){
     // ── SHOCKWAVE path: cannon-style body with rotating barrel + shockwave ring indicator
     if(cfg.shockwave){
@@ -7434,6 +7937,30 @@ function draw(){
   for(const p of projs){
     if(gfxMode===3) continue;
     if(p.type==='elecBall'){const bp=(Math.sin(frame*.35+p.x*.05)+1)*.5;ctx.beginPath();ctx.arc(p.x,p.y,p.sz+bp*2,0,Math.PI*2);ctx.fillStyle=p.col;ctx.fill();}
+    else if(p.type==='mace'){
+      // Draw mace projectile: arc trail + mace head
+      const rot=(p.arcProgress||0)*Math.PI*8; // spinning
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(rot);
+      // Glow
+      if(gfxMode<2){ctx.beginPath();ctx.arc(0,0,p.sz+4,0,Math.PI*2);ctx.fillStyle=p.col+'44';ctx.fill();}
+      // Handle
+      ctx.strokeStyle=p.maceUpgraded?'#cc88ff':'#8866aa';ctx.lineWidth=2.5;
+      ctx.beginPath();ctx.moveTo(0,p.sz*.5);ctx.lineTo(0,p.sz*1.6);ctx.stroke();
+      // Head body
+      ctx.beginPath();ctx.arc(0,0,p.sz*.8,0,Math.PI*2);
+      ctx.fillStyle=p.maceUpgraded?'#cc44ff':'#9955cc';ctx.fill();
+      ctx.strokeStyle='#ffffff66';ctx.lineWidth=1;ctx.stroke();
+      // Spikes (4 spikes for upgraded, 2 for base)
+      const spikes=p.maceUpgraded?4:2;
+      ctx.fillStyle=p.maceUpgraded?'#ff88ff':'#bb77ee';
+      for(let si=0;si<spikes;si++){
+        const sa=(si/spikes)*Math.PI*2;
+        ctx.save();ctx.rotate(sa);
+        ctx.beginPath();ctx.moveTo(0,-p.sz*.8);ctx.lineTo(-2,-p.sz*1.35);ctx.lineTo(2,-p.sz*1.35);ctx.closePath();ctx.fill();
+        ctx.restore();
+      }
+      ctx.restore();
+    }
     else if(p.type==='towershot'){ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fillStyle='#ff8800';ctx.fill();ctx.beginPath();ctx.arc(p.x,p.y,2,0,Math.PI*2);ctx.fillStyle='#ffcc00';ctx.fill();}
     else if(p.type==='missile'){const mAngle=Math.atan2(p.lastY-p.y,p.lastX-p.x);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(mAngle);ctx.fillStyle='#00ffaa';ctx.beginPath();ctx.ellipse(0,0,p.sz,3,0,0,Math.PI*2);ctx.fill();ctx.restore();}
     else if(p.type==='nuke'){
@@ -8021,6 +8548,7 @@ async function bgChatPoll(){
     {key:'basic',   name:'BLASTER',       col:'#33aaff', type:'Attack',      unlock:0},
     {key:'sniper',  name:'RAILGUN',       col:'#bb44ff', type:'Attack',      unlock:0},
     {key:'cannon',  name:'CANNON',        col:'#ff8800', type:'Splash',      unlock:0},
+    {key:'mace',     name:'MACE',          col:'#7766cc', type:'Splash',      unlock:0},
     {key:'electric',name:'TESLA',         col:'#aaff00', type:'Splash',      unlock:5},
     {key:'healer',  name:'MEDIC',         col:'#00ffcc', type:'Support',     unlock:5},
     {key:'spike',   name:'SPIKE',         col:'#ff4488', type:'Executioner', unlock:15},
@@ -8293,13 +8821,13 @@ async function bgChatPoll(){
   'use strict';
 
   const WIKI_TOWER_META = {
-    wall:{type:'Support'}, basic:{type:'Attack'}, sniper:{type:'Attack'}, cannon:{type:'Splash'},
+    wall:{type:'Support'}, basic:{type:'Attack'}, sniper:{type:'Attack'}, cannon:{type:'Splash'}, mace:{type:'Splash'},
     electric:{type:'Splash'}, healer:{type:'Support'}, spike:{type:'Executioner'}, buff:{type:'Support'},
     mine:{type:'Economic'}, cowboy:{type:'Economic'}, necromancer:{type:'Support'}, flame:{type:'Splash'}, laser:{type:'Executioner'}, bhole:{type:'Executioner'},
     ice:{type:'Support'}, heli:{type:'Attack'}, barracks:{type:'Support'}, mech_base:{type:'Support'}, silo:{type:'Executioner'},
     hero_accel:{type:'Hero'}, hero_score:{type:'Hero'}, hero_sacrifice:{type:'Hero'}, admindrone:{type:'Attack'}, barbwire:{type:'Support'}
   };
-  const TOWER_ORDER = ['wall','basic','sniper','cannon','electric','healer','spike','buff','mine','cowboy','flame','laser','bhole','ice','barbwire','heli','barracks','necromancer','mech_base','admindrone','silo','hero_accel','hero_score','hero_sacrifice'];
+  const TOWER_ORDER = ['wall','basic','sniper','cannon','mace','electric','healer','spike','buff','mine','cowboy','flame','laser','bhole','ice','barbwire','heli','barracks','necromancer','mech_base','admindrone','silo','hero_accel','hero_score','hero_sacrifice'];
 
   let curTowerKey = null;
 
@@ -8664,6 +9192,11 @@ function applyHeroLockUI(){
       <button class="set-tog" id="sett-as-tog" onclick="setAutoSaveEnabled(!autoSaveEnabled)">&#9889; AUTO-SAVE: OFF</button>
       <div class="as-info">Saves after each wave to: <span id="as-slot-lbl">Slot 1</span></div>
       <div class="as-info" style="color:#0e2a1e">Uses last manually saved slot. Turns OFF on new game.</div>
+    </div>
+    <div class="set-sec">
+      <div class="set-sec-lbl">PRIVACY</div>
+      <button class="set-tog" id="sett-privacy-tog" onclick="togglePrivacy()">&#128065; PROFILE: PUBLIC — others can view your stats</button>
+      <div class="as-info" id="privacy-info">Your name, level, achievements and stats can be viewed by anyone clicking your leaderboard row.</div>
     </div>
   </div>
 </div>
