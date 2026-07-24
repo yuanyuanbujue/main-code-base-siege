@@ -6466,7 +6466,7 @@ function mirrorBlocked(tgt,srcKey){if(tgt&&tgt.bossType==='mirror'&&srcKey&&tgt.
 function mirrorTrack(tgt,srcKey,dmg){if(tgt&&tgt.bossType==='mirror'&&srcKey&&dmg>0){if(!tgt.dmgByType)tgt.dmgByType={};tgt.dmgByType[srcKey]=(tgt.dmgByType[srcKey]||0)+dmg;tgt.mirrorStageDmg=(tgt.mirrorStageDmg||0)+dmg;}}
 
 // === SHOP / BACKPACK (persistent meta-currency, earned via kills) ===
-const MG_MONEY_PER_KILL=0.001;
+const MG_MONEY_PER_KILL=0.01;
 let mgMoney=parseFloat(localStorage.getItem('mg_money')||'0')||0;
 let mgBackpack=JSON.parse(localStorage.getItem('mg_backpack')||'{}');
 let mgEquipped=JSON.parse(localStorage.getItem('mg_equipped')||'{}');
