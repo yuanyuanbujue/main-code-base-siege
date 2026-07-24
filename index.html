@@ -257,7 +257,7 @@ const MP={
     const cfg=TS[d.key]?TS[d.key][d.lvl||1]:null;
     if(!cfg) return;
     if(d.size===2){grid[d.row][d.col]=cfg.t;grid[d.row][d.col+1]=cfg.t;grid[d.row+1][d.col]=cfg.t;grid[d.row+1][d.col+1]=cfg.t;}else{grid[d.row][d.col]=cfg.t;}bfs();
-    const t={row:d.row,col:d.col,key:d.key,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,level:d.lvl||1,path:null,size:d.size,id:++_towerIdCounter,owner:d.pid,ownerColor:PLAYER_COLORS[d.colorIdx]||'#888',ownerName:d.name||'?',totalDmgDealt:0,totalKills:0,totalGoldSpent:0};
+    const t={row:d.row,col:d.col,key:d.key,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,level:d.lvl||1,path:null,size:d.size,id:++_towerIdCounter,owner:d.pid,ownerColor:PLAYER_COLORS[d.colorIdx]||'#888',ownerName:d.name||'?',totalDmgDealt:0,totalKills:0,totalGoldSpent:0,skins:d.skins||{}};
     if(cfg.healAmt){t.healTick=0;}
     towers.push(t);
     // Spawn helicopter for remote heli pads
@@ -1343,6 +1343,27 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 .ach-prog.done .ach-prog-bar{background:linear-gradient(90deg,#ffd70044,#ffd70088);}
 .ach-prog-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:7px;color:#4a8a6a;letter-spacing:1px;}
 .ach-prog.done .ach-prog-txt{color:#ffd700;}
+
+#shop-modal{display:none;position:fixed;inset:0;background:#04080fee;z-index:10001;align-items:center;justify-content:center;}
+#shop-modal.vis{display:flex;}
+.shop-box{background:#060c18;border:1px solid #ffd700;padding:22px 26px;width:92vw;max-width:640px;max-height:82vh;overflow-y:auto;}
+.shop-modal-title{font-family:'Orbitron',sans-serif;font-size:18px;letter-spacing:4px;color:#ffd700;text-align:center;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;}
+.shop-money{text-align:center;font-family:'Share Tech Mono',monospace;font-size:14px;color:#ffd700;letter-spacing:1px;margin-bottom:14px;}
+.shop-tabs-big{display:flex;gap:8px;margin-bottom:16px;}
+.shop-tabs-big button{flex:1;background:#04090f;border:1px solid #0e2030;color:#2a4a6a;font-family:'Share Tech Mono',monospace;font-size:11px;padding:10px;cursor:pointer;letter-spacing:2px;transition:all .1s;}
+.shop-tabs-big button:hover,.shop-tabs-big button.on{border-color:#ffd700;color:#ffd700;background:#1a1400;}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;}
+.shop-card{display:flex;align-items:center;gap:10px;border:1px solid #0e2030;padding:12px;background:#04090f;transition:all .15s;}
+.shop-card:hover{border-color:#1a4a2a;}
+.shop-card .shop-icon{font-size:30px;min-width:40px;text-align:center;}
+.shop-card .shop-info{flex:1;}
+.shop-card .shop-n{font-family:'Share Tech Mono',monospace;font-size:12px;color:#00ff88;letter-spacing:1px;}
+.shop-card .shop-d{font-size:9px;color:#4a6a5a;margin-top:3px;}
+.shop-card .shop-owned{font-size:9px;color:#4a8a6a;}
+.shop-buy-btn-big{background:#04140a;border:1px solid #00ff88;color:#00ff88;font-family:'Share Tech Mono',monospace;font-size:11px;padding:8px 12px;cursor:pointer;white-space:nowrap;transition:all .1s;}
+.shop-buy-btn-big:hover{background:#00ff88;color:#04140a;}
+.shop-buy-btn-big:disabled{background:#0a0a0a;border-color:#333;color:#555;cursor:not-allowed;}
+.shop-empty{font-size:11px;color:#2a4a6a;text-align:center;padding:40px 0;line-height:1.6;}
 /* ═══ PLAYER STATS MENU ═══ */
 #stats-modal{display:none;position:fixed;inset:0;background:#04080fee;z-index:10001;align-items:center;justify-content:center;}
 #stats-modal.vis{display:flex;}
@@ -1551,6 +1572,20 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     <!-- Dynamic content -->
   </div>
 </div>
+<div id="shop-modal">
+  <div class="shop-box">
+    <div class="shop-modal-title">
+      <span>🛒 SHOP</span>
+      <span style="color:#4a6a5a;cursor:pointer;font-size:18px" id="shop-modal-close">✕</span>
+    </div>
+    <div class="shop-money" id="shop-modal-money">$0.00</div>
+    <div class="shop-tabs-big">
+      <button id="shop-modal-tab-store">STORE</button>
+      <button id="shop-modal-tab-backpack">BACKPACK</button>
+    </div>
+    <div id="shop-modal-content"></div>
+  </div>
+</div>
 <div id="ach-popup">
   <div class="ach-header">ACHIEVEMENT UNLOCKED</div>
   <div><span class="ach-icon" id="ach-pop-icon"></span><span class="ach-title" id="ach-pop-title"></span></div>
@@ -1645,6 +1680,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 <div id="auth-bar">
   <span id="auth-user">NOT SIGNED IN — scores won't be saved to leaderboard</span>
   <button id="name-btn" style="background:#04090f;border:1px solid #0e2030;color:#ffaa33;font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 10px;cursor:pointer;transition:all .1s;letter-spacing:1px;white-space:nowrap;display:none">✏ NAME</button>
+  <button id="topbar-shop-btn" style="font-size:9px;background:#04090f;border:1px solid #ffd700;color:#ffd700;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-right:4px;transition:all .1s;">🛒 SHOP</button>
   <button id="sug-btn" style="font-size:9px;background:#04090f;border:1px solid #ffaa33;color:#ffaa33;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-right:4px;transition:all .1s;" onclick="openSugModal()">💡 IDEAS</button>
   <button id="ach-btn" style="display:none;font-size:9px;background:#04090f;border:1px solid #ffd700;color:#ffd700;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-right:4px;transition:all .1s;">🏅 ACHIEVEMENTS</button>
   <button id="stats-btn" style="font-size:9px;background:#04090f;border:1px solid #00ccff;color:#00ccff;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-right:4px;transition:all .1s;">📊 STATS</button>
@@ -2766,7 +2802,7 @@ const WAVE_TYPES=[
 ];
 function mkComp(w,ratios,countMult=1,sizeMult=1){const cnt=Math.round((6+w*3+Math.max(0,w-50)*2)*countMult);const res=[];const keys=Object.keys(ratios),vals=Object.values(ratios);for(let i=0;i<cnt;i++){let r=Math.random(),acc=0,picked=keys[0];for(let j=0;j<keys.length;j++){acc+=vals[j];if(r<=acc){picked=keys[j];break;}}res.push({variant:picked,sizeMult});}return res;}
 const BOSS_WAVE_IDX={14:'boss_normal',15:'boss_armor',16:'boss_robot',17:'boss_flying',18:'boss_commander',19:'boss_guardian',20:'boss_mirror'};
-const BOSS_UNLOCK_WAVE={14:5,16:5,15:20,17:20,18:35,19:50,20:65};
+const BOSS_UNLOCK_WAVE={14:5,16:5,15:20,17:20,18:35,19:50,20:150};
 function pickWaveType(w){if(w===1) return 0;if(w===2) return 1;if(w===3) return 3;if(w===4) return 4;if(w===5) return 2;if(w%5===0){const isHC=gameMode==='hardcore';let pool=Object.keys(BOSS_WAVE_IDX).map(Number).filter(idx=>w>=(BOSS_UNLOCK_WAVE[idx]||0));if(isHC) pool=pool.filter(idx=>idx!==18);if(pool.length===0) pool=[14];return pool[Math.floor((w/5-1))%pool.length];}const pool=[];for(let i=0;i<14;i++){const weight=i<4?Math.max(0,8-w):Math.min(i+1,w);for(let j=0;j<weight;j++) pool.push(i);}if(w>=6) for(let j=0;j<Math.min(w-4,5);j++) pool.push(11);if(w>=7) for(let j=0;j<Math.min(w-5,4);j++) pool.push(12);if(w>=8) for(let j=0;j<Math.min(w-6,4);j++) pool.push(13);return pool[Math.floor(Math.random()*pool.length)];}
 
 const cv=document.getElementById('cv');cv.width=W;cv.height=H;
@@ -3933,6 +3969,11 @@ document.getElementById('mg-close').addEventListener('click',()=>{
   mgStopTTT();
   mgStopChess();
 });
+document.getElementById('topbar-shop-btn').addEventListener('click',mgOpenShopModal);
+document.getElementById('shop-modal-close').addEventListener('click',mgCloseShopModal);
+document.getElementById('shop-modal').addEventListener('click',e=>{ if(e.target.id==='shop-modal') mgCloseShopModal(); });
+document.getElementById('shop-modal-tab-store').addEventListener('click',()=>{ mgShopTab='store'; mgRenderShopModal(); });
+document.getElementById('shop-modal-tab-backpack').addEventListener('click',()=>{ mgShopTab='backpack'; mgRenderShopModal(); });
 
 // Tab switching
 document.querySelectorAll('.mg-tab').forEach(t=>{t.addEventListener('click',()=>{
@@ -6029,10 +6070,10 @@ cv.addEventListener('click',e=>{
   const cfg=getCfg(selBuild,1,null);const actualCost=getDiscountedCost(selBuild,col,row);
   if(gold<actualCost){msg('⚠ Insufficient gold!');return;}
   grid[row][col]=cfg.t;bfs();const saved=cfg.cost-actualCost;gold-=actualCost;if(gameMode!=='sandbox'){achStats.totalGoldSpent=(achStats.totalGoldSpent||0)+actualCost;if(achStats.totalGoldSpent>=50000)unlockAchievement('gambler');if(achStats.totalGoldSpent%5000<actualCost)saveAchStats();}
-  const newTower={row,col,key:selBuild,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,angle:0,level:1,path:null,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],owner:MP.active?MP.playerId:null,ownerColor:MP.active?PLAYER_COLORS[MP.colorIndex]:'#00ff88',ownerName:MP.active?MP.playerName:'YOU',totalDmgDealt:0,totalKills:0,totalGoldSpent:actualCost};
+  const newTower={row,col,key:selBuild,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,angle:0,level:1,path:null,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],owner:MP.active?MP.playerId:null,ownerColor:MP.active?PLAYER_COLORS[MP.colorIndex]:'#00ff88',ownerName:MP.active?MP.playerName:'YOU',totalDmgDealt:0,totalKills:0,totalGoldSpent:actualCost,skins:{...mgEquipped}};
   towers.push(newTower);if(selBuild!=='wall'){_sessionTowerTypes.add(selBuild);}_sessionAllTypes.add(selBuild);if(selBuild==='wall')_sessionWallCount++;
   if(typeof checkAchievements_towerPlaced==='function') checkAchievements_towerPlaced(selBuild);
-  if(MP.active){MP.broadcast('tower:place',{pid:MP.playerId,row,col,key:selBuild,lvl:1,colorIdx:MP.colorIndex,name:MP.playerName});MP.updatePlayerGold();}if(selBuild==='heli') spawnHelicopter(newTower);if(selBuild==='admindrone') spawnAdminDrones(newTower);  if(selBuild==='barracks'||selBuild==='mech_base'){newTower.allySpawnCd=0;}
+  if(MP.active){MP.broadcast('tower:place',{pid:MP.playerId,row,col,key:selBuild,lvl:1,colorIdx:MP.colorIndex,name:MP.playerName,skins:{...mgEquipped}});MP.updatePlayerGold();}if(selBuild==='heli') spawnHelicopter(newTower);if(selBuild==='admindrone') spawnAdminDrones(newTower);  if(selBuild==='barracks'||selBuild==='mech_base'){newTower.allySpawnCd=0;}
   if(selBuild==='silo'){newTower.siloCd=0;newTower.siloTarget=null;newTower.siloFiring=false;newTower.siloBeamLife=0;newTower.siloFrozenX=null;newTower.siloFrozenY=null;newTower.siloReticleFrozen=false;newTower.siloBeamHold=0;}
   sparks(col*CS+CS/2,row*CS+CS/2,cfg.col,7,1.5);if(saved>0) ft(col*CS+CS/2,row*CS-14,`DISCOUNT -${saved}g!`,'#ffd700');
   if(pathBlocked) msg('⚠ Path sealed! Enemies will breach!',2500);syncUI();
@@ -6423,6 +6464,101 @@ function spawnE(entry){
 function isBlockedByShield(px,py,targetEnemy){if(!targetEnemy.shielded) return false;for(const e of enemies){if(!e.isShielder||e.stun>0) continue;const dx=targetEnemy.x-e.x,dy=targetEnemy.y-e.y;if(Math.sqrt(dx*dx+dy*dy)<=65) return e;}return null;}
 function mirrorBlocked(tgt,srcKey){if(tgt&&tgt.bossType==='mirror'&&srcKey&&tgt.mirrorImmuneType===srcKey){sparks(tgt.x,tgt.y,'#ffffff',6,1.4);ft(tgt.x,tgt.y-tgt.sz-6,'IMMUNE','#ffffff');return true;}return false;}
 function mirrorTrack(tgt,srcKey,dmg){if(tgt&&tgt.bossType==='mirror'&&srcKey&&dmg>0){if(!tgt.dmgByType)tgt.dmgByType={};tgt.dmgByType[srcKey]=(tgt.dmgByType[srcKey]||0)+dmg;tgt.mirrorStageDmg=(tgt.mirrorStageDmg||0)+dmg;}}
+
+// === SHOP / BACKPACK (persistent meta-currency, earned via kills) ===
+const MG_MONEY_PER_KILL=0.001;
+let mgMoney=parseFloat(localStorage.getItem('mg_money')||'0')||0;
+let mgBackpack=JSON.parse(localStorage.getItem('mg_backpack')||'{}');
+let mgEquipped=JSON.parse(localStorage.getItem('mg_equipped')||'{}');
+let mgMoneySaveTimer=null;
+function mgEarnMoney(killCount){
+  mgMoney+=killCount*MG_MONEY_PER_KILL;
+  if(!mgMoneySaveTimer) mgMoneySaveTimer=setTimeout(()=>{ mgMoneySaveTimer=null; localStorage.setItem('mg_money',mgMoney.toFixed(4)); },1500);
+  const hud=document.getElementById('shop-modal-money');
+  if(hud) hud.textContent='$'+mgMoney.toFixed(2);
+}
+function mgSaveBackpack(){ localStorage.setItem('mg_backpack',JSON.stringify(mgBackpack)); }
+function mgSaveEquipped(){ localStorage.setItem('mg_equipped',JSON.stringify(mgEquipped)); }
+window.addEventListener('beforeunload',()=>{ localStorage.setItem('mg_money',mgMoney.toFixed(4)); });
+
+const SHOP_ITEMS=[
+  {id:'skin_classic_tesla',name:'CLASSIC TESLA SKIN',icon:'⚡',price:50,desc:'Restores the original TESLA tower look on all Electric towers.',type:'skin',slot:'electric',maxOwn:1},
+  {id:'skin_golden_blaster',name:'GOLDEN BLASTER SKIN',icon:'🟡',price:999,desc:'Recolors all Blaster/Minigun/Shockwave towers gold, with a glowing rim and sparkle.',type:'skin',slot:'basic',maxOwn:1},
+];
+function mgBuyShopItem(id){
+  const item=SHOP_ITEMS.find(i=>i.id===id);
+  if(!item||mgMoney<item.price) return false;
+  if(item.maxOwn&&(mgBackpack[id]||0)>=item.maxOwn) return false;
+  mgMoney-=item.price;
+  mgBackpack[id]=(mgBackpack[id]||0)+1;
+  localStorage.setItem('mg_money',mgMoney.toFixed(4));
+  mgSaveBackpack();
+  return true;
+}
+function mgToggleEquip(id){
+  const item=SHOP_ITEMS.find(i=>i.id===id);
+  if(!item||!(mgBackpack[id]>0)) return;
+  mgEquipped[id]=!mgEquipped[id];
+  mgSaveEquipped();
+}
+let mgShopTab='store';
+function mgRenderShopModal(){
+  const moneyEl=document.getElementById('shop-modal-money');
+  if(moneyEl) moneyEl.textContent='$'+mgMoney.toFixed(2);
+  document.getElementById('shop-modal-tab-store').classList.toggle('on',mgShopTab==='store');
+  document.getElementById('shop-modal-tab-backpack').classList.toggle('on',mgShopTab==='backpack');
+  const content=document.getElementById('shop-modal-content');
+  const ownedCount=Object.values(mgBackpack).reduce((a,b)=>a+b,0);
+  document.getElementById('shop-modal-tab-backpack').textContent='BACKPACK'+(ownedCount?' ('+ownedCount+')':'');
+  if(mgShopTab==='store'){
+    content.innerHTML=`<div class="shop-grid">${SHOP_ITEMS.map(i=>{
+      const owned=mgBackpack[i.id]||0;
+      const maxedOut=i.maxOwn&&owned>=i.maxOwn;
+      const afford=mgMoney>=i.price&&!maxedOut;
+      return `<div class="shop-card">
+        <span class="shop-icon">${i.icon}</span>
+        <div class="shop-info">
+          <div class="shop-n">${i.name}${owned?` <span class="shop-owned">${maxedOut?'OWNED':'x'+owned}</span>`:''}</div>
+          <div class="shop-d">${i.desc}</div>
+        </div>
+        <button class="shop-buy-btn-big" data-id="${i.id}" ${afford?'':'disabled'}>${maxedOut?'OWNED':'$'+i.price}</button>
+      </div>`;
+    }).join('')}</div>`;
+    content.querySelectorAll('.shop-buy-btn-big').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        if(mgBuyShopItem(btn.dataset.id)) mgRenderShopModal();
+      });
+    });
+  } else {
+    const owned=Object.keys(mgBackpack).filter(k=>mgBackpack[k]>0);
+    if(owned.length===0){
+      content.innerHTML=`<div class="shop-empty">Your backpack is empty.<br>Get kills in battle to earn money, then buy items in the STORE tab.</div>`;
+    } else {
+      content.innerHTML=`<div class="shop-grid">${owned.map(id=>{
+        const item=SHOP_ITEMS.find(i=>i.id===id);
+        if(!item) return '';
+        const eq=!!mgEquipped[id];
+        return `<div class="shop-card shop-card-equip" data-id="${id}" style="cursor:pointer;${eq?'border-color:#00ff88;box-shadow:0 0 10px #00ff8844;':''}">
+          <span class="shop-icon">${item.icon}</span>
+          <div class="shop-info">
+            <div class="shop-n">${item.name}</div>
+            <div class="shop-d">${item.desc}</div>
+          </div>
+          <span style="font-size:9px;font-weight:bold;color:${eq?'#00ff88':'#4a6a8a'};white-space:nowrap;letter-spacing:1px;">${eq?'✓ EQUIPPED':'CLICK TO EQUIP'}</span>
+        </div>`;
+      }).join('')}</div>`;
+      content.querySelectorAll('.shop-card-equip').forEach(card=>{
+        card.addEventListener('click',()=>{ mgToggleEquip(card.dataset.id); mgRenderShopModal(); });
+      });
+    }
+  }
+}
+function mgOpenShopModal(){
+  mgShopTab='store';
+  document.getElementById('shop-modal').classList.add('vis');
+  mgRenderShopModal();
+}
+function mgCloseShopModal(){ document.getElementById('shop-modal').classList.remove('vis'); }
 function applyArmor(e,dmg,isElec=false){let d=dmg;const shredMult=(e.armorShred||0)+(e.curseShred||0)>0?1+(e.armorShred||0)+(e.curseShred||0):1;if(e.heavyArmor&&!isElec) d=Math.max(1,Math.round(d*0.15*shredMult));else if(shredMult>1) d=Math.round(d*shredMult);if(e.shielded) d=Math.max(1,Math.round(d*0.35));if(e.champBuffed) d=Math.max(1,Math.round(d*0.6));if(e.guardianBuffed) d=Math.max(1,Math.round(d*0.6));if(e.curseDmgAmp&&e.curseDmgAmp>0) d=Math.round(d*(1+e.curseDmgAmp));return d;}
 function elecDmg(e,dmg){let d=dmg;if(e.robot) d=Math.max(1,Math.round(d*.12));if(e.shielded) d=Math.max(1,Math.round(d*.40));return d;}
 function fireElectric(ox,oy,first,dmg,chains){if(!enemies.includes(first)) return;const hit=new Set([first]);const d=elecDmg(first,dmg);first.hp-=d;if(!first.robot&&!first.stunImmune) applyStun(first,14);addLx(ox,oy,first.x,first.y);sparks(first.x,first.y,'#aaff00',5,1.5);let prev=first;for(let c=0;c<chains;c++){let nx=null,bd=Infinity;for(const e of enemies){if(hit.has(e)) continue;const dx=e.x-prev.x,dy=e.y-prev.y,dd=dx*dx+dy*dy;if(dd<115*115&&dd<bd){bd=dd;nx=e;}}if(!nx) break;addLx(prev.x,prev.y,nx.x,nx.y);const cd=elecDmg(nx,Math.round(dmg*(.62**(c+1))));nx.hp-=cd;if(!nx.robot) applyStun(nx,9);sparks(nx.x,nx.y,'#aaff00',3,1.2);hit.add(nx);prev=nx;}}
@@ -7440,7 +7576,7 @@ if(cfg.t===CT.FLAME&&cfg.flameTower){if(t.cd>0){t.cd--;continue;}const bfx=getBu
       ft(e.x,e.y-e.sz-24,'🪞 STAGE '+e.mirrorStage+' — +'+gain+' HP ('+e.mhp+' total)','#ff66ff');sparks(e.x,e.y,'#ff66ff',30,5);sparks(e.x,e.y,'#ffffff',15,3);
       continue;
     }
-    const bfx=getBuffsAt(Math.floor(e.x/CS),Math.floor(e.y/CS));const rw=Math.round(e.rw*(1+bfx.goldBonusMult));gold+=rw;const sm=(MODES[gameMode].scoreMult||1)*(negativeWaveMode?1.5:1)*heroScoreMult();score+=Math.round(rw*10*sm);kills++;achStats.totalKills++;if(e._lastHitTower&&towers.includes(e._lastHitTower)){e._lastHitTower.totalKills=(e._lastHitTower.totalKills||0)+1;}if(e.isBoss&&e._bossSpawnTime&&(Date.now()-e._bossSpawnTime)<=5000){unlockAchievement('boss_speed');}
+    const bfx=getBuffsAt(Math.floor(e.x/CS),Math.floor(e.y/CS));const rw=Math.round(e.rw*(1+bfx.goldBonusMult));gold+=rw;const sm=(MODES[gameMode].scoreMult||1)*(negativeWaveMode?1.5:1)*heroScoreMult();score+=Math.round(rw*10*sm);kills++;mgEarnMoney(1);achStats.totalKills++;if(e._lastHitTower&&towers.includes(e._lastHitTower)){e._lastHitTower.totalKills=(e._lastHitTower.totalKills||0)+1;}if(e.isBoss&&e._bossSpawnTime&&(Date.now()-e._bossSpawnTime)<=5000){unlockAchievement('boss_speed');}
       // === VOID REAVER DEFEATED — WON THE CHAPTER (Last Light wave 40 / Abyssal Depths wave 50). Grants bonus XP, doesn't end the run. ===
       if(e.isBoss&&e.bossType==='reaver'&&!lastLightWon){
         lastLightWon=true;
@@ -8410,38 +8546,103 @@ function drawTower(t){
     if(sel){ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.strokeRect(x+1,y+1,CS-2,CS-2);}
     return;
   } else if(cfg.t===CT.BASIC){
+    const goldenBlaster=t.skins?t.skins['skin_golden_blaster']:mgEquipped['skin_golden_blaster'];
+    const bcol=goldenBlaster?'#ffd700':col;
+    if(goldenBlaster){
+      // ── GOLDEN BLASTER SKIN: brushed-metal gradient body + specular shine + trim ring ──
+      const gPulse=(Math.sin(_frm*.06)+1)*.5;
+      const shineAng=_frm*.025;
+      const bodyR=cfg.shockwave?14:12;
+      const mkGoldGrad=(r)=>{
+        const gr=ctx.createRadialGradient(cx-r*.35,cy-r*.4,r*.1,cx,cy,r*1.15);
+        gr.addColorStop(0,'#fff6cf');
+        gr.addColorStop(.28,'#ffe066');
+        gr.addColorStop(.55,'#e8a800');
+        gr.addColorStop(.8,'#8a5a00');
+        gr.addColorStop(1,'#3d2600');
+        return gr;
+      };
+      gl('#ffd700',12+gPulse*6);
+      ctx.beginPath();ctx.arc(cx,cy,bodyR+2,0,Math.PI*2);
+      ctx.fillStyle=mkGoldGrad(bodyR+2);ctx.fill();
+      ng();
+      // fine concentric machining rings for a "modeled" metal look
+      ctx.strokeStyle='rgba(255,240,180,.35)';ctx.lineWidth=.7;
+      ctx.beginPath();ctx.arc(cx,cy,bodyR-1,0,Math.PI*2);ctx.stroke();
+      ctx.beginPath();ctx.arc(cx,cy,bodyR-4,0,Math.PI*2);ctx.stroke();
+      // outer trim ring, brighter
+      ctx.strokeStyle='#fff2b0';ctx.lineWidth=1.4;
+      ctx.beginPath();ctx.arc(cx,cy,bodyR+2,0,Math.PI*2);ctx.stroke();
+      // rotating specular glint arc — sells the "3D model" feel
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(shineAng);
+      ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=1.6;
+      ctx.beginPath();ctx.arc(0,0,bodyR-1,-.5,.15);ctx.stroke();
+      ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.arc(0,0,bodyR-1,Math.PI-.5,Math.PI+.35);ctx.stroke();
+      ctx.restore();
+      // small gold rivets around the rim
+      for(let i=0;i<6;i++){const ra=i/6*Math.PI*2+_frm*.005;const rx=cx+Math.cos(ra)*(bodyR-1.5),ry=cy+Math.sin(ra)*(bodyR-1.5);ctx.beginPath();ctx.arc(rx,ry,.9,0,Math.PI*2);ctx.fillStyle='#fff2b0';ctx.fill();}
+    }
     // ── SHOCKWAVE path: cannon-style body with rotating barrel + shockwave ring indicator
     if(cfg.shockwave){
-      // Outer ring pulsing — shows it's a shockwave type
-      const swPulse=(Math.sin(_frm*.15)+1)*.5;
-      ctx.beginPath();ctx.arc(cx,cy,14+swPulse*2,0,Math.PI*2);
-      ctx.fillStyle='#030c1a';ctx.fill();
-      ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.stroke();
-      // Inner decorative ring (shockwave indicator)
-      ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);
-      ctx.strokeStyle=col+'66';ctx.lineWidth=1;ctx.stroke();
+      if(!goldenBlaster){
+        // Outer ring pulsing — shows it's a shockwave type
+        const swPulse=(Math.sin(_frm*.15)+1)*.5;
+        ctx.beginPath();ctx.arc(cx,cy,14+swPulse*2,0,Math.PI*2);
+        ctx.fillStyle='#030c1a';ctx.fill();
+        ctx.strokeStyle=bcol;ctx.lineWidth=2.5;ctx.stroke();
+        // Inner decorative ring (shockwave indicator)
+        ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);
+        ctx.strokeStyle=bcol+'66';ctx.lineWidth=1;ctx.stroke();
+      }
       // Cannon barrel (thick, like the Cannon tower) — rotates toward target
       ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle);
-      ctx.strokeStyle=col;ctx.lineWidth=5;
-      ctx.beginPath();ctx.moveTo(3,0);ctx.lineTo(15,0);ctx.stroke();
+      if(goldenBlaster){
+        // layered barrel: dark core + gold sleeve + bright rim for a chunky machined look
+        ctx.strokeStyle='#2a1c00';ctx.lineWidth=6.5;ctx.beginPath();ctx.moveTo(3,0);ctx.lineTo(16,0);ctx.stroke();
+        ctx.strokeStyle=bcol;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(3,0);ctx.lineTo(16,0);ctx.stroke();
+        ctx.strokeStyle='#fff2b0';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(4,-1.6);ctx.lineTo(15,-1.6);ctx.stroke();
+        ctx.strokeStyle='#7a5000';ctx.lineWidth=1;ctx.beginPath();ctx.arc(9,0,2.6,0,Math.PI*2);ctx.stroke();
+      } else {
+        ctx.strokeStyle=bcol;ctx.lineWidth=5;
+        ctx.beginPath();ctx.moveTo(3,0);ctx.lineTo(15,0);ctx.stroke();
+      }
       // Barrel ring near base
-      ctx.strokeStyle=col+'aa';ctx.lineWidth=1;
+      ctx.strokeStyle=bcol+'aa';ctx.lineWidth=1;
       ctx.beginPath();ctx.arc(4,0,4,Math.PI/2,-Math.PI/2);ctx.stroke();
       // Muzzle cap
-      ctx.fillStyle=col;ctx.beginPath();ctx.arc(15,0,2.5,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle=goldenBlaster?'#fff2b0':bcol;ctx.beginPath();ctx.arc(16,0,goldenBlaster?3:2.5,0,Math.PI*2);ctx.fill();
       ctx.restore();
       // Center orb
-      ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fillStyle='#030c1a';ctx.fill();
-      ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();
-      ctx.beginPath();ctx.arc(cx,cy,2.5,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+      ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fillStyle=goldenBlaster?'#3d2600':'#030c1a';ctx.fill();
+      ctx.strokeStyle=bcol;ctx.lineWidth=2;ctx.stroke();
+      ctx.beginPath();ctx.arc(cx,cy,2.5,0,Math.PI*2);ctx.fillStyle=goldenBlaster?'#fff6cf':bcol;ctx.fill();
       // Shockwave label
-      ctx.fillStyle=col+'99';ctx.font='5px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('SW',cx,cy+10);
+      ctx.fillStyle=bcol+'99';ctx.font='5px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('SW',cx,cy+10);
+      if(goldenBlaster&&_frm%4===0) sparks(cx+Math.cos(_frm*.075)*15,cy+Math.sin(_frm*.075)*15,'#ffe066',1,.5);
     } else {
       // Standard Blaster / Minigun
-      ctx.beginPath();ctx.arc(cx,cy,12,0,Math.PI*2);ctx.fillStyle='#0a1828';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();
-      ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle);ctx.strokeStyle=col;ctx.lineWidth=cfg.minigun?2:2.5;ctx.beginPath();ctx.moveTo(4,0);ctx.lineTo(17,0);ctx.stroke();
-      if(cfg.minigun){ctx.strokeStyle=col+'cc';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(4,-3);ctx.lineTo(15,-3);ctx.stroke();ctx.beginPath();ctx.moveTo(4,3);ctx.lineTo(15,3);ctx.stroke();}
-      ctx.restore();ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+      if(!goldenBlaster){
+        ctx.beginPath();ctx.arc(cx,cy,12,0,Math.PI*2);ctx.fillStyle='#0a1828';ctx.fill();ctx.strokeStyle=bcol;ctx.lineWidth=2;ctx.stroke();
+      }
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle);
+      if(goldenBlaster){
+        // gatling-style triple-barrel cluster with metallic shading
+        const barrelOffs=cfg.minigun?[-3,0,3]:[0];
+        for(const bo of barrelOffs){
+          ctx.strokeStyle='#2a1c00';ctx.lineWidth=cfg.minigun?2.6:3.4;ctx.beginPath();ctx.moveTo(4,bo);ctx.lineTo(17,bo);ctx.stroke();
+          ctx.strokeStyle=bcol;ctx.lineWidth=cfg.minigun?1.7:2.4;ctx.beginPath();ctx.moveTo(4,bo);ctx.lineTo(17,bo);ctx.stroke();
+          ctx.strokeStyle='#fff2b0';ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(5,bo-.6);ctx.lineTo(15,bo-.6);ctx.stroke();
+        }
+        ctx.fillStyle='#fff2b0';ctx.beginPath();ctx.arc(17,0,1.6,0,Math.PI*2);ctx.fill();
+      } else {
+        ctx.strokeStyle=bcol;ctx.lineWidth=cfg.minigun?2:2.5;ctx.beginPath();ctx.moveTo(4,0);ctx.lineTo(17,0);ctx.stroke();
+        if(cfg.minigun){ctx.strokeStyle=bcol+'cc';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(4,-3);ctx.lineTo(15,-3);ctx.stroke();ctx.beginPath();ctx.moveTo(4,3);ctx.lineTo(15,3);ctx.stroke();}
+      }
+      ctx.restore();
+      ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fillStyle=goldenBlaster?'#fff6cf':bcol;ctx.fill();
+      if(goldenBlaster){ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.strokeStyle='#7a5000';ctx.lineWidth=.8;ctx.stroke();}
+      if(goldenBlaster&&_frm%5===0) sparks(cx+(Math.random()-.5)*14,cy+(Math.random()-.5)*14,'#ffd700',1,.5);
     }
   } else if(cfg.t===CT.SNIPER){
     ctx.save();ctx.translate(cx,cy);ctx.beginPath();for(let i=0;i<8;i++){const a=i/8*Math.PI*2-Math.PI/8,R=12;ctx[i===0?'moveTo':'lineTo'](Math.cos(a)*R,Math.sin(a)*R);}ctx.closePath();ctx.fillStyle='#0d0818';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();ctx.rotate(t.angle);ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(4,0);ctx.lineTo(22,0);ctx.stroke();ctx.strokeStyle=col+'99';ctx.lineWidth=0.8;ctx.beginPath();ctx.moveTo(14,-2);ctx.lineTo(14,2);ctx.stroke();ctx.beginPath();ctx.moveTo(18,-2);ctx.lineTo(18,2);ctx.stroke();ctx.restore();ctx.beginPath();ctx.arc(cx,cy,3,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
@@ -8449,7 +8650,21 @@ function drawTower(t){
     ctx.beginPath();ctx.arc(cx,cy,13,0,Math.PI*2);ctx.fillStyle='#140a04';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.stroke();
     ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle);ctx.strokeStyle=col;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(3,0);ctx.lineTo(15,0);ctx.stroke();ctx.strokeStyle=col+'aa';ctx.lineWidth=1;ctx.beginPath();ctx.arc(3,0,4,Math.PI/2,-Math.PI/2);ctx.stroke();ctx.restore();ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
   } else if(cfg.t===CT.ELECTRIC){
-    ctx.save();ctx.translate(cx,cy);ctx.rotate(_frm*0.02);ctx.beginPath();const pts=cfg.elecBall?6:5;for(let i=0;i<pts*2;i++){const a=i/pts/2*Math.PI*2-Math.PI/2,r=i%2===0?13:6;ctx[i===0?'moveTo':'lineTo'](Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();ctx.fillStyle='#0a1402';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();ctx.restore();const ep=(Math.sin(_frm*.2)+1)*.5;ctx.beginPath();ctx.arc(cx,cy,3+ep*2,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+    if(t.skins?t.skins['skin_classic_tesla']:mgEquipped['skin_classic_tesla']){
+      // ── CLASSIC TESLA SKIN (copied from the original v4 look) ──
+      ctx.fillStyle='#060e06';ctx.fillRect(x+2,y+2,CS-4,CS-4);
+      const ep=(Math.sin(_frm*.15+t.col)+1)*.5;
+      gl(col,10+ep*8);ctx.beginPath();ctx.arc(cx,cy,13,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(170,255,0,${.6+ep*.4})`;ctx.lineWidth=1.5;ctx.stroke();ng();
+      ctx.beginPath();ctx.arc(cx,cy,13,0,Math.PI*2);ctx.fillStyle='rgba(170,255,0,0.06)';ctx.fill();
+      ctx.save();ctx.translate(cx,cy);gl(col,6);ctx.strokeStyle=col;ctx.lineWidth=1.5;
+      const np=2+t.level;for(let a=0;a<np;a++){const ang=(a/np)*Math.PI*2+_frm*.025;ctx.beginPath();ctx.moveTo(Math.cos(ang)*5,Math.sin(ang)*5);ctx.lineTo(Math.cos(ang)*14,Math.sin(ang)*14);ctx.stroke();}
+      ng();ctx.restore();
+      ctx.beginPath();ctx.arc(cx,cy,3.5,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+      if(t.level>=2&&_frm%4===0) sparks(cx+(Math.random()-.5)*16,cy+(Math.random()-.5)*16,col,1,.5);
+    } else {
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(_frm*0.02);ctx.beginPath();const pts=cfg.elecBall?6:5;for(let i=0;i<pts*2;i++){const a=i/pts/2*Math.PI*2-Math.PI/2,r=i%2===0?13:6;ctx[i===0?'moveTo':'lineTo'](Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();ctx.fillStyle='#0a1402';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();ctx.restore();const ep=(Math.sin(_frm*.2)+1)*.5;ctx.beginPath();ctx.arc(cx,cy,3+ep*2,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+    }
   } else if(cfg.t===CT.HEALER){
     const pulse=(Math.sin(_frm*.07)+1)*.5,hc=fl?'#ff4444':t.path==='A'?'#00ccff':'#00ffcc';
     ctx.fillStyle=fl?'#1a0808':'#040e0e';ctx.fillRect(x+2,y+2,CS-4,CS-4);
@@ -9727,7 +9942,7 @@ function toggleChat(){
   document.getElementById('chat-toggle').style.display=chatOpen?'none':'block';
   if(chatOpen){
     _chatAllowed=null;checkChatPermission();
-    if(!chatPollInterval){fetchChat();chatPollInterval=setInterval(fetchChat,2000);}
+    if(!chatPollInterval){loadLatestChat();chatPollInterval=setInterval(fetchChat,2000);}
   }
 }
 
@@ -9738,9 +9953,35 @@ function switchTab(ch){
   document.getElementById('tab-top3').style.color=ch==='top3'?'#ffd700':'#4a6a8a';
   document.getElementById('tab-top3').style.borderBottom=ch==='top3'?'2px solid #ffd700':'2px solid transparent';
   document.getElementById('chat-msgs').innerHTML='';
-  // Reset IDs to reload messages for this channel
-  if(ch==='global') lastGlobalId=0; else lastTop3Id=0;
-  fetchChat();
+  // Load the newest messages for this channel first (instead of resetting to id 0,
+  // which forced the poller to crawl forward from the very oldest message).
+  loadLatestChat();
+}
+
+// Fetch the most recent batch of messages (newest first), then render oldest→newest.
+// This also fast-forwards lastGlobalId/lastTop3Id to the current tip, so the regular
+// fetchChat() poller only ever asks for messages newer than what's already shown.
+async function loadLatestChat(){
+  try{
+    const{data,error}=await sb.from('game_chat').select('*').order('id',{ascending:false}).limit(40);
+    if(error){console.warn('Chat error:',error.message);return;}
+    const msgs=document.getElementById('chat-msgs');
+    if(!data||data.length===0) return;
+    const ordered=data.slice().reverse(); // oldest→newest for display
+    for(const m of ordered){
+      if(m.id>lastGlobalId) lastGlobalId=m.id;
+      if(m.id>lastTop3Id) lastTop3Id=m.id;
+      const ch=m.channel||'global';
+      if(ch!==chatChannel) continue;
+      const div=document.createElement('div');div.className='chat-msg';
+      const t=new Date(m.created_at);
+      const ts=t.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'});
+      const nameCol=ch==='top3'?'#ffd700':'#ff8844';
+      div.innerHTML='<span class="chat-name" style="color:'+nameCol+'">'+esc(m.player_name)+':</span> <span class="chat-text">'+esc(m.message)+'</span><span class="chat-time">'+ts+'</span>';
+      msgs.appendChild(div);
+    }
+    msgs.scrollTop=msgs.scrollHeight;
+  }catch(e){console.warn('Chat load:',e);}
 }
 
 async function fetchChat(){
