@@ -1283,13 +1283,15 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 .ch-start-btn:hover{background:#0a2814;box-shadow:0 0 10px #00ff8833;}
 .ch-back-btn{width:100%;margin-top:6px;background:transparent;border:1px solid #0e2030;color:#2a4a6a;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:7px;cursor:pointer;}
 .ch-back-btn:hover{border-color:#ff4444;color:#ff4444;}
-.ch-banner{text-align:center;font-size:9px;letter-spacing:1px;padding:6px;margin-bottom:6px;border:1px solid #0e2030;color:#4a8a6a;background:#04090f;}
-.ch-banner.mine{color:#00ff88;border-color:#0e3a24;}
+.ch-banner{text-align:center;font-size:9px;letter-spacing:1px;padding:6px;margin-bottom:6px;border:1px solid #0e2030;color:#4a8a6a;background:#04090f;transition:background .2s,border-color .2s,color .2s,box-shadow .2s;}
+.ch-banner.mine{color:#04140a;background:#00ff88;border-color:#00ff88;box-shadow:0 0 12px #00ff8866;font-weight:bold;animation:chTurnPulse 1.4s ease-in-out infinite;}
 .ch-banner.win{color:#00ff88;border-color:#00ff88;}
 .ch-banner.lose{color:#ff4444;border-color:#4a1010;}
 .ch-banner.draw{color:#ffaa33;border-color:#4a3410;}
 .ch-banner.check{color:#ff8800;border-color:#5a3a10;}
-.ch-board{display:grid;grid-template-columns:repeat(8,1fr);width:100%;max-width:232px;margin:0 auto;border:1px solid #0e2030;}
+@keyframes chTurnPulse{0%,100%{box-shadow:0 0 8px #00ff8855;}50%{box-shadow:0 0 18px #00ff88cc;}}
+.ch-board{display:grid;grid-template-columns:repeat(8,1fr);width:100%;max-width:232px;margin:0 auto;border:1px solid #0e2030;transition:border-color .2s,box-shadow .2s;}
+.ch-board.your-turn{border-color:#00ff88;box-shadow:0 0 14px #00ff8844;}
 .ch-sq{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;position:relative;user-select:none;}
 .ch-sq.light{background:#0e2030;}
 .ch-sq.dark{background:#050c14;}
@@ -4514,25 +4516,55 @@ let chMode,chPhase,chBoard,chTurn,chCastling,chEnPassant,chSelected,chLegalTarge
 let chHumanColor,chMySym,chDiff=localStorage.getItem('mg_chDiff')||'normal',chFirst=localStorage.getItem('mg_chFirst')||'you';
 let chWins=parseInt(localStorage.getItem('mg_chWins')||'0'),chLosses=parseInt(localStorage.getItem('mg_chLosses')||'0'),chDraws=parseInt(localStorage.getItem('mg_chDraws')||'0');
 let chBotTimeoutId=null,chPollTimer=null,chMyId=null,chMatchId=null,chPendingPromo=null,chThinking=false;
+let chHbTimer=null,chOpponentGone=null; // null | 'left' | 'timeout'
+const CH_HB_MS=3000, CH_HB_TIMEOUT_MS=8000;
 
 async function chSGet(key){ try{const{data,error}=await sb.from('chess_kv').select('value').eq('key',key).maybeSingle(); if(error||!data) return null; return data.value; }catch(e){return null;} }
 async function chSSet(key,value){ try{const{error}=await sb.from('chess_kv').upsert({key,value,updated_at:new Date().toISOString()},{onConflict:'key'}); return !error; }catch(e){return false;} }
 async function chSDel(key){ try{await sb.from('chess_kv').delete().eq('key',key);}catch(e){} }
 function chGenId(){ return 'cp_'+Math.random().toString(36).slice(2,10)+Date.now().toString(36); }
 
+function chStartHeartbeat(){
+  chStopHeartbeat();
+  chSendHeartbeat();
+  chHbTimer=setInterval(chSendHeartbeat,CH_HB_MS);
+}
+function chStopHeartbeat(){ if(chHbTimer){clearInterval(chHbTimer);chHbTimer=null;} }
+async function chSendHeartbeat(){
+  if(chMode!=='online'||!chMatchId||!chMySym) return;
+  await chSSet('ch_hb_'+chMatchId+'_'+chMySym, String(Date.now()));
+}
+// Best-effort notice to the opponent that we left, even on tab close (keepalive fetch works during unload; sendBeacon can't carry the required auth headers).
+function chNotifyLeaveBeacon(){
+  if(chMode!=='online'||!chMatchId||!chMySym||chWinner) return;
+  try{
+    fetch(MP_SUPABASE_URL+'/rest/v1/chess_kv?on_conflict=key',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':MP_SUPABASE_ANON,'Authorization':'Bearer '+MP_SUPABASE_ANON,'Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({key:'ch_left_'+chMatchId,value:chMySym,updated_at:new Date().toISOString()}),
+      keepalive:true
+    });
+  }catch(e){}
+}
+window.addEventListener('beforeunload', chNotifyLeaveBeacon);
+window.addEventListener('pagehide', chNotifyLeaveBeacon);
+
 function mgStopChess(){
   if(chBotTimeoutId){clearTimeout(chBotTimeoutId);chBotTimeoutId=null;}
   if(chPollTimer){clearInterval(chPollTimer);chPollTimer=null;}
+  chStopHeartbeat();
+  if(chMode==='online' && chMatchId && !chWinner){ chSSet('ch_left_'+chMatchId, chMySym); }
   chLeaveChessQueue();
 }
 async function chLeaveChessQueue(){
   if(chMyId){
     try{
-      const wRaw=await chSGet('ch_waiting',true);
-      if(wRaw){const w=JSON.parse(wRaw);if(w.id===chMyId) await chSDel('ch_waiting',true);}
+      const wRaw=await chSGet('ch_waiting');
+      if(wRaw){const w=JSON.parse(wRaw);if(w.id===chMyId) await chSDel('ch_waiting');}
     }catch(e){}
   }
 }
+
 
 function mgStartChess(){
   chPhase='mode';
@@ -4867,23 +4899,35 @@ async function chBeginMatchmaking(){
 }
 function chEnterOnlineGame(gs){
   chBoard=gs.board; chTurn=gs.turn; chCastling=gs.castling; chEnPassant=gs.enPassant;
-  chWinner=gs.winner; chLastMove=gs.lastMove; chSelected=null; chLegalTargets=[];
+  chWinner=gs.winner; chLastMove=gs.lastMove; chSelected=null; chLegalTargets=[]; chOpponentGone=null;
   const kp=chKingPos(chBoard,chTurn);
   chCheckColor = (kp && chIsAttacked(chBoard,kp.row,kp.col,chTurn==='w'?'b':'w')) ? chTurn : null;
   chPhase='play';
   mgRenderChessGame();
+  chSDel('ch_left_'+chMatchId); // clear any stale leave-flag from a previous game on this match id
+  chStartHeartbeat();
   chPollTimer=setInterval(chPollOnlineGame,1200);
 }
 async function chPollOnlineGame(){
   if(chPhase!=='play'||chMode!=='online'||!chMatchId) return;
-  const raw=await chSGet('ch_game_'+chMatchId,true);
+  const oppSym = chMySym==='w'?'b':'w';
+  const [raw,leftRaw,oppHbRaw]=await Promise.all([
+    chSGet('ch_game_'+chMatchId),
+    chSGet('ch_left_'+chMatchId),
+    chSGet('ch_hb_'+chMatchId+'_'+oppSym)
+  ]);
   if(!raw) return;
   try{
     const gs=JSON.parse(raw);
     chBoard=gs.board; chTurn=gs.turn; chCastling=gs.castling; chEnPassant=gs.enPassant; chWinner=gs.winner; chLastMove=gs.lastMove;
     const kp=chKingPos(chBoard,chTurn);
     chCheckColor=(kp && chIsAttacked(chBoard,kp.row,kp.col,chTurn==='w'?'b':'w')) ? chTurn : null;
-    if(gs.winner && chPollTimer){ clearInterval(chPollTimer); chPollTimer=null; }
+    if(!gs.winner){
+      if(leftRaw===oppSym) chOpponentGone='left';
+      else if(oppHbRaw && (Date.now()-parseInt(oppHbRaw,10))>CH_HB_TIMEOUT_MS) chOpponentGone='timeout';
+      else chOpponentGone=null;
+    }
+    if((gs.winner||chOpponentGone) && chPollTimer){ clearInterval(chPollTimer); chPollTimer=null; chStopHeartbeat(); }
     mgRenderChessGame();
   }catch(e){}
 }
@@ -4910,9 +4954,11 @@ async function chRematchOnline(){
   const players=g?g.players:{w:chMySym==='w'?chMyId:'?',b:chMySym==='b'?chMyId:'?'};
   const gs={ board:chInitBoard(), turn:'w', castling:{wK:true,wQ:true,bK:true,bQ:true}, enPassant:null, players, winner:null, lastMove:null, updatedAt:Date.now() };
   await chSSet('ch_game_'+chMatchId, JSON.stringify(gs), true);
+  await chSDel('ch_left_'+chMatchId);
   chBoard=gs.board; chTurn=gs.turn; chCastling=gs.castling; chEnPassant=gs.enPassant; chWinner=null; chLastMove=null; chCheckColor=null;
-  chSelected=null; chLegalTargets=[];
+  chSelected=null; chLegalTargets=[]; chOpponentGone=null;
   mgRenderChessGame();
+  chStartHeartbeat();
   if(!chPollTimer) chPollTimer=setInterval(chPollOnlineGame,1200);
 }
 
@@ -4927,6 +4973,7 @@ function chGetLegalForSquare(r,c){
 function chMySide(){ return chMode==='bot' ? chHumanColor : chMySym; }
 function chCanInteract(){
   if(chWinner) return false;
+  if(chMode==='online' && chOpponentGone) return false;
   if(chMode==='bot') return chTurn===chHumanColor;
   return chTurn===chMySym;
 }
@@ -4939,6 +4986,9 @@ function mgRenderChessGame(){
   else if(chWinner){
     if(chMode==='bot'){ bannerText = chWinner===chHumanColor?'★ YOU WIN — CHECKMATE':'† BOT WINS — CHECKMATE'; bannerClass = chWinner===chHumanColor?'win':'lose'; }
     else { bannerText = chWinner===mySide?'★ YOU WIN — CHECKMATE':'† OPPONENT WINS — CHECKMATE'; bannerClass = chWinner===mySide?'win':'lose'; }
+  } else if(chMode==='online' && chOpponentGone){
+    bannerText = chOpponentGone==='left' ? '⚠ OPPONENT LEFT THE GAME' : '⚠ OPPONENT DISCONNECTED';
+    bannerClass='lose';
   } else if(chThinking){ bannerText='BOT THINKING…'; bannerClass=''; }
   else {
     const turnLabel = chTurn==='w'?'WHITE':'BLACK';
@@ -4965,14 +5015,16 @@ function mgRenderChessGame(){
     }
   }
 
-  const showRematch = !!chWinner;
+  const isMyTurn = !chWinner && !(chMode==='online'&&chOpponentGone) && !chThinking && chTurn===mySide;
+  const opponentGone = chMode==='online' && !!chOpponentGone;
+  const showRematch = !!chWinner && !opponentGone;
   body.innerHTML=`
     <div class="ch-banner ${bannerClass}">${bannerText}</div>
-    <div class="ch-board" id="ch-board">${sqHtml}</div>
+    <div class="ch-board${isMyTurn?' your-turn':''}" id="ch-board">${sqHtml}</div>
     <div id="ch-promo-slot"></div>
     <div class="ch-actions">
       ${showRematch ? `<button id="ch-rematch">↻ REMATCH</button>` : ''}
-      <button id="ch-leave">${showRematch?'MENU':'✕ ABANDON'}</button>
+      <button id="ch-leave">${(showRematch||opponentGone)?'MENU':'✕ ABANDON'}</button>
     </div>
   `;
 
