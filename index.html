@@ -2956,6 +2956,14 @@ function togglePathPreview(){
   if(btn){btn.classList.toggle('on',showPathPreview);btn.innerHTML='&#128204; SHOW ENEMY PATH: '+(showPathPreview?'ON':'OFF');}
 }
 
+function toggleScreenShake(){
+  screenShakeEnabled=!screenShakeEnabled;
+  localStorage.setItem('sug_screen_shake',screenShakeEnabled?'on':'off');
+  if(!screenShakeEnabled){shakeAmt=0;shakeX=0;shakeY=0;}
+  const btn=document.getElementById('sett-shake-tog');
+  if(btn){btn.classList.toggle('on',screenShakeEnabled);btn.innerHTML='&#128165; SCREEN SHAKE: '+(screenShakeEnabled?'ON':'OFF');}
+}
+
 function autoSaveReset(){
   autoSaveEnabled=false;
   updateAutoSaveUI();
@@ -3002,6 +3010,10 @@ function openSettings(){
   updateAutoSaveUI();
   updatePrivacyUI();
   renderMusicTracklist();
+  var shakeBtn=document.getElementById('sett-shake-tog');
+  if(shakeBtn){shakeBtn.classList.toggle('on',screenShakeEnabled);shakeBtn.innerHTML='&#128165; SCREEN SHAKE: '+(screenShakeEnabled?'ON':'OFF');}
+  var pathBtn=document.getElementById('sett-path-tog');
+  if(pathBtn){pathBtn.classList.toggle('on',showPathPreview);pathBtn.innerHTML='&#128204; SHOW ENEMY PATH: '+(showPathPreview?'ON':'OFF');}
 }
 
 function closeSettings(){
@@ -3082,6 +3094,7 @@ function ytSetCustom(){
 
 
 let hov=null,selTower=null,speed=1,frame=0,showPathPreview=false;
+let screenShakeEnabled=(localStorage.getItem('sug_screen_shake')!=='off');
 // ── CAMERA PAN (ultra map) ──
 let camX=0,camY=0;
 const CAM_SPEED=12; // pixels per frame
@@ -5660,7 +5673,7 @@ function msg(t,d=2500){const e=document.getElementById('msg');e.textContent=t;cl
 function ft(x,y,t,col='#ffd700'){if(gfxMode===3) return;if(gfxMode===2&&Math.random()>.4) return;floats.push({x,y,t,col,life:gfxMode>=1?40:62,vy:-.6});}
 function sparks(x,y,col,n,spd){if(gfxMode===3) return;const gn=gfxMode===0?n:gfxMode===1?Math.ceil(n*.5):Math.ceil(n*.2);for(let i=0;i<gn;i++){const a=Math.random()*Math.PI*2,s=spd*(.5+Math.random());parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:32+Math.random()*20,ml:52,col,sz:2+Math.random()*2.5});}}
 let shakeAmt=0,shakeX=0,shakeY=0;
-function addShake(amt){shakeAmt=Math.min(20,Math.max(shakeAmt,amt));}
+function addShake(amt){if(!screenShakeEnabled)return;shakeAmt=Math.min(20,Math.max(shakeAmt,amt));}
 function explodeFx(x,y,col,r){
   if(gfxMode===3) return;
   const big=r>=90;
@@ -6483,7 +6496,8 @@ window.addEventListener('beforeunload',()=>{ localStorage.setItem('mg_money',mgM
 
 const SHOP_ITEMS=[
   {id:'skin_classic_tesla',name:'CLASSIC TESLA SKIN',icon:'⚡',price:50,desc:'Restores the original TESLA tower look on all Electric towers.',type:'skin',slot:'electric',maxOwn:1},
-  {id:'skin_golden_blaster',name:'GOLDEN BLASTER SKIN',icon:'🟡',price:999,desc:'Recolors all Blaster/Minigun/Shockwave towers gold, with a glowing rim and sparkle.',type:'skin',slot:'basic',maxOwn:1},
+  {id:'skin_golden_blaster',name:'GOLDEN BLASTER SKIN',icon:'🟡',price:500,desc:'Recolors all Blaster/Minigun/Shockwave towers gold, with a glowing rim and sparkle.',type:'skin',slot:'basic',maxOwn:1},
+  {id:'skin_laser_sans',name:'GASTER BLASTER SKIN',icon:'💀',price:60,desc:'Bone-white Gaster Blaster skull housing with a glowing eye for all Laser towers. Its look grows more menacing with every upgrade — horns, cracks, and a burning aura appear at higher levels.',type:'skin',slot:'laser',maxOwn:1},
 ];
 function mgBuyShopItem(id){
   const item=SHOP_ITEMS.find(i=>i.id===id);
@@ -7908,6 +7922,110 @@ function pips(x,y,lvl,col,maxLvl){const m=maxLvl||ML;for(let i=0;i<m;i++){ctx.be
 // ══════════════════════════════
 // TOWER DRAW
 // ══════════════════════════════
+function gasterCannonTip(t,cx,cy){
+  const ang=t.angle||0;
+  const px=cx+Math.cos(ang-Math.PI/2)*20-Math.cos(ang)*3;
+  const py=cy+Math.sin(ang-Math.PI/2)*20-Math.sin(ang)*3;
+  const tipx=px+Math.cos(ang)*15,tipy=py+Math.sin(ang)*15;
+  return {px,py,tipx,tipy,ang};
+}
+function drawGasterCannon(px,py,ang,eyeCol,firing,scale,level,accentCol){
+  scale=scale||1;
+  level=level||1;
+  accentCol=accentCol||eyeCol||'#f2f2ea';
+  ctx.save();ctx.translate(px,py);ctx.rotate(ang);
+  const s=scale;
+  // upgrades make the whole skull grow slightly and glow harder
+  const lvlGrow=1+Math.min(level-1,4)*0.035;
+  ctx.scale(lvlGrow,lvlGrow);
+  // level>=4: crackling aura behind the skull — bigger/brighter the higher the level
+  if(level>=4){
+    const auraPulse=(Math.sin((frame||0)*.12)+1)*.5;
+    ctx.save();ctx.globalAlpha=.18+auraPulse*.15+(level>=5?.12:0);
+    ctx.beginPath();ctx.arc(2*s,0,(level>=5?15:12)*s,0,Math.PI*2);
+    ctx.fillStyle=accentCol;ctx.fill();
+    ctx.restore();
+  }
+  // elongated bone-white skull cannon body — smooth rounded silhouette (side profile,
+  // snout points toward target) instead of the old jagged/angular outline
+  ctx.fillStyle='#efe9d8';
+  ctx.beginPath();
+  ctx.moveTo(-9*s,0);
+  ctx.quadraticCurveTo(-9.5*s,-8.4*s,0*s,-8.6*s);
+  ctx.quadraticCurveTo(8*s,-8.6*s,15.5*s,-3.4*s);
+  ctx.lineTo(15.5*s,3.4*s);
+  ctx.quadraticCurveTo(8*s,8.6*s,0*s,8.6*s);
+  ctx.quadraticCurveTo(-9.5*s,8.4*s,-9*s,0);
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle=level>=2?accentCol:'#8a7d55';ctx.lineWidth=(level>=2?1.4:1)*s;ctx.stroke();
+  // level>=3: a pair of small curved horns jutting back off the top of the skull
+  if(level>=3){
+    ctx.fillStyle='#d8cfae';ctx.strokeStyle=accentCol;ctx.lineWidth=.5*s;
+    for(const hx of [-4.5*s,1.5*s]){
+      ctx.beginPath();
+      ctx.moveTo(hx,-8.2*s);
+      ctx.quadraticCurveTo(hx-2.4*s,-13.5*s,hx-0.6*s,-15.5*s);
+      ctx.quadraticCurveTo(hx+1.6*s,-12.5*s,hx+2.4*s,-8*s);
+      ctx.closePath();ctx.fill();ctx.stroke();
+    }
+  }
+  // subtle top-down shading for a rounder, less flat look
+  ctx.save();ctx.globalAlpha=.5;
+  const shade=ctx.createLinearGradient(0,-8.6*s,0,8.6*s);
+  shade.addColorStop(0,'rgba(255,255,255,.55)');shade.addColorStop(.45,'rgba(255,255,255,0)');shade.addColorStop(1,'rgba(90,75,40,.18)');
+  ctx.fillStyle=shade;
+  ctx.beginPath();
+  ctx.moveTo(-9*s,0);
+  ctx.quadraticCurveTo(-9.5*s,-8.4*s,0*s,-8.6*s);
+  ctx.quadraticCurveTo(8*s,-8.6*s,15.5*s,-3.4*s);
+  ctx.lineTo(15.5*s,3.4*s);
+  ctx.quadraticCurveTo(8*s,8.6*s,0*s,8.6*s);
+  ctx.quadraticCurveTo(-9.5*s,8.4*s,-9*s,0);
+  ctx.closePath();ctx.fill();
+  ctx.restore();
+  // brow shadow band around the eyes
+  ctx.fillStyle='rgba(138,125,85,.3)';
+  ctx.beginPath();ctx.ellipse(-2.5*s,0,4.6*s,6.6*s,0,0,Math.PI*2);ctx.fill();
+  // two round eye sockets mirrored top/bottom — one on each side of the center line (no colored light)
+  ctx.fillStyle='#241f14';
+  ctx.beginPath();ctx.ellipse(-2.5*s,-3.6*s,1.9*s,2.2*s,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(-2.5*s,3.6*s,1.9*s,2.2*s,0,0,Math.PI*2);ctx.fill();
+  // small rim highlight so each socket reads as a distinct hollow rather than a flat blob
+  ctx.strokeStyle='rgba(138,125,85,.5)';ctx.lineWidth=.5*s;
+  ctx.beginPath();ctx.ellipse(-2.5*s,-3.6*s,1.9*s,2.2*s,0,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.ellipse(-2.5*s,3.6*s,1.9*s,2.2*s,0,0,Math.PI*2);ctx.stroke();
+  // small nose ridge between the eyes
+  ctx.strokeStyle='#8a7d55';ctx.lineWidth=.6*s;
+  ctx.beginPath();ctx.moveTo(2.4*s,-1.4*s);ctx.lineTo(2.4*s,1.4*s);ctx.stroke();
+  // wide grinning mouth cavity — stays dark, no glow
+  ctx.fillStyle='#1a140c';
+  ctx.beginPath();ctx.moveTo(6.5*s,-4.6*s);ctx.quadraticCurveTo(13*s,-4.8*s,16.5*s,0);ctx.quadraticCurveTo(13*s,4.8*s,6.5*s,4.6*s);ctx.quadraticCurveTo(9*s,0,6.5*s,-4.6*s);ctx.closePath();ctx.fill();
+  // even row of sharp triangular teeth along the top and bottom jaw
+  ctx.fillStyle='#efe9d8';ctx.strokeStyle='#8a7d55';ctx.lineWidth=.5*s;
+  const toothN=4,tx0=7.2*s,tx1=15.3*s;
+  for(let ti=0;ti<toothN;ti++){
+    const fx=tx0+(tx1-tx0)*(ti/toothN),fx2=tx0+(tx1-tx0)*((ti+1)/toothN);
+    // upper tooth
+    ctx.beginPath();ctx.moveTo(fx,-4.2*s);ctx.lineTo((fx+fx2)/2,-1.4*s);ctx.lineTo(fx2,-4.2*s);ctx.closePath();ctx.fill();ctx.stroke();
+    // lower tooth
+    ctx.beginPath();ctx.moveTo(fx,4.2*s);ctx.lineTo((fx+fx2)/2,1.4*s);ctx.lineTo(fx2,4.2*s);ctx.closePath();ctx.fill();ctx.stroke();
+  }
+  // level>=4: glowing power cracks spidering across the cranium
+  if(level>=4){
+    ctx.save();ctx.strokeStyle=accentCol;ctx.lineWidth=.6*s;ctx.globalAlpha=.85;
+    ctx.beginPath();ctx.moveTo(-6*s,-6*s);ctx.lineTo(-2*s,-1*s);ctx.lineTo(-4.5*s,3*s);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(2*s,-7*s);ctx.lineTo(4*s,-2*s);ctx.stroke();
+    ctx.restore();
+  }
+  // level 5 (max/apex forms): a small glowing third eye above the brow
+  if(level>=5){
+    ctx.save();ctx.globalAlpha=.9;
+    ctx.fillStyle=accentCol;
+    ctx.beginPath();ctx.ellipse(-2.9*s,-7.2*s,1.1*s,1.3*s,0,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+}
 function drawTower(t){
   const _frm=(gfxMode===3)?0:frame;
   if(t.cfg&&t.cfg.railgunTower){
@@ -8937,9 +9055,33 @@ function drawTower(t){
     if(isCharging){ctx.fillStyle='#ffffffaa';ctx.font='5px Share Tech Mono';ctx.fillText('CHARGING',cx,cy+13);}
     else if(t.laserStacks>0){ctx.fillStyle=col+'cc';ctx.font='5px Share Tech Mono';ctx.fillText('x'+t.laserStacks,cx,cy+13);}
   } else if(cfg.t===CT.LASER){
-    const isCrystal=!!cfg.crystalMax&&cfg.crystalMax>0;const lc=isCrystal?'#ff88ff':col;
+    const laserSans=t.skins?t.skins['skin_laser_sans']:mgEquipped['skin_laser_sans'];
+    const isCrystal=!!cfg.crystalMax&&cfg.crystalMax>0;const lc=laserSans?'#f2f2ea':(isCrystal?'#ff88ff':col);
+    const eyeCol=laserSans?(cfg.heroTower?'#ffcc00':'#f2f2ea'):null;
     const sp=t.laserStacks?t.laserStacks/(t.cfg.maxStacks||15):0;
     const spin=_frm*(0.02+sp*0.05);
+    if(laserSans){
+      // ── GASTER BLASTER SKIN: bone-white housing, grinning skull face, glowing eye ──
+      const eyePulse=(Math.sin(_frm*.1)+1)*.5;
+      // bone-textured square housing (ivory, slightly yellowed at edges)
+      const boneGrad=ctx.createLinearGradient(x+3,y+3,x+CS-3,y+CS-3);
+      boneGrad.addColorStop(0,'#fbfaf2');boneGrad.addColorStop(.6,'#efe9d8');boneGrad.addColorStop(1,'#d8cfae');
+      ctx.fillStyle=boneGrad;ctx.fillRect(x+3,y+3,CS-6,CS-6);
+      ctx.strokeStyle='#9a8f6a';ctx.lineWidth=1;ctx.strokeRect(x+4,y+4,CS-8,CS-8);
+      // corner "bolts" as tiny bone knobs
+      ctx.fillStyle='#c9bd96';
+      for(const[bx3,by3]of[[x+6,y+6],[x+CS-6,y+6],[x+6,y+CS-6],[x+CS-6,y+CS-6]]){ctx.beginPath();ctx.arc(bx3,by3,1.1,0,Math.PI*2);ctx.fill();}
+      // rotating focus ring in bone-white
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(spin);
+      ctx.strokeStyle=lc;ctx.lineWidth=1.4;ctx.setLineDash([4,3]);ctx.globalAlpha=.6;
+      ctx.beginPath();ctx.arc(0,0,10.5,0,Math.PI*2);ctx.stroke();
+      ctx.setLineDash([]);ctx.globalAlpha=1;
+      ctx.restore();
+      // skull face — the FULL detailed Gaster Cannon skull, drawn directly onto the
+      // housing itself so the tower's own body reads as a proper Gaster Blaster head.
+      const gcFiring=!!t.laserTarget&&!(t.laserCharge>0);
+      drawGasterCannon(cx,cy,t.angle||0,eyeCol,gcFiring,0.92,t.level||1,col);
+    } else {
     // square housing base
     ctx.fillStyle='#060a12';ctx.fillRect(x+3,y+3,CS-6,CS-6);
     ctx.strokeStyle=lc+'55';ctx.lineWidth=1;ctx.strokeRect(x+4,y+4,CS-8,CS-8);
@@ -8960,13 +9102,14 @@ function drawTower(t){
     ctx.fillStyle=lc;ctx.beginPath();ctx.arc(17,0,2,0,Math.PI*2);ctx.fill();
     ctx.strokeStyle=lc+'99';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(8,-2.5);ctx.lineTo(8,2.5);ctx.stroke();
     ctx.restore();
+    }
     // pulsing lens core — brighter/larger with more stacks
     const corePulse=(Math.sin(_frm*.15)+1)*.5;
     ctx.save();ctx.globalAlpha=.5+corePulse*.3+sp*.2;
-    ctx.beginPath();ctx.arc(cx,cy,3+sp*2,0,Math.PI*2);ctx.fillStyle='#ffffff';ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy,3+sp*2,0,Math.PI*2);ctx.fillStyle=laserSans?eyeCol:'#ffffff';ctx.fill();
     ctx.restore();
     ctx.beginPath();ctx.arc(cx,cy,2,0,Math.PI*2);ctx.fillStyle=lc;ctx.fill();
-    if(isCrystal){
+    if(isCrystal&&!laserSans){
       // small orbiting shard motes hint at the crystal-forging path
       for(let ci=0;ci<3;ci++){
         const ca=spin*1.4+ci*(Math.PI*2/3);
@@ -8974,6 +9117,14 @@ function drawTower(t){
         ctx.save();ctx.translate(cx2,cy2);ctx.rotate(ca+Math.PI/4);
         ctx.fillStyle=lc+'cc';ctx.beginPath();ctx.moveTo(0,-3);ctx.lineTo(2,0);ctx.lineTo(0,3);ctx.lineTo(-2,0);ctx.closePath();ctx.fill();
         ctx.restore();
+      }
+    } else if(isCrystal&&laserSans){
+      // crystal-forge path summons a ring of orbiting mini gaster cannons instead of shards
+      const ringCount=3;
+      for(let ci=0;ci<ringCount;ci++){
+        const ca=spin*1.1+ci*(Math.PI*2/ringCount);
+        const cx2=cx+Math.cos(ca)*15,cy2=cy+Math.sin(ca)*15;
+        drawGasterCannon(cx2,cy2,ca,eyeCol,_frm%18<6,0.45,t.level||1,col);
       }
     }
     if(t.laserStacks>0){
@@ -9177,13 +9328,13 @@ function draw(){
   }
 
   for(const b of healBeams) drawBeam(b.x1,b.y1,b.x2,b.y2,b.life/b.ml);
-  for(const t of towers){if(!t.cfg.laserTower||!t.laserTarget||!enemies.includes(t.laserTarget)) continue;if(t.laserCharge>0) continue;const ltx2=t.col*CS+CS/2,lty2=t.row*CS+CS/2;const sp=t.laserStacks/(t.cfg.maxStacks||15);ctx.save();ctx.globalAlpha=.4+sp*.5;ctx.strokeStyle=t.cfg.col;ctx.lineWidth=.6+sp*1.4;ctx.beginPath();ctx.moveTo(ltx2,lty2);ctx.lineTo(t.laserTarget.x,t.laserTarget.y);ctx.stroke();if(sp>.3){ctx.strokeStyle='#ffffff';ctx.lineWidth=sp*.7;ctx.globalAlpha=sp*.3;ctx.beginPath();ctx.moveTo(ltx2,lty2);ctx.lineTo(t.laserTarget.x,t.laserTarget.y);ctx.stroke();}ctx.globalAlpha=1;ctx.restore();}
+  for(const t of towers){if(!t.cfg.laserTower||!t.laserTarget||!enemies.includes(t.laserTarget)) continue;if(t.laserCharge>0) continue;let ltx2=t.col*CS+CS/2,lty2=t.row*CS+CS/2;const _lsans=t.skins?t.skins['skin_laser_sans']:mgEquipped['skin_laser_sans'];if(_lsans&&!t.cfg.heroTower){const _ang=t.angle||0;ltx2+=Math.cos(_ang)*16*0.92;lty2+=Math.sin(_ang)*16*0.92;}const sp=t.laserStacks/(t.cfg.maxStacks||15);ctx.save();ctx.globalAlpha=.4+sp*.5;ctx.strokeStyle=_lsans?(t.cfg.heroTower?'#ffcc00':'#f2f2ea'):t.cfg.col;ctx.lineWidth=.6+sp*1.4;ctx.beginPath();ctx.moveTo(ltx2,lty2);ctx.lineTo(t.laserTarget.x,t.laserTarget.y);ctx.stroke();if(sp>.3){ctx.strokeStyle='#ffffff';ctx.lineWidth=sp*.7;ctx.globalAlpha=sp*.3;ctx.beginPath();ctx.moveTo(ltx2,lty2);ctx.lineTo(t.laserTarget.x,t.laserTarget.y);ctx.stroke();}ctx.globalAlpha=1;ctx.restore();}
   if(gfxMode<2){for(const cr of crystals){const bob=Math.sin(cr.bobPhase)*3;ctx.save();ctx.translate(cr.x,cr.y+bob);ctx.rotate(frame*.03);ctx.beginPath();ctx.moveTo(0,-6);ctx.lineTo(5,0);ctx.lineTo(0,6);ctx.lineTo(-5,0);ctx.closePath();ctx.fillStyle=cr.col+'66';ctx.fill();ctx.strokeStyle=cr.col;ctx.lineWidth=1.5;ctx.stroke();ctx.restore();const lifeR=cr.life/cr.maxLife;ctx.fillStyle='#0a0a1a';ctx.fillRect(cr.x-6,cr.y+bob+8,12,2);ctx.fillStyle=cr.col;ctx.fillRect(cr.x-6,cr.y+bob+8,12*lifeR,2);if(cr.target&&enemies.includes(cr.target)){ctx.save();ctx.globalAlpha=.5;ctx.strokeStyle=cr.col;ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(cr.x,cr.y+bob);ctx.lineTo(cr.target.x,cr.target.y);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;ctx.restore();}}
 
   if(gfxMode<3){for(const sw of shockwaves){const alpha=Math.max(0,1-sw.r/sw.maxR);ctx.beginPath();ctx.arc(sw.ox,sw.oy,sw.r,0,Math.PI*2);ctx.strokeStyle=sw.col;ctx.lineWidth=gfxMode>=2?1:3*(1-sw.r/sw.maxR)+1;ctx.globalAlpha=gfxMode>=1?alpha*.5:alpha*.8;ctx.stroke();if(sw.isIce&&gfxMode===0){ctx.beginPath();ctx.arc(sw.ox,sw.oy,sw.r*.85,0,Math.PI*2);ctx.strokeStyle='rgba(136,221,255,'+alpha*.4+')';ctx.lineWidth=1;ctx.stroke();}ctx.globalAlpha=1;}}
   }
   // BARBWIRE connection wires
-  if(barbWireSegs.length){
+  if(barbWireSegs.length&&gfxMode<2){
     ctx.save();
     for(const seg of barbWireSegs){
       let grad;
@@ -10729,6 +10880,11 @@ function applyHeroLockUI(){
           style="background:#020e1c;border:1px solid #00aaff;color:#00aaff;font-family:'Share Tech Mono',monospace;font-size:9px;padding:5px 10px;cursor:pointer;letter-spacing:1px;white-space:nowrap;flex-shrink:0;">&#9654;</button>
       </div>
       <div id="yt-status-msg" style="font-size:8px;color:#ff6644;min-height:13px;text-align:center;letter-spacing:1px;"></div>
+    </div>
+    <div class="set-sec">
+      <div class="set-sec-lbl">SCREEN SHAKE</div>
+      <button class="set-tog on" id="sett-shake-tog" onclick="toggleScreenShake()">&#128165; SCREEN SHAKE: ON</button>
+      <div class="as-info">Disables the camera shake from explosions and boss attacks.</div>
     </div>
     <div class="set-sec">
       <div class="set-sec-lbl">ENEMY PATH PREVIEW</div>
