@@ -2313,9 +2313,11 @@ startPlayTimeTracker = function() {
     _playTimeInterval = setInterval(() => {
       if(gameStarted && !gameOver) {
         playTimeSeconds++;
-        totalPlayTimeSeconds++;
-        // Auto-save total every 30s
-        if(++_lastPlayTimeSave >= 30) { _lastPlayTimeSave = 0; saveTotalPlayTime(); }
+        if(gameMode!=='sandbox') {
+          totalPlayTimeSeconds++;
+          // Auto-save total every 30s
+          if(++_lastPlayTimeSave >= 30) { _lastPlayTimeSave = 0; saveTotalPlayTime(); }
+        }
       }
     }, 1000);
   }
@@ -3250,12 +3252,14 @@ function loadPlayerLevel() {
 }
 
 function savePlayerLevel() {
+  if(typeof gameMode!=='undefined'&&gameMode==='sandbox') return;
   try { localStorage.setItem(XP_SAVE_KEY, JSON.stringify({level: playerLevel, xp: playerXP})); } catch(e) {}
   if(typeof saveTotalPlayTime==='function') saveTotalPlayTime();
   queueProgressCloudSync();
 }
 
 function grantXP(amount) {
+  if(typeof gameMode!=='undefined'&&gameMode==='sandbox') return false;
   playerXP += amount;
   let leveled = false;
   let newUnlocks = [];
@@ -3872,12 +3876,14 @@ let _progressSyncDirtyAgain = false;
 
 function queueProgressCloudSync() {
   if (typeof currentUser === 'undefined' || !currentUser) return;
+  if (typeof gameMode !== 'undefined' && gameMode === 'sandbox') return;
   clearTimeout(_progressSyncTimer);
   _progressSyncTimer = setTimeout(pushProgressToCloud, 1500);
 }
 
 async function pushProgressToCloud() {
   if (typeof currentUser === 'undefined' || !currentUser) return;
+  if (typeof gameMode !== 'undefined' && gameMode === 'sandbox') return;
   if (_progressSyncInFlight) { _progressSyncDirtyAgain = true; return; }
   _progressSyncInFlight = true;
   try {
@@ -6485,6 +6491,7 @@ let mgBackpack=JSON.parse(localStorage.getItem('mg_backpack')||'{}');
 let mgEquipped=JSON.parse(localStorage.getItem('mg_equipped')||'{}');
 let mgMoneySaveTimer=null;
 function mgEarnMoney(killCount){
+  if(typeof gameMode!=='undefined'&&gameMode==='sandbox') return;
   mgMoney+=killCount*MG_MONEY_PER_KILL;
   if(!mgMoneySaveTimer) mgMoneySaveTimer=setTimeout(()=>{ mgMoneySaveTimer=null; localStorage.setItem('mg_money',mgMoney.toFixed(4)); },1500);
   const hud=document.getElementById('shop-modal-money');
