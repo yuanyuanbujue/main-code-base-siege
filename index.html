@@ -413,7 +413,7 @@ const MP={
   },
 
   onChatMessage(d){
-    this.addChatBubble(d.name,d.msg,PLAYER_COLORS[d.colorIdx]||'#888',d.pid);
+    this.addChatBubble(d.name,d.msg,PLAYER_COLORS[d.colorIdx]||'#888');
     if(!this.chatOpen){
       this.unreadCount++;
       this.updateChatBadge();
@@ -551,54 +551,14 @@ const MP={
     if(!this.chatOpen){this.unreadCount++;this.updateChatBadge();}
   },
 
-  addChatBubble(name,msg,color,pid){
+  addChatBubble(name,msg,color){
     const div=document.getElementById('chatMessages');
     if(!div) return;
     const el=document.createElement('div');
     el.className='chat-msg';
-    const clickable=pid?` class="cm-name cm-name-click" onclick="MP.showPlayerCard('${pid}',event)" style="color:${color};cursor:pointer;text-decoration:underline dotted;"`
-      :` class="cm-name" style="color:${color}"`;
-    el.innerHTML=`<span${clickable}>${name}:</span> ${msg}`;
+    el.innerHTML='<span class="cm-name" style="color:'+color+'">'+name+':</span> '+msg;
     div.appendChild(el);
     div.scrollTop=div.scrollHeight;
-  },
-
-  showPlayerCard(pid,event){
-    // Remove any existing card
-    const old=document.getElementById('playerCard');
-    if(old){old.remove();if(old._pid===pid) return;}
-    const p=this.players[pid];
-    if(!p) return;
-    const col=PLAYER_COLORS[p.color_index]||'#888';
-    const isMe=p.player_id===this.playerId;
-    const myTowers=typeof towers!=='undefined'?towers.filter(t=>t.owner===pid).length:(p.towers_count||0);
-    const card=document.createElement('div');
-    card.id='playerCard';
-    card._pid=pid;
-    card.innerHTML=`
-      <div class="pc-header" style="border-color:${col}44">
-        <span class="pc-dot" style="background:${col};box-shadow:0 0 8px ${col}"></span>
-        <span class="pc-name" style="color:${col}">${p.name}${isMe?' (YOU)':''}</span>
-        <span class="pc-close" onclick="this.closest('#playerCard').remove()">✕</span>
-      </div>
-      <div class="pc-stats">
-        <div class="pc-stat"><span class="pc-lbl">GOLD</span><span class="pc-val" style="color:#ffd700">💰 ${(p.gold||0).toLocaleString()}</span></div>
-        <div class="pc-stat"><span class="pc-lbl">KILLS</span><span class="pc-val" style="color:#ff4444">⚔ ${(p.kills||0).toLocaleString()}</span></div>
-        <div class="pc-stat"><span class="pc-lbl">SCORE</span><span class="pc-val" style="color:#aa88ff">★ ${(p.score||0).toLocaleString()}</span></div>
-        <div class="pc-stat"><span class="pc-lbl">TOWERS</span><span class="pc-val" style="color:#00ccff">🗼 ${myTowers}</span></div>
-      </div>
-      ${(!isMe&&this.active)?`<button class="pc-gold-btn" onclick="document.getElementById('transferTarget').value='${pid}';MP.showPlayerCard('${pid}',null);MP.chatOpen||MP.toggleChat();">💸 SEND GOLD</button>`:''}
-    `;
-    // Position near click
-    const x=event?Math.min(event.clientX+8,window.innerWidth-190):window.innerWidth/2-85;
-    const y=event?Math.min(event.clientY+8,window.innerHeight-200):window.innerHeight/2-80;
-    card.style.cssText=`position:fixed;left:${x}px;top:${y}px;z-index:200;background:#060c18;border:1px solid ${col}55;padding:0;border-radius:6px;width:180px;font-family:'Share Tech Mono',monospace;box-shadow:0 4px 24px ${col}22,0 0 0 1px #0e203055;animation:pcFadeIn .15s ease;`;
-    document.body.appendChild(card);
-    // Close on outside click
-    setTimeout(()=>{
-      const close=(e)=>{if(!card.contains(e.target)){card.remove();document.removeEventListener('mousedown',close);}};
-      document.addEventListener('mousedown',close);
-    },10);
   },
 
   updateChatBadge(){
@@ -623,7 +583,7 @@ const MP={
     setTimeout(()=>{this._sendingChat=false;},50);
     input.value='';
     this.broadcast('chat:message',{pid:this.playerId,name:this.playerName,msg,colorIdx:this.colorIndex});
-    this.addChatBubble(this.playerName,msg,PLAYER_COLORS[this.colorIndex],this.playerId);
+    this.addChatBubble(this.playerName,msg,PLAYER_COLORS[this.colorIndex]);
   },
 
   sendGold(){
@@ -995,17 +955,6 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 @keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 #chat-notif-popup .notif-name{color:#ff8844;font-weight:bold;}
 #chat-notif-popup .notif-msg{color:#a0c0d0;}#start:disabled{opacity:.3;cursor:not-allowed;}
-.gc-name-click{cursor:pointer;text-decoration:underline dotted;}.gc-name-click:hover{opacity:.75;}
-@keyframes pcFadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
-.gc-pc-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 10px 6px;border-bottom:1px solid #1a2a4a;}
-.gc-pc-name{font-size:11px;font-weight:bold;letter-spacing:1px;}
-.gc-pc-close{color:#4a6a5a;font-size:11px;cursor:pointer;padding:0 2px;}.gc-pc-close:hover{color:#ff4444;}
-.gc-pc-body{padding:8px 10px;display:flex;flex-direction:column;gap:5px;}
-.gc-pc-online{font-size:9px;letter-spacing:1px;margin-bottom:2px;}
-.gc-pc-row{display:flex;justify-content:space-between;align-items:center;}
-.gc-pc-lbl{font-size:8px;letter-spacing:2px;color:#3a5a7a;}
-.gc-pc-val{font-size:12px;font-weight:bold;}
-.gc-pc-gameover{color:#ff2244;font-size:9px;letter-spacing:2px;text-align:center;padding:4px;border:1px solid #ff224433;margin-top:2px;background:#1a000a;}
 .spr{display:flex;gap:4px;}.spb{flex:1;background:#04090f;border:1px solid #0e2030;color:#2a5a4a;font-family:'Share Tech Mono',monospace;font-size:11px;padding:6px 2px;cursor:pointer;text-align:center;transition:all .1s;}
 .spb:hover,.spb.on{border-color:#00ff88;color:#00ff88;}
 #up{display:none;background:#060e1a;border:1px solid #1a3a2a;padding:9px;flex-direction:column;gap:6px;}
@@ -1221,17 +1170,6 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 .chat-close{font-size:18px;color:#4a6a5a;cursor:pointer;}.chat-close:hover{color:#ff4444;}
 #chatMessages{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;}
 .chat-msg{font-size:11px;line-height:1.5;padding:4px 0;}.chat-msg .cm-name{font-weight:bold;margin-right:6px;}.chat-msg.system{color:#4a6a5a;font-style:italic;font-size:10px;}.chat-msg.money{color:#ffd700;font-size:10px;}
-.cm-name-click:hover{opacity:.8;}
-@keyframes pcFadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
-.pc-header{display:flex;align-items:center;gap:7px;padding:8px 10px 6px;border-bottom:1px solid #0e2030;}
-.pc-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-.pc-name{flex:1;font-size:11px;font-weight:bold;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.pc-close{color:#4a6a5a;font-size:11px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;}.pc-close:hover{color:#ff4444;}
-.pc-stats{padding:8px 10px;display:flex;flex-direction:column;gap:5px;}
-.pc-stat{display:flex;justify-content:space-between;align-items:center;}
-.pc-lbl{font-size:8px;letter-spacing:2px;color:#3a5a7a;}
-.pc-val{font-size:12px;font-weight:bold;}
-.pc-gold-btn{width:100%;background:#040e08;border:0;border-top:1px solid #1a3a2a;color:#00ff88;font-family:'Share Tech Mono',monospace;font-size:10px;padding:7px;cursor:pointer;letter-spacing:1px;border-radius:0 0 5px 5px;transition:all .1s;}.pc-gold-btn:hover{background:#00ff88;color:#04080f;}
 .chat-input-row{display:flex;border-top:1px solid #0e2030;padding:8px;}
 .chat-input-row input{flex:1;background:#04090f;border:1px solid #0e2030;color:#c0d8c0;font-family:'Share Tech Mono',monospace;font-size:12px;padding:8px 10px;outline:none;}.chat-input-row input:focus{border-color:#00ff88;}
 .chat-input-row button{background:#061a0e;border:1px solid #00ff88;color:#00ff88;padding:8px 14px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:12px;}.chat-input-row button:hover{background:#00ff88;color:#04080f;}
@@ -2089,17 +2027,10 @@ try{
 }
 // Stub so any later `sb.xxx` calls don't crash the whole script if sb is null
 if(!sb){
-  const _stubResult={data:null,error:{message:'Offline'}};
-  const _chain={
-    then(resolve){resolve&&resolve(_stubResult);return Promise.resolve(_stubResult);},
-    catch(){return Promise.resolve(_stubResult);},
-    select(){return _chain;},insert(){return _chain;},update(){return _chain;},
-    delete(){return _chain;},upsert(){return _chain;},eq(){return _chain;},
-    order(){return _chain;},limit(){return _chain;},gt(){return _chain;},single(){return _chain;}
-  };
+  const _noop=()=>({then(){return this;},catch(){return this;}});
   sb={
     auth:{onAuthStateChange(){},getSession:async()=>({data:{session:null}}),signOut:async()=>({}),signInWithPassword:async()=>({error:{message:'Offline'}}),signUp:async()=>({error:{message:'Offline'}})},
-    from(){return _chain;}
+    from(){return{select:_noop,insert:_noop,update:_noop,delete:_noop,upsert:_noop,eq:_noop,order:_noop,limit:_noop};}
   };
 }
 let currentUser=null;
@@ -10454,11 +10385,7 @@ async function loadLatestChat(){
       const t=new Date(m.created_at);
       const ts=t.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'});
       const nameCol=ch==='top3'?'#ffd700':'#ff8844';
-      const pid=m.player_id||null;
-      const nameHtml=pid
-        ?`<span class="chat-name gc-name-click" style="color:${nameCol}" onclick="showGlobalPlayerCard('${esc(pid)}','${esc(m.player_name)}',event)">${esc(m.player_name)}</span>`
-        :`<span class="chat-name" style="color:${nameCol}">${esc(m.player_name)}</span>`;
-      div.innerHTML=nameHtml+': <span class="chat-text">'+esc(m.message)+'</span><span class="chat-time">'+ts+'</span>';
+      div.innerHTML='<span class="chat-name" style="color:'+nameCol+'">'+esc(m.player_name)+':</span> <span class="chat-text">'+esc(m.message)+'</span><span class="chat-time">'+ts+'</span>';
       msgs.appendChild(div);
     }
     msgs.scrollTop=msgs.scrollHeight;
@@ -10484,11 +10411,7 @@ async function fetchChat(){
       const t=new Date(m.created_at);
       const ts=t.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'});
       const nameCol=ch==='top3'?'#ffd700':'#ff8844';
-      const pid2=m.player_id||null;
-      const nameHtml2=pid2
-        ?`<span class="chat-name gc-name-click" style="color:${nameCol}" onclick="showGlobalPlayerCard('${esc(pid2)}','${esc(m.player_name)}',event)">${esc(m.player_name)}</span>`
-        :`<span class="chat-name" style="color:${nameCol}">${esc(m.player_name)}</span>`;
-      div.innerHTML=nameHtml2+': <span class="chat-text">'+esc(m.message)+'</span><span class="chat-time">'+ts+'</span>';
+      div.innerHTML='<span class="chat-name" style="color:'+nameCol+'">'+esc(m.player_name)+':</span> <span class="chat-text">'+esc(m.message)+'</span><span class="chat-time">'+ts+'</span>';
       msgs.appendChild(div);
     }
     msgs.scrollTop=msgs.scrollHeight;
@@ -10525,33 +10448,8 @@ async function sendChat(){
   // Global chat: everyone can send
   const name=playerName||(currentUser?currentUser.email:'Anonymous');
   try{
-    const{data:inserted,error:sendErr}=await sb.from('game_chat').insert({player_name:name,message:msg,channel:chatChannel,player_id:getPlayerId()}).select().single();
-    if(sendErr){
-      console.warn('Chat send error:',sendErr);
-      const msgs=document.getElementById('chat-msgs');
-      if(msgs){
-        const div=document.createElement('div');div.className='chat-msg system';
-        div.textContent='⚠ Send failed: '+(sendErr.message||sendErr.code||JSON.stringify(sendErr));
-        msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
-      }
-      return;
-    }
-    input.value='';
-    // Show message immediately without waiting for poll
-    const msgs=document.getElementById('chat-msgs');
-    const div=document.createElement('div');div.className='chat-msg';
-    const now=new Date();
-    const ts=now.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'});
-    const nameCol=chatChannel==='top3'?'#ffd700':'#ff8844';
-    const myPid=getPlayerId();
-    div.innerHTML='<span class="chat-name gc-name-click" style="color:'+nameCol+'" onclick="showGlobalPlayerCard(\''+esc(myPid)+'\',\''+esc(name)+'\',event)">'+esc(name)+'</span>: <span class="chat-text">'+esc(msg)+'</span><span class="chat-time">'+ts+'</span>';
-    msgs.appendChild(div);
-    msgs.scrollTop=msgs.scrollHeight;
-    // Advance lastId so fetchChat won't duplicate it
-    if(inserted&&inserted.id){
-      if(inserted.id>lastGlobalId) lastGlobalId=inserted.id;
-      if(inserted.id>lastTop3Id) lastTop3Id=inserted.id;
-    }
+    await sb.from('game_chat').insert({player_name:name,message:msg,channel:chatChannel});
+    input.value='';fetchChat();
   }catch(e){console.warn('Chat send:',e);}
 }
 
@@ -10583,63 +10481,6 @@ async function bgChatPoll(){
       setTimeout(()=>{popup.style.display='none';},4000);
     }
   }catch(e){}
-}
-
-async function showGlobalPlayerCard(pid,name,event){
-  const old=document.getElementById('gcPlayerCard');
-  if(old){old.remove();if(old._pid===pid) return;}
-
-  // Placeholder card while loading
-  const card=document.createElement('div');
-  card.id='gcPlayerCard';
-  card._pid=pid;
-  const isMe=pid===getPlayerId();
-  const nameCol=chatChannel==='top3'?'#ffd700':'#ff8844';
-  card.innerHTML=`
-    <div class="gc-pc-hdr">
-      <span class="gc-pc-name" style="color:${nameCol}">${esc(name)}${isMe?' (YOU)':''}</span>
-      <span class="gc-pc-close" onclick="this.closest('#gcPlayerCard').remove()">✕</span>
-    </div>
-    <div class="gc-pc-body" id="gcPlayerCardBody"><span style="color:#4a6a5a;font-size:9px">LOADING...</span></div>
-  `;
-  const x=event?Math.min(event.clientX+8,window.innerWidth-210):window.innerWidth/2-100;
-  const y=event?Math.min(event.clientY+8,window.innerHeight-220):window.innerHeight/2-90;
-  card.style.cssText=`position:fixed;left:${x}px;top:${y}px;z-index:9999;background:#060c18;border:1px solid ${nameCol}44;border-radius:6px;width:200px;font-family:'Share Tech Mono',monospace;box-shadow:0 4px 24px rgba(0,0,0,.6);animation:pcFadeIn .15s ease;`;
-  document.body.appendChild(card);
-
-  // Fetch live state
-  try{
-    const{data}=await sb.from('live_players').select('name,gold,hp,max_hp,wave,score,kills,mode,game_over,towers_count,last_seen').eq('player_id',pid).maybeSingle();
-    const body=document.getElementById('gcPlayerCardBody');
-    if(!body) return;
-    if(!data){body.innerHTML='<span style="color:#4a6a5a;font-size:9px">⚠ Player not in active game</span>';return;}
-    const seen=new Date(data.last_seen);
-    const minsAgo=Math.round((Date.now()-seen)/60000);
-    const onlineLbl=minsAgo<2?'<span style="color:#00ff88">● ONLINE</span>':'<span style="color:#4a6a5a">'+minsAgo+'m ago</span>';
-    const hpPct=data.max_hp>0?Math.round(data.hp/data.max_hp*100):0;
-    const hpCol=hpPct>60?'#00ff88':hpPct>30?'#ffcc00':'#ff4444';
-    const modeCol={easy:'#00ff88',normal:'#ffcc00',hard:'#ff8800',hardcore:'#ff2244',sandbox:'#00eeff'}[data.mode]||'#888';
-    body.innerHTML=`
-      <div class="gc-pc-online">${onlineLbl}</div>
-      <div class="gc-pc-row"><span class="gc-pc-lbl">MODE</span><span class="gc-pc-val" style="color:${modeCol}">${(data.mode||'?').toUpperCase()}</span></div>
-      <div class="gc-pc-row"><span class="gc-pc-lbl">WAVE</span><span class="gc-pc-val" style="color:#00ccff">${data.wave||0}</span></div>
-      <div class="gc-pc-row"><span class="gc-pc-lbl">BASE HP</span><span class="gc-pc-val" style="color:${hpCol}">${data.hp||0}/${data.max_hp||0}</span></div>
-      <div class="gc-pc-row"><span class="gc-pc-lbl">GOLD</span><span class="gc-pc-val" style="color:#ffd700">💰 ${(data.gold||0).toLocaleString()}</span></div>
-      <div class="gc-pc-row"><span class="gc-pc-lbl">KILLS</span><span class="gc-pc-val" style="color:#ff4444">⚔ ${(data.kills||0).toLocaleString()}</span></div>
-      <div class="gc-pc-row"><span class="gc-pc-lbl">SCORE</span><span class="gc-pc-val" style="color:#aa88ff">★ ${(data.score||0).toLocaleString()}</span></div>
-      <div class="gc-pc-row"><span class="gc-pc-lbl">TOWERS</span><span class="gc-pc-val" style="color:#88ccff">🗼 ${data.towers_count||0}</span></div>
-      ${data.game_over?'<div class="gc-pc-gameover">GAME OVER</div>':''}
-    `;
-  }catch(e){
-    const body=document.getElementById('gcPlayerCardBody');
-    if(body) body.innerHTML='<span style="color:#ff4444;font-size:9px">⚠ Could not load state</span>';
-  }
-
-  // Close on outside click
-  setTimeout(()=>{
-    const close=(e)=>{if(!card.contains(e.target)){card.remove();document.removeEventListener('mousedown',close);}};
-    document.addEventListener('mousedown',close);
-  },10);
 }
 
 // ═══════════════════════════════════════════════════════════════
