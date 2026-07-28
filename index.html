@@ -413,6 +413,8 @@ const MP={
   },
 
   onChatMessage(d){
+    // Only display messages from other players (not our own echoed back)
+    if(d.pid===this.playerId) return;
     this.addChatBubble(d.name,d.msg,PLAYER_COLORS[d.colorIdx]||'#888');
     if(!this.chatOpen){
       this.unreadCount++;
@@ -582,8 +584,8 @@ const MP={
     this._sendingChat=true;
     setTimeout(()=>{this._sendingChat=false;},50);
     input.value='';
+    // Broadcast to other players via Supabase — do NOT add locally
     this.broadcast('chat:message',{pid:this.playerId,name:this.playerName,msg,colorIdx:this.colorIndex});
-    this.addChatBubble(this.playerName,msg,PLAYER_COLORS[this.colorIndex]);
   },
 
   sendGold(){
@@ -1615,39 +1617,46 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 <div id="update-popup">
 <div class="up-header">
 <div class="up-title">PATCH NOTES</div>
-<div class="up-ver">BASE SIEGE v29.7 — Mace Tower &amp; Player Privacy Update</div>
+<div class="up-ver">BASE SIEGE v29.8 — Golden Cannon, Tesla Cannon &amp; More</div>
 </div>
 <div class="up-body">
 <div class="up-section">
+<div class="up-section-title">🟡 golden cannon skin rework</div>
+<div class="up-item new">🟡 GOLDEN CANNON SKIN completely overhauled — all three states (base, Path A, Path B) have been redrawn from scratch with richer multi-stop gradients, glowing rims, animated details, and level-scaling geometry</div>
+<div class="up-item new">🏠 Base housing is now noticeably larger and more imposing across all levels, with an animated rotating engrave ring, outer glow halo, and a bright center gem hub</div>
+<div class="up-item new">⚡ Path A (RAPID FIRE) — completely redesigned with a forward-pointing swept kite/diamond housing, staggered triple barrels at level 4+ (outer pair + center barrel), spinning 6-blade turbine hub, glowing amber heat vents on the housing sides, and backward speed-streak aura lines</div>
+<div class="up-item new">💥 Path B (DEVASTATOR) — hexagonal housing now features per-face engrave spokes, rivets with per-rivet gold gradients, a top shine line on the barrel, gradient-lit reinforcement bands, and a double-ringed hub with a white center gem. Level 5 triggers a strong pulsing outer aura burst</div>
+
+<div class="up-section-title">⚡ new: tesla cannon (2×2 merge)</div>
+<div class="up-item new">⚡ NEW 2×2 MERGE TOWER — TESLA CANNON! Surround/build 4 level-1 ELECTRIC towers in a square, then hit "MERGE 2×2 INTO TESLA CANNON" to fuse them into a massive energy weapon</div>
+<div class="up-item new">🌩 Path A — STORM CANNON: unleashes rapid multi-chain lightning that arcs between nearby enemies, with energy that builds up from kills to fuel larger chain bursts</div>
+<div class="up-item new">🔵 Path B — PLASMA CANNON: fires a slow-moving plasma orb that crackles with arcing lightning at every enemy it passes near before detonating on impact for massive AoE damage</div>
+
+<div class="up-section-title">💣 new: mega blaster cannon (4×4 merge)</div>
+<div class="up-item new">💣 NEW 4×4 MEGA MERGE — MEGA BLASTER CANNON! Fill a 4×4 area with level-1 BLASTER towers (16 towers total), then merge them into the largest tower in the game</div>
+<div class="up-item new">🔫 An absolute wall of firepower — 16 rotating barrels firing in continuous sweeping bursts, with a massive AoE footprint and screen-shaking detonations</div>
+<div class="up-item new">📐 Takes up a 4×4 tile footprint on the grid — plan your layout carefully before committing to the merge</div>
+
+<div class="up-section-title">🩸 new: yuji itadori hunter skin</div>
+<div class="up-item new">🩸 New YUJI ITADORI skin for the HUNTER tower! Replaces the standard hunter visuals with cursed-energy themed artwork — black &amp; red color scheme, Divergent Fist impact effects on shots, and a soul-flame aura at higher upgrade tiers</div>
+<div class="up-item new">💀 Pairs thematically with the existing SUKUNA SPIKE skin — run both for full Jujutsu Kaisen vibes</div>
+
 <div class="up-section-title">🔮 new: mace tower</div>
 <div class="up-item new">🔮 New MACE TOWER (280g)! Unlocks at Player Level 130 (or 8 Upgrade Points in Hardcore mode). A splash-damage tower that swings an enchanted mace down onto enemies in an arc, with armor-piercing that scales up each upgrade tier</div>
 <div class="up-item new">💪 Path A — CRUSHER/ANNIHILATOR: slower swings but massive damage and the highest armor pierce in the game at max tier</div>
 <div class="up-item new">🌀 Path B — TEMPEST/WHIRLWIND MACE: much faster swing speed and longer range, trading raw damage for consistent DPS</div>
-<div class="up-section-title">🔒 new: player privacy</div>
-<div class="up-item new">🔒 New PRIVACY setting (⚙ Settings menu): toggle your profile between PUBLIC and PRIVATE</div>
-<div class="up-item new">👁 PUBLIC (default) — other players can click your name on the leaderboard to view your level, stats and achievements</div>
-<div class="up-item new">🙈 PRIVATE — your stats are hidden from other players entirely, and your email is no longer shared with anyone viewing your profile</div>
-<div class="up-item new">📧 Your email now displays beside your name in the top bar and in the stats panel, so you can see at a glance which account you're signed into</div>
-<div class="up-section-title">⚗ alchemist tower</div>
-<div class="up-item new">⚗ NEW TOWER — ALCHEMIST: throws flasks of toxic concoctions in an AoE splash. Unlocks at Player Level 140 (or 11 Upgrade Points in Hardcore mode), 280g to build</div>
-<div class="up-item new">☠ Path A — VIRULENCE: stacking acid poison that deals DoT — each hit on the same enemy adds a stack, and damage scales up with stack count (up to 10 stacks at max tier). Ideal for tanky enemies and long corridors</div>
-<div class="up-item new">🔮 Path B — HEXBREW: curses enemies on hit, slowing them, shredding their armor, and amplifying all incoming damage they take from any source. Pairs devastatingly with high-damage towers</div>
-<div class="up-section-title">🔫 blaster cannon</div>
-<div class="up-item new">🔫 2×2 merge tower! Surround/build 4 level-1 BLASTER towers in a square, then hit "MERGE 2x2 INTO BLASTER CANNON" to fuse them</div>
-<div class="up-item new">🔫 Path A — GATLING FORTRESS: one big central minigun plus 4 smaller corner guns, all firing in 5-barrel bursts with no charge-up, for relentless sustained DPS</div>
-<div class="up-item new">💥 Path B — SHOCK CANNON: charges up like a railgun, then unleashes one massive circular blast that damages AND stuns every enemy caught in it</div>
+
 <div class="up-section-title">⚖ balance</div>
 <div class="up-item fix">🤠 COWBOY tower now unlocks at Player Level 90 (up from 45) to better match its power level</div>
 <div class="up-item fix">⚡ RAILGUN CANNON (2×2 merge) buffed 2× damage across every tier and every path — its DPS was barely ahead of a single-tile RAILGUN despite costing 4 towers and 4 tiles; damage now properly rewards the merge</div>
 <div class="up-item new">⚡ RAILGUN CANNON — NEW PASSIVE CHARGE: when no enemies are on the map the cannon silently charges up (cyan glow on the ring/bar). Once fully charged it fires instantly when the next enemy appears with up to 3× damage bonus. Rewards patient placement!</div>
-<div class="up-item fix">🏆 HERO: SCORE MACHINE nerfed — combat buff % (DMG/speed/range) reduced ~35% and score-multiplier bonus reduced ~45% across every upgrade tier, both paths. It was providing far too much power for a single hero slot</div>
-<div class="up-item fix">⚗ ALCHEMIST nerfed across every tier — damage, AoE radius, and attack speed all reduced, plus weaker poison/curse potency (lower tick damage, shorter duration, fewer max stacks). Now unlocks at Player Level 140 (up from available immediately) and costs 11 Upgrade Points in Hardcore mode</div>
+<div class="up-item fix">🏆 HERO: SCORE MACHINE nerfed — combat buff % (DMG/speed/range) reduced ~35% and score-multiplier bonus reduced ~45% across every upgrade tier, both paths</div>
+<div class="up-item fix">⚗ ALCHEMIST nerfed across every tier — damage, AoE radius, and attack speed all reduced, plus weaker poison/curse potency. Now unlocks at Player Level 140 and costs 11 Upgrade Points in Hardcore mode</div>
 <div class="up-item fix">🔮 MACE TOWER's Hardcore unlock cost reduced from 10 to 8 Upgrade Points</div>
-<div class="up-section-title">🗺 interface</div>
-<div class="up-item fix">🗺 Removed the minimap panel that sat below the main gameplay view — it wasn't adding much and was cluttering the layout</div>
+
 <div class="up-section-title">🎨 vfx</div>
-<div class="up-item new">🎨 Fixed a bug where the 2×2 merge cannons fired from an off-center point instead of their true middle — the BLASTER CANNON in particular looked like only one gun was ever shooting</div>
-<div class="up-item new">🎨 GATLING FORTRESS now fires visibly from all 5 barrels (4 corners + center), each with its own muzzle flash and sparks, instead of every shot spawning from one shared point</div>
+<div class="up-item new">🎨 Fixed a bug where the 2×2 merge cannons fired from an off-center point instead of their true middle</div>
+<div class="up-item new">🎨 GATLING FORTRESS now fires visibly from all 5 barrels (4 corners + center), each with its own muzzle flash and sparks</div>
 <div class="up-item new">🎨 SHOCK CANNON charge-up now has a brighter windup glow, crackling arcs, and a bigger dual-ring blast + screen shake on detonation</div>
 </div>
 </div>
@@ -1927,6 +1936,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     <button id="up-merge-btn3" style="display:none;background:#1a0a00;border:1px solid #ff8800;color:#ff8800;font-family:'Share Tech Mono',monospace;font-size:10px;padding:8px;cursor:pointer;letter-spacing:1px;margin-bottom:6px;">💣 MERGE 2x2 INTO SIEGE CANNON</button>
     <button id="up-merge-btn4" style="display:none;background:#001824;border:1px solid #33bbff;color:#33bbff;font-family:'Share Tech Mono',monospace;font-size:10px;padding:8px;cursor:pointer;letter-spacing:1px;margin-bottom:6px;">🛡 MERGE 2x2 INTO BARRIER CANNON</button>
     <button id="up-merge-btn5" style="display:none;background:#241800;border:1px solid #ffdd44;color:#ffdd44;font-family:'Share Tech Mono',monospace;font-size:10px;padding:8px;cursor:pointer;letter-spacing:1px;margin-bottom:6px;">💥 MERGE 4x 2x2 INTO MEGA BLASTER (4x4)</button>
+    <button id="up-merge-btn6" style="display:none;background:#0a1a00;border:1px solid #aaff00;color:#aaff00;font-family:'Share Tech Mono',monospace;font-size:10px;padding:8px;cursor:pointer;letter-spacing:1px;margin-bottom:6px;">⚡ MERGE 2x2 INTO TESLA CANNON</button>
     <button id="silo-mark-btn" style="display:none;background:#0a0500;border:1px solid #ff6600;color:#ff6600;font-family:'Share Tech Mono',monospace;font-size:11px;padding:8px;cursor:pointer;width:100%;text-align:left;letter-spacing:1px;transition:all .15s;">🎯 MANUAL TARGET</button>
     <div id="silo-target-info" style="display:none;font-size:9px;color:#ff8800;padding:2px 0 4px 0;letter-spacing:1px;"></div>
     <!-- SACRIFICE TEMPLE PANEL -->
@@ -2468,7 +2478,7 @@ function applyMapDimensions(mapKey){
 const CT={EMPTY:0,WALL:1,BASIC:2,SNIPER:3,CANNON:4,BASE:5,SPAWN:6,ELECTRIC:7,HEALER:8,SPIKE:9,BUFF:10,MINE:11,HELI:12,FLAME:13,BHOLE:14,LASER:15,DRONE:16,ICE:17,BARRACKS:18,SILO:19,MECH_BASE:20,BARBWIRE:21,PATH:22,COWBOY:23,NECRO:24,MACE:25,ALCH:26,HUNTER:27};
 const ML=5;
 const HERO_ML=10; // Hero towers have 10 levels
-function getML(key){if(key==='hero_score')return 6;if(key==='mega_blaster_cannon')return 5;if(key==='railgun_cannon'||key==='blaster_cannon'||key==='siege_cannon'||key==='barrier_cannon')return 5;return(key==='hero_accel'||key==='hero_sacrifice')?HERO_ML:ML;}
+function getML(key){if(key==='hero_score')return 6;if(key==='mega_blaster_cannon')return 1;if(key==='railgun_cannon'||key==='blaster_cannon'||key==='siege_cannon'||key==='barrier_cannon')return 5;if(key==='tesla_cannon')return 5;return(key==='hero_accel'||key==='hero_sacrifice')?HERO_ML:ML;}
 function towerAt(r,c){for(const t of towers){const sz=t.size||1;if(sz>1){if(r>=t.row&&r<=t.row+sz-1&&c>=t.col&&c<=t.col+sz-1) return t;}else if(t.row===r&&t.col===c) return t;}return null;}
 function clearTowerGrid(t){const sz=t.size||1;if(sz>1){for(let dr=0;dr<sz;dr++)for(let dc=0;dc<sz;dc++)grid[t.row+dr][t.col+dc]=CT.EMPTY;}else{grid[t.row][t.col]=CT.EMPTY;}}
 function findRailgunGroup(t){
@@ -2521,6 +2531,20 @@ function findBarrierGroup(t){
     const cells=[[ar,ac],[ar,ac+1],[ar+1,ac],[ar+1,ac+1]];
     const members=cells.map(([r,c])=>towerAt(r,c));
     if(members.every(m=>m&&m.key==='wall'&&m.level===1&&m.size!==2)){
+      if(MP.active&&!members.every(m=>MP.canInteractTower(m))) continue;
+      return{anchorRow:ar,anchorCol:ac,members:[...new Set(members)]};
+    }
+  }
+  return null;
+}
+function findTeslaGroup(t){
+  if(!t||t.key!=='electric'||t.level!==1) return null;
+  for(const[dr,dc] of[[0,0],[0,-1],[-1,0],[-1,-1]]){
+    const ar=t.row+dr,ac=t.col+dc;
+    if(ar<0||ac<0||ar+1>=ROWS||ac+1>=COLS) continue;
+    const cells=[[ar,ac],[ar,ac+1],[ar+1,ac],[ar+1,ac+1]];
+    const members=cells.map(([r,c])=>towerAt(r,c));
+    if(members.every(m=>m&&m.key==='electric'&&m.level===1&&m.size!==2)){
       if(MP.active&&!members.every(m=>MP.canInteractTower(m))) continue;
       return{anchorRow:ar,anchorCol:ac,members:[...new Set(members)]};
     }
@@ -2621,6 +2645,17 @@ const TS={
     3:{t:CT.BASIC,cost:13000,hp:4700,rng:480,dmg:2500,cd:6,aoe:0,chn:0,col:'#ffe680',name:'MEGA BLASTER CANNON III',blasterCannon:true,minigun:true,shots:10,megaBlaster:true,maxHeat:41,heatDecay:.06,overheatDecayMult:2.3},
     4:{t:CT.BASIC,cost:19000,hp:5700,rng:500,dmg:3300,cd:5,aoe:0,chn:0,col:'#ffeeaa',name:'MEGA BLASTER CANNON IV',blasterCannon:true,minigun:true,shots:10,megaBlaster:true,maxHeat:44,heatDecay:.065,overheatDecayMult:2.3},
     5:{t:CT.BASIC,cost:27000,hp:7000,rng:520,dmg:4400,cd:5,aoe:0,chn:0,col:'#fff4cc',name:'MEGA BLASTER OMEGA',blasterCannon:true,minigun:true,shots:11,megaBlaster:true,maxHeat:48,heatDecay:.07,overheatDecayMult:2.4}
+  },
+  tesla_cannon:{
+    1  :{t:CT.ELECTRIC,cost:0,   hp:340,rng:200,dmg:34, cd:44,aoe:0,  chn:6, col:'#aaff00',name:'TESLA CANNON',teslaCannon:true},
+    '2A':{t:CT.ELECTRIC,cost:2400,hp:460,rng:220,dmg:70, cd:34,aoe:0,  chn:9, col:'#ccff33',name:'STORM CANNON',teslaCannon:true,burst:6, teslaEnergyPath:true,energyMax:100,energyCost:32,energyRegen:0.55},
+    '2B':{t:CT.ELECTRIC,cost:2800,hp:500,rng:235,dmg:170,cd:78,aoe:140,chn:7, col:'#66ff22',name:'PLASMA CANNON',teslaCannon:true,elecBall:true,preBoltCount:2,preBoltRange:100},
+    '3A':{t:CT.ELECTRIC,cost:4200,hp:600,rng:240,dmg:120,cd:26,aoe:0,  chn:13,col:'#ddff00',name:'STORM CANNON+',teslaCannon:true,burst:10,teslaEnergyPath:true,energyMax:130,energyCost:34,energyRegen:0.7},
+    '3B':{t:CT.ELECTRIC,cost:4800,hp:660,rng:260,dmg:300,cd:70,aoe:190,chn:9, col:'#44ff00',name:'PLASMA CANNON+',teslaCannon:true,elecBall:true,preBoltCount:3,preBoltRange:120},
+    '4A':{t:CT.ELECTRIC,cost:6800,hp:800,rng:265,dmg:190,cd:20,aoe:0,  chn:17,col:'#eeff22',name:'STORM CANNON++',teslaCannon:true,burst:14,teslaEnergyPath:true,energyMax:160,energyCost:36,energyRegen:0.85},
+    '4B':{t:CT.ELECTRIC,cost:7600,hp:880,rng:285,dmg:520,cd:64,aoe:245,chn:11,col:'#33ff11',name:'PLASMA CANNON++',teslaCannon:true,elecBall:true,preBoltCount:4,preBoltRange:140},
+    '5A':{t:CT.ELECTRIC,cost:11000,hp:1050,rng:295,dmg:280,cd:15,aoe:0,  chn:22,col:'#ffff55',name:'THUNDER TITAN',teslaCannon:true,burst:19,teslaEnergyPath:true,energyMax:200,energyCost:40,energyRegen:1.05},
+    '5B':{t:CT.ELECTRIC,cost:12500,hp:1150,rng:320,dmg:900,cd:58,aoe:310,chn:13,col:'#22ff00',name:'PLASMA APOCALYPSE',teslaCannon:true,elecBall:true,preBoltCount:5,preBoltRange:165}
   },
   siege_cannon:{
     1  :{t:CT.CANNON,cost:0,   hp:400, rng:220,dmg:110, cd:60, aoe:110,chn:0,col:'#ff8800',name:'SIEGE CANNON',siegeCannon:true,ballistic:true},
@@ -2796,8 +2831,8 @@ const TS={
   },
 };
 
-const PATH_NAMES={alchemist:{A:'VIRULENCE (stacking acid DoT)',B:'HEXBREW (curse: slow+shred+dmg amp)'},mace:{A:'CRUSHER (high dmg/pierce)',B:'TEMPEST (fast/range)'},railgun_cannon:{A:'SIEGE (slow/heavy)',B:'RAPID (fast/light)'},blaster_cannon:{A:'GATLING FORTRESS (5-barrel/no charge)',B:'SHOCK CANNON (charge/massive dmg+stun)'},siege_cannon:{A:'RAPID SIEGE (fast attack)',B:'DEVASTATOR SIEGE (high damage)'},basic:{A:'MINIGUN',B:'SHOCKWAVE'},sniper:{A:'OVERCHARGE',B:'EXPLOSIVE'},cannon:{A:'RAPID FIRE',B:'DEVASTATOR'},electric:{A:'STORM',B:'PLASMA BALL'},healer:{A:'BASE MEDIC',B:'REGEN+'},spike:{A:'RAPID STRIKE',B:'WARHAMMER'},buff:{A:'BASS BOOST',B:'DJ BOOTH'},mine:{A:'BIG FARM',B:'BANK'},heli:{A:'MISSILE+BULLETS',B:'MINIGUN SPEED'},flame:{A:'INFERNO',B:'CORROSION'},ice:{A:'FROST WAVE',B:'CRYO BULLET'},bhole:{A:'EVENT HORIZON',B:'SINGULARITY'},laser:{A:'FOCUS BEAM',B:'CRYSTAL FORGE'},barracks:{A:'DEMOLISHER',B:'GUNNER',C:'TANK DEPOT'},silo:{A:'NUKE',B:'LASER STRIKE'},hero_accel:{A:'OVERCHARGE BEAM'},hero_score:{A:'SCORE FOCUS',B:'AURA FOCUS'},hero_sacrifice:{A:'BLOOD ALTAR',B:'SOUL BEACON'},mech_base:{A:'THE TITAN',B:'WALKING ARSENAL',C:'SWARM PROTOCOL'},admindrone:{A:'SWARM PROTOCOL',B:'MULTI-ROLE'},barbwire:{A:'LONG WIRE',B:'RAZOR WIRE'},cowboy:{A:'GUNSLINGER',B:'POSSE CALLER'},necromancer:{A:'DEATH CALLER',B:'BONE WARDEN'},hunter:{A:'MARKSMAN (higher crit chance/dmg)',B:'TRACKER (marks enemies for bonus dmg+gold)'}};
-const PATH_COLORS={alchemist:{A:'#aaff00',B:'#aa44ff'},mace:{A:'#cc44ff',B:'#3399ff'},railgun_cannon:{A:'#33bbff',B:'#99eeff'},blaster_cannon:{A:'#ffcc33',B:'#ff5511'},siege_cannon:{A:'#ff9900',B:'#ff3300'},basic:{A:'#33aaff',B:'#55ddff'},sniper:{A:'#cc55ff',B:'#ff44bb'},cannon:{A:'#ff9900',B:'#ff6600'},electric:{A:'#aaff00',B:'#88ff44'},healer:{A:'#00ccff',B:'#00ffcc'},spike:{A:'#ff4488',B:'#ff2255'},buff:{A:'#ffd700',B:'#ff8800'},mine:{A:'#ffe066',B:'#ffd700'},heli:{A:'#00ffaa',B:'#44ffcc'},flame:{A:'#ff4400',B:'#44ff88'},ice:{A:'#44ccff',B:'#4488ff'},bhole:{A:'#cc66ff',B:'#ff44aa'},laser:{A:'#00ccff',B:'#ff88ff'},barracks:{A:'#ff8844',B:'#33ccff',C:'#cc8800'},silo:{A:'#ff4400',B:'#cc55ff'},hero_accel:{A:'#ffe066'},hero_score:{A:'#ff44aa',B:'#ffaa00'},hero_sacrifice:{A:'#ff1144',B:'#aa22ff'},mech_base:{A:'#ff3311',B:'#2299ee',C:'#44ee77'},admindrone:{A:'#ff44ff',B:'#44ffee'},barbwire:{A:'#c8a874',B:'#ff5533'},cowboy:{A:'#ffdca8',B:'#c8955a'},necromancer:{A:'#bb8fff',B:'#6a4a9a'},hunter:{A:'#22dd77',B:'#eeaa33'}};
+const PATH_NAMES={alchemist:{A:'VIRULENCE (stacking acid DoT)',B:'HEXBREW (curse: slow+shred+dmg amp)'},mace:{A:'CRUSHER (high dmg/pierce)',B:'TEMPEST (fast/range)'},railgun_cannon:{A:'SIEGE (slow/heavy)',B:'RAPID (fast/light)'},tesla_cannon:{A:'STORM CANNON (energy-fueled multi-chain lightning)',B:'PLASMA CANNON (plasma orb arcs lightning at nearby foes before impact)'},blaster_cannon:{A:'GATLING FORTRESS (5-barrel/no charge)',B:'SHOCK CANNON (charge/massive dmg+stun)'},siege_cannon:{A:'RAPID SIEGE (fast attack)',B:'DEVASTATOR SIEGE (high damage)'},basic:{A:'MINIGUN',B:'SHOCKWAVE'},sniper:{A:'OVERCHARGE',B:'EXPLOSIVE'},cannon:{A:'RAPID FIRE',B:'DEVASTATOR'},electric:{A:'STORM',B:'PLASMA BALL'},healer:{A:'BASE MEDIC',B:'REGEN+'},spike:{A:'RAPID STRIKE',B:'WARHAMMER'},buff:{A:'BASS BOOST',B:'DJ BOOTH'},mine:{A:'BIG FARM',B:'BANK'},heli:{A:'MISSILE+BULLETS',B:'MINIGUN SPEED'},flame:{A:'INFERNO',B:'CORROSION'},ice:{A:'FROST WAVE',B:'CRYO BULLET'},bhole:{A:'EVENT HORIZON',B:'SINGULARITY'},laser:{A:'FOCUS BEAM',B:'CRYSTAL FORGE'},barracks:{A:'DEMOLISHER',B:'GUNNER',C:'TANK DEPOT'},silo:{A:'NUKE',B:'LASER STRIKE'},hero_accel:{A:'OVERCHARGE BEAM'},hero_score:{A:'SCORE FOCUS',B:'AURA FOCUS'},hero_sacrifice:{A:'BLOOD ALTAR',B:'SOUL BEACON'},mech_base:{A:'THE TITAN',B:'WALKING ARSENAL',C:'SWARM PROTOCOL'},admindrone:{A:'SWARM PROTOCOL',B:'MULTI-ROLE'},barbwire:{A:'LONG WIRE',B:'RAZOR WIRE'},cowboy:{A:'GUNSLINGER',B:'POSSE CALLER'},necromancer:{A:'DEATH CALLER',B:'BONE WARDEN'},hunter:{A:'MARKSMAN (higher crit chance/dmg)',B:'TRACKER (marks enemies for bonus dmg+gold)'}};
+const PATH_COLORS={alchemist:{A:'#aaff00',B:'#aa44ff'},mace:{A:'#cc44ff',B:'#3399ff'},railgun_cannon:{A:'#33bbff',B:'#99eeff'},tesla_cannon:{A:'#ccff33',B:'#66ff22'},blaster_cannon:{A:'#ffcc33',B:'#ff5511'},siege_cannon:{A:'#ff9900',B:'#ff3300'},basic:{A:'#33aaff',B:'#55ddff'},sniper:{A:'#cc55ff',B:'#ff44bb'},cannon:{A:'#ff9900',B:'#ff6600'},electric:{A:'#aaff00',B:'#88ff44'},healer:{A:'#00ccff',B:'#00ffcc'},spike:{A:'#ff4488',B:'#ff2255'},buff:{A:'#ffd700',B:'#ff8800'},mine:{A:'#ffe066',B:'#ffd700'},heli:{A:'#00ffaa',B:'#44ffcc'},flame:{A:'#ff4400',B:'#44ff88'},ice:{A:'#44ccff',B:'#4488ff'},bhole:{A:'#cc66ff',B:'#ff44aa'},laser:{A:'#00ccff',B:'#ff88ff'},barracks:{A:'#ff8844',B:'#33ccff',C:'#cc8800'},silo:{A:'#ff4400',B:'#cc55ff'},hero_accel:{A:'#ffe066'},hero_score:{A:'#ff44aa',B:'#ffaa00'},hero_sacrifice:{A:'#ff1144',B:'#aa22ff'},mech_base:{A:'#ff3311',B:'#2299ee',C:'#44ee77'},admindrone:{A:'#ff44ff',B:'#44ffee'},barbwire:{A:'#c8a874',B:'#ff5533'},cowboy:{A:'#ffdca8',B:'#c8955a'},necromancer:{A:'#bb8fff',B:'#6a4a9a'},hunter:{A:'#22dd77',B:'#eeaa33'}};
 
 function getCfg(key,lvl,path){if(key==='wall') return TS.wall[Math.min(lvl,5)]||TS.wall[1];if(lvl===1) return TS[key][1];return TS[key][lvl+(path||'')]||TS[key][1];}
 function upgCost(key,toLvl,path){if(key==='wall'){const s=TS.wall[Math.min(toLvl,5)];return s?s.cost:TS.wall[1].cost;}if(TS[key]&&TS[key][toLvl]&&!TS[key][toLvl+'A']&&!TS[key][toLvl+'B']) return TS[key][toLvl].cost;if(toLvl===2){const lk2='2'+(path||'A');const s2=TS[key]&&TS[key][lk2];if(s2) return s2.cost;const sA=TS[key]&&TS[key]['2A'];return sA?sA.cost:Math.round(TS[key][1].cost*0.6);}const lk=toLvl+(path||'A');const s=TS[key]&&TS[key][lk];if(s) return s.cost;const base=TS[key][1].cost;if(toLvl===3) return Math.round(base*1.0);if(toLvl===4) return Math.round(base*1.45);if(toLvl===5) return Math.round(base*2.0);if(toLvl===6) return Math.round(base*3.2);if(toLvl===7) return Math.round(base*4.5);if(toLvl===8) return Math.round(base*6.2);if(toLvl===9) return Math.round(base*8.5);if(toLvl===10) return Math.round(base*12.0);return Math.round(base*1.2);}
@@ -5841,6 +5876,10 @@ function showPanel(t){
   const megaBlasterGrp=findMegaBlasterGroup(t);
   mergeBtn5.style.display='none';
   if(megaBlasterGrp){mergeBtn5.style.display='';mergeBtn5.disabled=false;}
+  const mergeBtn6=document.getElementById('up-merge-btn6');
+  const teslaGrp=findTeslaGroup(t);
+  mergeBtn6.style.display='none';
+  if(teslaGrp){mergeBtn6.style.display='';mergeBtn6.disabled=false;}
   if(isSacTemple){
     // Temple never uses path/upgrade buttons
     pr.style.display='none';ub.style.display='none';
@@ -5994,6 +6033,16 @@ document.getElementById('up-merge-btn5').addEventListener('click',()=>{
   const nt={row:ar,col:ac,size:4,key:'mega_blaster_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||0),0)};
   towers.push(nt);bfs();hidePanel();msg('💥 MEGA BLASTER CANNON ASSEMBLED!',2500);syncUI();
   if(MP.active) MP.broadcast('tower:megaBlasterMerge',{pid:MP.playerId,row:ar,col:ac});
+});
+document.getElementById('up-merge-btn6').addEventListener('click',()=>{
+  if(!selTower) return;const grp=findTeslaGroup(selTower);if(!grp) return;
+  const{anchorRow:ar,anchorCol:ac,members}=grp;
+  for(const m of members){const idx=towers.indexOf(m);if(idx!==-1) towers.splice(idx,1);}
+  const cfg=getCfg('tesla_cannon',1,null);
+  grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
+  const nt={row:ar,col:ac,size:2,key:'tesla_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,teslaEnergy:0,teslaCharging:true,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.electric[1].cost),0)};
+  towers.push(nt);bfs();hidePanel();msg('⚡ TESLA CANNON ASSEMBLED!',2200);syncUI();
+  if(MP.active) MP.broadcast('tower:teslaMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-sell-btn').addEventListener('click',()=>{if(!selTower) return;const t=selTower;const ti=towers.indexOf(t);if(ti===-1) return;if(MP.active&&!MP.canInteractTower(t)){msg(MP.getTowerOwnerMsg(t)||'Not your tower',2000);return;}const ref=Math.floor((t.totalGoldSpent||TS[t.key][1].cost)*.5);if(t.key==='healer'&&t.path==='A'&&t.level>=2){const bon=t.level===2?25:t.level===3?55:t.level===4?90:140;baseMaxHP=Math.max(150,baseMaxHP-bon);baseHP=Math.min(baseHP,baseMaxHP);}if(t.key==='heli'){const hi=helicopters.findIndex(h=>h.towerId===t.id);if(hi!==-1) helicopters.splice(hi,1);}if(t.key==='barracks'||t.key==='mech_base'||t.key==='cowboy'||t.key==='necromancer'){for(let ai=allies.length-1;ai>=0;ai--){if(allies[ai]&&allies[ai].towerId===t.id){sparks(allies[ai].x,allies[ai].y,'#ff4444',5,2);allies.splice(ai,1);}}}gold+=ref;const row=t.row,col=t.col;towers.splice(ti,1);clearTowerGrid(t);bfs();ft(col*CS+CS/2,row*CS,'+'+ref+'g');hidePanel();syncUI();if(MP.active){MP.broadcast('tower:sell',{pid:MP.playerId,row,col});MP.updatePlayerGold();}});
 document.getElementById('sbtn').addEventListener('click',()=>{
@@ -6555,7 +6604,8 @@ window.addEventListener('beforeunload',()=>{ localStorage.setItem('mg_money',mgM
 
 const SHOP_ITEMS=[
   {id:'skin_classic_tesla',name:'CLASSIC TESLA SKIN',icon:'⚡',price:50,desc:'Restores the original TESLA tower look on all Electric towers.',type:'skin',slot:'electric',maxOwn:1},
-  {id:'skin_golden_blaster',name:'GOLDEN BLASTER SKIN',icon:'🟡',price:500,desc:'Recolors all Blaster/Minigun/Shockwave towers gold, with a glowing rim and sparkle.',type:'skin',slot:'basic',maxOwn:1},
+  {id:'skin_golden_blaster',name:'GOLDEN BLASTER SKIN',icon:'🟡',price:2000,desc:'Recolors all Blaster/Minigun/Shockwave towers gold, with a glowing rim and sparkle.',type:'skin',slot:'basic',maxOwn:1},
+  {id:'skin_golden_cannon',name:'GOLDEN CANNON SKIN',icon:'🟡',price:2000,desc:'Reforges all Cannon towers in gleaming gold — gilded barrel, golden housing, and a sparkling muzzle flash with every shot.',type:'skin',slot:'cannon',maxOwn:1},
   {id:'skin_laser_sans',name:'GASTER BLASTER SKIN',icon:'💀',price:60,desc:'Bone-white Gaster Blaster skull housing with a glowing eye for all Laser towers. Its look grows more menacing with every upgrade — horns, cracks, and a burning aura appear at higher levels.',type:'skin',slot:'laser',maxOwn:1},
   {id:'skin_void_railgun',name:'VOID RAILGUN SKIN',icon:'🌌',price:100,desc:'Recasts the 2x2 Railgun Cannon in obsidian-black void armor with a swirling purple accretion disk and a miniature event horizon. Fires a purple void beam instead of the default color, and grows more intense — extra rings, tendrils, and crackling void lightning — with every upgrade.',type:'skin',slot:'railgun_cannon',maxOwn:1},
   {id:'skin_sukuna_spike',name:'SUKUNA SPIKE SKIN',icon:'🔴',price:50,desc:'A recolored spike housing with some eye markings and a dark aura. Attacks get a red crescent slash effect. Nothing too fancy.',type:'skin',slot:'spike',maxOwn:1},
@@ -7117,7 +7167,7 @@ function update(){
   updateHelicopters();
   updateAllies();
   if(baseUpgPath==='A'&&baseUpgLevel>0){const upd=BASE_UPG.A[baseUpgLevel];baseTurretCd--;if(baseTurretCd<=0){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-bx,dy=e.y-by,d=dx*dx+dy*dy;if(d<=upd.turretRng*upd.turretRng&&d<bd){bd=d;closest=e;}}if(closest){baseTurretAngle=Math.atan2(closest.y-by,closest.x-bx);baseTurretCd=upd.turretCd;const effDmg=Math.round(upd.turretDmg*getBuffsAt(BASE_C,BASE_R).dmgMult);projs.push({x:bx,y:by,tgt:closest,lastX:closest.x,lastY:closest.y,spd:9,dmg:effDmg,aoe:0,chn:0,col:'#00ff88',sz:3,type:'normal'});sparks(bx,by,'#00ff88',4,1.2);}}}
-  for(const t of towers){if(t.hitFlash>0) t.hitFlash--;if(t.huntBuffTimer>0){t.huntBuffTimer--;if(t.huntBuffTimer<=0){t.huntBuffDmg=0;t.huntBuffRng=0;}}if(t.stunned>0){t.stunned--;continue;}const cfg=t.cfg;if(cfg.megaBlaster){if(t.overheated){t.heat=Math.max(0,t.heat-(cfg.heatDecay||.12)*(cfg.overheatDecayMult||2.2));if(t.heat<=0){t.overheated=false;ft(t.col*CS+CS*2,t.row*CS+CS*2-CS*2-6,'⚙ READY',cfg.col);sparks(t.col*CS+CS*2,t.row*CS+CS*2,'#66ccff',10,2);}}else if((t.coolDelay||0)>0){t.coolDelay--;}else if((t.heat||0)>0){t.heat=Math.max(0,t.heat-(cfg.heatDecay||.12));}}if(cfg.railgunTower){
+  for(const t of towers){if(t.hitFlash>0) t.hitFlash--;if(t.huntBuffTimer>0){t.huntBuffTimer--;if(t.huntBuffTimer<=0){t.huntBuffDmg=0;t.huntBuffRng=0;}}if(t.stunned>0){t.stunned--;continue;}const cfg=t.cfg;if(cfg.megaBlaster){if(t.overheated){t.heat=Math.max(0,t.heat-(cfg.heatDecay||.12)*(cfg.overheatDecayMult||2.2));if(t.heat<=0){t.overheated=false;ft(t.col*CS+CS*2,t.row*CS+CS*2-CS*2-6,'⚙ READY',cfg.col);sparks(t.col*CS+CS*2,t.row*CS+CS*2,'#66ccff',10,2);}}else if((t.coolDelay||0)>0){t.coolDelay--;}else if((t.heat||0)>0){t.heat=Math.max(0,t.heat-(cfg.heatDecay||.12));}}if(cfg.teslaEnergyPath){t.teslaEnergy=Math.min(cfg.energyMax,(t.teslaEnergy||0)+cfg.energyRegen);if(t.teslaEnergy>=cfg.energyMax) t.teslaCharging=false;}if(cfg.railgunTower){
   const rFireCol=(t.skins?t.skins['skin_void_railgun']:mgEquipped['skin_void_railgun'])?'#a855ff':cfg.col;
   if(t.cd>0){t.cd--;/* passive charge while on cooldown: accumulate overcharge up to 3x */if(enemies.length===0){t.passiveCharge=(t.passiveCharge||0)+1;}continue;}
   const rsz=CS*(t.size||1);
@@ -7504,7 +7554,7 @@ if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.
   t.angle=Math.atan2(closest.y-ty,closest.x-tx);
   shockwaves.push({ox:tx,oy:ty,r:CS*.3,maxR:cfg.shockMaxR||200,spd:cfg.shockSpd||3.2,dmg:effDmg,col:cfg.col,life:1,hit:new Set(),width:3,srcKey:t.key});sparks(tx,ty,cfg.col,6,1);continue;}
   if(cfg.iceTower&&cfg.iceShockwave){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;closest=e;}}if(!closest) continue;t.cd=effCd;t.angle=Math.atan2(closest.y-ty,closest.x-tx);shockwaves.push({ox:tx,oy:ty,r:CS*.3,maxR:cfg.shockMaxR||180,spd:cfg.shockSpd||3.0,dmg:effDmg,col:cfg.col,life:1,hit:new Set(),width:3,isIce:true,slowFactor:cfg.slowFactor||.40,slowDur:cfg.slowDur||120,srcKey:t.key});sparks(tx,ty,'#88ddff',6,1);continue;}
-  if(cfg.iceTower&&cfg.iceBullet){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;closest=e;}}if(!closest) continue;t.cd=effCd;t.angle=Math.atan2(closest.y-ty,closest.x-tx);projs.push({x:tx,y:ty,tgt:closest,lastX:closest.x,lastY:closest.y,spd:cfg.bulletSpd||12,dmg:effDmg,col:cfg.col,src:t,type:'iceBullet',slowFactor:cfg.slowFactor||.25,slowDur:cfg.slowDur||90,armorShred:cfg.armorShred||.15,shredDur:cfg.shredDur||130,flyFreeze:cfg.flyFreeze||.80,flySpdCap:cfg.flySpdCap||.25});sparks(tx,ty,'#4488ff',4,1.5);continue;}let tgt=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;tgt=e;}}if(!tgt) continue;t.angle=Math.atan2(tgt.y-ty,tgt.x-tx);t.cd=effCd;if(cfg.t===CT.ELECTRIC){if(cfg.burst&&cfg.burst>1){const inR=enemies.filter(e=>{const dx=e.x-tx,dy=e.y-ty;return dx*dx+dy*dy<=effRng*effRng;});inR.sort((a,b)=>(a.x-tx)**2+(a.y-ty)**2-(b.x-tx)**2-(b.y-ty)**2);for(const bt of inR.slice(0,cfg.burst)) fireElectric(tx,ty,bt,effDmg,cfg.chn);}else if(cfg.elecBall){projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:2.6,dmg:effDmg,aoe:cfg.aoe||0,chn:cfg.chn||3,chainRng:105,col:cfg.col,sz:8,type:'elecBall'});}else fireElectric(tx,ty,tgt,effDmg,cfg.chn);}else if(cfg.t===CT.SPIKE){const sukunaSkin=t.skins?t.skins['skin_sukuna_spike']:mgEquipped['skin_sukuna_spike'];if(cfg.hammer) projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:6,dmg:effDmg,aoe:cfg.aoe||45,chn:0,col:sukunaSkin?'#ff1133':cfg.col,sz:6,type:'hammer',stunDur:cfg.stunDur||45,sukunaSkin});else if(cfg.rapidStrike){for(let rb=0;rb<2;rb++) projs.push({x:tx+(Math.random()-.5)*3,y:ty+(Math.random()-.5)*3,tgt,lastX:tgt.x,lastY:tgt.y,spd:8,dmg:effDmg,aoe:0,chn:0,col:sukunaSkin?'#ff1133':cfg.col,sz:sukunaSkin?8:3,type:sukunaSkin?'worldcut':'normal',ang:Math.atan2(tgt.y-ty,tgt.x-tx),src:t});}else{projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:sukunaSkin?'#ff1133':cfg.col,sz:sukunaSkin?11:4,type:sukunaSkin?'worldcut':'normal',ang:Math.atan2(tgt.y-ty,tgt.x-tx)});}}else if(cfg.minigun){
+  if(cfg.iceTower&&cfg.iceBullet){let closest=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;closest=e;}}if(!closest) continue;t.cd=effCd;t.angle=Math.atan2(closest.y-ty,closest.x-tx);projs.push({x:tx,y:ty,tgt:closest,lastX:closest.x,lastY:closest.y,spd:cfg.bulletSpd||12,dmg:effDmg,col:cfg.col,src:t,type:'iceBullet',slowFactor:cfg.slowFactor||.25,slowDur:cfg.slowDur||90,armorShred:cfg.armorShred||.15,shredDur:cfg.shredDur||130,flyFreeze:cfg.flyFreeze||.80,flySpdCap:cfg.flySpdCap||.25});sparks(tx,ty,'#4488ff',4,1.5);continue;}let tgt=null,bd=Infinity;for(const e of enemies){const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;tgt=e;}}if(!tgt) continue;t.angle=Math.atan2(tgt.y-ty,tgt.x-tx);if(cfg.teslaEnergyPath&&(t.teslaCharging||(t.teslaEnergy||0)<cfg.energyMax)){t.cd=6;continue;}t.cd=effCd;if(cfg.t===CT.ELECTRIC){if(cfg.teslaEnergyPath){t.teslaEnergy=0;t.teslaCharging=true;}if(cfg.burst&&cfg.burst>1){const inR=enemies.filter(e=>{const dx=e.x-tx,dy=e.y-ty;return dx*dx+dy*dy<=effRng*effRng;});inR.sort((a,b)=>(a.x-tx)**2+(a.y-ty)**2-(b.x-tx)**2-(b.y-ty)**2);for(const bt of inR.slice(0,cfg.burst)) fireElectric(tx,ty,bt,effDmg,cfg.chn);if(cfg.teslaEnergyPath){sparks(tx,ty,cfg.col,12,2.4);flashes.push({x:tx,y:ty,r:14,life:8,ml:8,col:cfg.col});}}else if(cfg.elecBall){projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:2.6,dmg:effDmg,aoe:cfg.aoe||0,chn:cfg.chn||3,chainRng:105,col:cfg.col,sz:8,type:'elecBall',preBolts:cfg.preBoltCount||0,preBoltRange:cfg.preBoltRange||90});}else fireElectric(tx,ty,tgt,effDmg,cfg.chn);}else if(cfg.t===CT.SPIKE){const sukunaSkin=t.skins?t.skins['skin_sukuna_spike']:mgEquipped['skin_sukuna_spike'];if(cfg.hammer) projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:6,dmg:effDmg,aoe:cfg.aoe||45,chn:0,col:sukunaSkin?'#ff1133':cfg.col,sz:6,type:'hammer',stunDur:cfg.stunDur||45,sukunaSkin});else if(cfg.rapidStrike){for(let rb=0;rb<2;rb++) projs.push({x:tx+(Math.random()-.5)*3,y:ty+(Math.random()-.5)*3,tgt,lastX:tgt.x,lastY:tgt.y,spd:8,dmg:effDmg,aoe:0,chn:0,col:sukunaSkin?'#ff1133':cfg.col,sz:sukunaSkin?8:3,type:sukunaSkin?'worldcut':'normal',ang:Math.atan2(tgt.y-ty,tgt.x-tx),src:t});}else{projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:sukunaSkin?'#ff1133':cfg.col,sz:sukunaSkin?11:4,type:sukunaSkin?'worldcut':'normal',ang:Math.atan2(tgt.y-ty,tgt.x-tx)});}}else if(cfg.minigun){
   const _mgShots=cfg.shots||3;
   if(cfg.blasterCannon){
     const _bsz=CS*(t.size||1);
@@ -7599,6 +7649,7 @@ if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.
   }
   for(let i=shockwaves.length-1;i>=0;i--){const sw=shockwaves[i];if(!sw.hit)sw.hit=new Set();const prevR=sw.r;sw.r+=sw.spd;for(const e of enemies){if(sw.hit.has(e)) continue;const dx=e.x-sw.ox,dy=e.y-sw.oy,d=Math.sqrt(dx*dx+dy*dy);if(d>=prevR-e.sz*0.5&&d<=sw.r+e.sz*0.5){sw.hit.add(e);if(mirrorBlocked(e,sw.srcKey)){}else{const swd=applyArmor(e,sw.dmg);e.hp-=swd;mirrorTrack(e,sw.srcKey,swd);}sparks(e.x,e.y,sw.col,4,1.5);if(sw.isIce){const sf=sw.slowFactor||.40;const sd=sw.slowDur||120;if(sf>e.slowFactor){e.slowFactor=sf;e.slowDur=Math.max(e.slowDur,sd);e.spd=e.spdBase*(1-e.slowFactor);if(e.flying&&sf>=.5){e.spd=Math.min(e.spd,e.spdBase*.20);}ft(e.x,e.y-e.sz-6,'❄','#88ddff');}}else{if(!e.robot) applyStun(e,6);}}}if(sw.r>=sw.maxR) shockwaves.splice(i,1);}
   for(let i=projs.length-1;i>=0;i--){const p=projs[i];if(!p.ballistic&&p.tgt&&enemies.includes(p.tgt)&&p.type!=='mace'){p.lastX=p.tgt.x;p.lastY=p.tgt.y;}const dx=p.lastX-p.x,dy=p.lastY-p.y,d=Math.sqrt(dx*dx+dy*dy);
+  if(p.type==='elecBall'&&p.preBolts>0){p._boltTick=(p._boltTick||0)+1;if(p._boltTick%14===0){const nearBolt=enemies.filter(e=>e!==p.tgt&&Math.hypot(e.x-p.x,e.y-p.y)<=(p.preBoltRange||90));for(const be of nearBolt.slice(0,p.preBolts)){const preD=elecDmg(be,Math.max(1,Math.round(p.dmg*.16)));be.hp-=preD;addLx(p.x,p.y,be.x,be.y,p.col);sparks(be.x,be.y,p.col,3,1.2);if(!be.robot&&!be.stunImmune) applyStun(be,6);}}}
   // === MACE ARC PROJECTILE ===
   if(p.type==='mace'){
     if(!p.arcProgress) p.arcProgress=0;
@@ -8410,6 +8461,87 @@ function drawTower(t){
       if(bcfg.rng&&bcfg.rng<9999){ctx.save();ctx.strokeStyle='rgba(255,215,0,0.55)';ctx.lineWidth=1.5;ctx.setLineDash([6,4]);ctx.beginPath();ctx.arc(bcx,bcy,bcfg.rng,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(255,215,0,0.06)';ctx.beginPath();ctx.arc(bcx,bcy,bcfg.rng,0,Math.PI*2);ctx.fill();ctx.restore();}}
     return;
   }
+  if(t.cfg&&t.cfg.teslaCannon){
+    const es=CS*(t.size||1),ex=t.col*CS,ey=t.row*CS,ecx=ex+es/2,ecy=ey+es/2;
+    const ecfg=t.cfg,efl=t.hitFlash>0;
+    const ecol=efl?'#ff4444':ecfg.col;
+    const lvl=t.level||1,isPlasma=!!ecfg.elecBall,isStorm=!!ecfg.teslaEnergyPath;
+    const epulse=(Math.sin(_frm*.12)+1)*.5,epulseFast=(Math.sin(_frm*.28)+1)*.5;
+    // ── base plate: hazard-trimmed gunmetal panel (or gilded plate if golden skin) ──
+    ctx.fillStyle=efl?'#241010':'#0b1408';ctx.fillRect(ex+2,ey+2,es-4,es-4);
+    ctx.save();ctx.beginPath();ctx.rect(ex+2,ey+2,es-4,es-4);ctx.clip();
+    ctx.strokeStyle=ecol+'22';ctx.lineWidth=4;
+    for(let hs2=-es;hs2<es*2;hs2+=16){ctx.beginPath();ctx.moveTo(ex+hs2,ey+es);ctx.lineTo(ex+hs2+es,ey);ctx.stroke();}
+    ctx.restore();
+    ctx.strokeStyle=ecol+'55';ctx.lineWidth=1;ctx.strokeRect(ex+7,ey+7,es-14,es-14);
+    ctx.strokeStyle=ecol;ctx.lineWidth=2.5;ctx.strokeRect(ex+3,ey+3,es-6,es-6);
+    ctx.strokeStyle='#000';ctx.lineWidth=1;ctx.strokeRect(ex+9,ey+9,es-18,es-18);
+
+    // ── four corner tesla coils (ring count scales with level) ──
+    const cornerOffE=es*0.27,ringN=Math.min(5,2+Math.ceil(lvl/2)),coilBaseR=es*.055;
+    const corners=[[ex+cornerOffE,ey+cornerOffE],[ex+es-cornerOffE,ey+cornerOffE],[ex+cornerOffE,ey+es-cornerOffE],[ex+es-cornerOffE,ey+es-cornerOffE]];
+    for(const[px,py] of corners){
+      // post base
+      ctx.fillStyle='#0a0a0a';ctx.beginPath();ctx.arc(px,py,coilBaseR*1.7,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle=ecol+'88';ctx.lineWidth=1;ctx.stroke();
+      ctx.save();ctx.translate(px,py);ctx.rotate(_frm*0.035);
+      ctx.strokeStyle=ecol;ctx.lineWidth=1.5;
+      for(let ci=0;ci<ringN;ci++){ctx.globalAlpha=1-ci*.12;ctx.beginPath();ctx.arc(0,0,coilBaseR+ci*2.6,0,Math.PI*1.5);ctx.stroke();}
+      ctx.globalAlpha=1;
+      ctx.restore();
+      // emitter tip glow
+      ctx.beginPath();ctx.arc(px,py,coilBaseR*.55,0,Math.PI*2);ctx.fillStyle='#fff';ctx.globalAlpha=.5+epulseFast*.5;ctx.fill();ctx.globalAlpha=1;
+      if(_frm%8===0&&Math.random()<0.45) sparks(px,py,ecol,1,.6);
+
+    }
+    // ── central power core ──
+    ctx.save();ctx.translate(ecx,ecy);
+    const orbR=(isPlasma?es*.20:es*.15)+epulse*es*.025;
+    const eGlow=ctx.createRadialGradient(0,0,0,0,0,orbR*3);eGlow.addColorStop(0,ecol+'aa');eGlow.addColorStop(.5,ecol+'33');eGlow.addColorStop(1,'transparent');
+    ctx.fillStyle=eGlow;ctx.beginPath();ctx.arc(0,0,orbR*3,0,Math.PI*2);ctx.fill();
+    if(isPlasma){
+      // swirling plasma sphere with orbiting motes
+      ctx.beginPath();ctx.arc(0,0,orbR,0,Math.PI*2);const pGrad=ctx.createRadialGradient(-orbR*.3,-orbR*.3,0,0,0,orbR);pGrad.addColorStop(0,'#ffffff');pGrad.addColorStop(.4,ecol);pGrad.addColorStop(1,'#0a1402');ctx.fillStyle=pGrad;ctx.fill();ctx.strokeStyle=ecol;ctx.lineWidth=2;ctx.stroke();
+      for(let mi=0;mi<3;mi++){const ma=_frm*0.05+mi*(Math.PI*2/3);const mr=orbR*1.5;ctx.beginPath();ctx.arc(Math.cos(ma)*mr,Math.sin(ma)*mr,2,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();}
+    } else {
+      // faceted storm core
+      ctx.beginPath();const facN=6;for(let fi=0;fi<facN;fi++){const fa=fi/facN*Math.PI*2;const fx=Math.cos(fa)*orbR,fy=Math.sin(fa)*orbR;fi===0?ctx.moveTo(fx,fy):ctx.lineTo(fx,fy);}ctx.closePath();
+      ctx.fillStyle='#0a1402';ctx.fill();ctx.strokeStyle=ecol;ctx.lineWidth=2;ctx.stroke();
+      ctx.beginPath();ctx.arc(0,0,orbR*.4,0,Math.PI*2);ctx.fillStyle='#ffffff';ctx.globalAlpha=.7+epulseFast*.3;ctx.fill();ctx.globalAlpha=1;
+    }
+    ctx.rotate(_frm*0.025);
+    const boltN=isPlasma?6:5+Math.min(3,Math.floor(lvl/2));
+    ctx.strokeStyle=ecol;ctx.lineWidth=1.3;
+    for(let bi=0;bi<boltN;bi++){const ba=bi/boltN*Math.PI*2;ctx.beginPath();ctx.moveTo(Math.cos(ba)*orbR*.4,Math.sin(ba)*orbR*.4);ctx.lineTo(Math.cos(ba)*orbR*.95,Math.sin(ba)*orbR*.95);ctx.stroke();}
+    ctx.restore();
+
+    // ── random arcs jumping between the core and coil posts ──
+    ctx.lineWidth=1.1;
+    if(_frm%3===0) for(const[px,py] of corners){
+      if(Math.random()<(isStorm?.55:.4)){
+        ctx.strokeStyle=(Math.random()<.3?'#ffffff':ecol)+'cc';
+        ctx.beginPath();ctx.moveTo(ecx,ecy);
+        const midx=(ecx+px)/2+(Math.random()-.5)*10,midy=(ecy+py)/2+(Math.random()-.5)*10;
+        ctx.lineTo(midx,midy);ctx.lineTo(px,py);ctx.stroke();
+      }
+    }
+    // occasional arc between adjacent coil posts too (busier at higher levels)
+    if(lvl>=3&&_frm%5===0&&Math.random()<.35){
+      const a=corners[Math.floor(Math.random()*4)],b=corners[Math.floor(Math.random()*4)];
+      if(a!==b){ctx.strokeStyle=ecol+'aa';ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo((a[0]+b[0])/2+(Math.random()-.5)*10,(a[1]+b[1])/2+(Math.random()-.5)*10);ctx.lineTo(b[0],b[1]);ctx.stroke();}
+    }
+    // ── STORM CANNON: energy bar (needs full charge to fire) ──
+    if(isStorm){
+      const eMax=ecfg.energyMax||100,eNow=Math.min(eMax,t.teslaEnergy||0),ePct=eNow/eMax,ready=ePct>=1;
+      ctx.fillStyle='#001800';ctx.fillRect(ex+6,ey+es-10,es-12,6);
+      ctx.fillStyle=ready?'#ffffff':ecol;ctx.fillRect(ex+6,ey+es-10,(es-12)*ePct,6);
+      ctx.strokeStyle=ecol+'cc';ctx.lineWidth=1;ctx.strokeRect(ex+6,ey+es-10,es-12,6);
+      if(ready&&_frm%6<3){ctx.save();ctx.globalAlpha=.6;ctx.fillStyle='#fff';ctx.fillRect(ex+6,ey+es-10,es-12,6);ctx.restore();}
+    }
+    if(selTower===t){ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.strokeRect(ex+1,ey+1,es-2,es-2);
+      if(ecfg.rng){ctx.save();ctx.strokeStyle='rgba(255,215,0,0.55)';ctx.lineWidth=1.5;ctx.setLineDash([6,4]);ctx.beginPath();ctx.arc(ecx,ecy,ecfg.rng,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(255,215,0,0.06)';ctx.beginPath();ctx.arc(ecx,ecy,ecfg.rng,0,Math.PI*2);ctx.fill();ctx.restore();}}
+    return;
+  }
   if(t.cfg&&t.cfg.siegeCannon){
     const hs=CS*2,hx=t.col*CS,hy=t.row*CS,hcx=hx+hs/2,hcy=hy+hs/2;
     const hcfg=t.cfg,hfl=t.hitFlash>0,hcol=hfl?'#ff4444':hcfg.col;
@@ -9103,8 +9235,262 @@ function drawTower(t){
   } else if(cfg.t===CT.SNIPER){
     ctx.save();ctx.translate(cx,cy);ctx.beginPath();for(let i=0;i<8;i++){const a=i/8*Math.PI*2-Math.PI/8,R=12;ctx[i===0?'moveTo':'lineTo'](Math.cos(a)*R,Math.sin(a)*R);}ctx.closePath();ctx.fillStyle='#0d0818';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();ctx.rotate(t.angle);ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(4,0);ctx.lineTo(22,0);ctx.stroke();ctx.strokeStyle=col+'99';ctx.lineWidth=0.8;ctx.beginPath();ctx.moveTo(14,-2);ctx.lineTo(14,2);ctx.stroke();ctx.beginPath();ctx.moveTo(18,-2);ctx.lineTo(18,2);ctx.stroke();ctx.restore();ctx.beginPath();ctx.arc(cx,cy,3,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
   } else if(cfg.t===CT.CANNON){
-    ctx.beginPath();ctx.arc(cx,cy,13,0,Math.PI*2);ctx.fillStyle='#140a04';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.stroke();
-    ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle);ctx.strokeStyle=col;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(3,0);ctx.lineTo(15,0);ctx.stroke();ctx.strokeStyle=col+'aa';ctx.lineWidth=1;ctx.beginPath();ctx.arc(3,0,4,Math.PI/2,-Math.PI/2);ctx.stroke();ctx.restore();ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+    const goldenCannon=t.skins?t.skins['skin_golden_cannon']:mgEquipped['skin_golden_cannon'];
+    const ccol=fl?'#ff4444':(goldenCannon?'#ffd700':col);
+    const gcLvl=t.level||1, gcPath=t.path||null;
+    const gcIsA=gcPath==='A', gcIsB=gcPath==='B';
+    const gcPulse=(Math.sin(_frm*.10)+1)*.5;
+    if(!goldenCannon){
+      // ── DEFAULT CANNON DRAW ──
+      ctx.beginPath();ctx.arc(cx,cy,13,0,Math.PI*2);ctx.fillStyle='#140a04';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.stroke();
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle);ctx.strokeStyle=col;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(3,0);ctx.lineTo(15,0);ctx.stroke();ctx.strokeStyle=col+'aa';ctx.lineWidth=1;ctx.beginPath();ctx.arc(3,0,4,Math.PI/2,-Math.PI/2);ctx.stroke();ctx.restore();
+      ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+    } else {
+      // ══ GOLDEN CANNON SKIN — path-aware ══
+      // Shared: housing size grows with level
+      const hR=13+Math.min(gcLvl-1,4)*0.9; // 13..16.6 across lvls
+
+      // ── LEVEL 1: simple gilded ball cannon ──
+      if(gcLvl===1){
+        // outer glow halo
+        const glowR=hR+6;const glHalo=ctx.createRadialGradient(cx,cy,hR*.7,cx,cy,glowR);glHalo.addColorStop(0,'rgba(255,215,0,0.22)');glHalo.addColorStop(1,'rgba(255,215,0,0)');ctx.fillStyle=glHalo;ctx.beginPath();ctx.arc(cx,cy,glowR,0,Math.PI*2);ctx.fill();
+        // dark base
+        ctx.beginPath();ctx.arc(cx,cy,hR,0,Math.PI*2);ctx.fillStyle='#1a1000';ctx.fill();
+        // rich multi-stop gold gradient
+        const hGrad=ctx.createRadialGradient(cx-3,cy-3,1,cx,cy,hR);hGrad.addColorStop(0,'#fffae0');hGrad.addColorStop(.25,'#ffd700');hGrad.addColorStop(.6,'#c8860a');hGrad.addColorStop(1,'#5c3800');
+        ctx.fillStyle=hGrad;ctx.globalAlpha=.75;ctx.beginPath();ctx.arc(cx,cy,hR,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+        // glowing rim
+        const rimGl=ctx.createRadialGradient(cx,cy,hR-1.5,cx,cy,hR+1);rimGl.addColorStop(0,'rgba(255,230,100,0.9)');rimGl.addColorStop(1,'rgba(255,180,0,0)');ctx.strokeStyle=rimGl;ctx.lineWidth=2.2;ctx.beginPath();ctx.arc(cx,cy,hR,0,Math.PI*2);ctx.stroke();
+        // specular highlight
+        ctx.strokeStyle='#fffae0';ctx.lineWidth=1.2;ctx.globalAlpha=.55;ctx.beginPath();ctx.arc(cx-3,cy-3,hR*.55,Math.PI*1.0,Math.PI*1.7);ctx.stroke();ctx.globalAlpha=1;
+        // animated rotating engrave ring
+        ctx.save();ctx.translate(cx,cy);ctx.rotate(_frm*0.025);ctx.strokeStyle='#5c3800';ctx.lineWidth=.7;ctx.setLineDash([2,4]);ctx.beginPath();ctx.arc(0,0,hR*.7,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+        // single barrel
+        ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle);
+        const bGrad1=ctx.createLinearGradient(3,-2.5,3,2.5);bGrad1.addColorStop(0,'#fffae0');bGrad1.addColorStop(.35,'#ffd700');bGrad1.addColorStop(1,'#7a5000');
+        ctx.strokeStyle=bGrad1;ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(3,0);ctx.lineTo(16,0);ctx.stroke();
+        // barrel band
+        ctx.strokeStyle='#5c3800';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(10,-3.5);ctx.lineTo(10,3.5);ctx.stroke();
+        // muzzle cap with glow
+        const mGl=ctx.createRadialGradient(16,0,0,16,0,5);mGl.addColorStop(0,'rgba(255,250,200,0.9)');mGl.addColorStop(1,'rgba(255,215,0,0)');ctx.fillStyle=mGl;ctx.beginPath();ctx.arc(16,0,5,0,Math.PI*2);ctx.fill();
+        ctx.beginPath();ctx.arc(16,0,2.5,0,Math.PI*2);ctx.fillStyle='#fffae0';ctx.fill();ctx.strokeStyle='#7a5000';ctx.lineWidth=.7;ctx.stroke();
+        ctx.restore();
+        // hub — layered gold disk
+        const hubG=ctx.createRadialGradient(cx-1,cy-1,0,cx,cy,4.5);hubG.addColorStop(0,'#fffae0');hubG.addColorStop(.5,'#ffd700');hubG.addColorStop(1,'#7a5000');
+        ctx.beginPath();ctx.arc(cx,cy,4.5,0,Math.PI*2);ctx.fillStyle=hubG;ctx.fill();ctx.strokeStyle='#5c3800';ctx.lineWidth=.8;ctx.stroke();
+        ctx.beginPath();ctx.arc(cx,cy,1.8,0,Math.PI*2);ctx.fillStyle='#fffae0';ctx.fill();
+        if(_frm%6===0) sparks(cx+(Math.random()-.5)*18,cy+(Math.random()-.5)*18,'#ffd700',1,.55);
+
+      // ── PATH A (RAPID FIRE) — triple staggered barrels, swept kite housing, turbine hub ──
+      } else if(gcIsA){
+        const aR=hR+1;
+        const lvlX=Math.min(gcLvl-2,3); // 0..3 extra bonus
+        const barrelCount=gcLvl>=4?3:2;  // 2 barrels until lvl4, then 3
+        const barrelLen=18+lvlX*2.2;     // grows with level
+
+        // ── 1. SPEED-STREAK AURA (drawn before housing, world-space) ──
+        // Radial speed lines shooting backward from the cannon
+        ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle);
+        const streakCount=6+lvlX*2;
+        for(let si=0;si<streakCount;si++){
+          const sa=(si/streakCount)*Math.PI*2;
+          // Only draw streaks in the rear half (behind the barrel)
+          if(Math.cos(sa)>0.1) continue;
+          const sd=8+Math.random()*10;const slen=6+lvlX*3+gcPulse*4;
+          const alpha=(.18+gcPulse*.12)*(1-si%2*.3);
+          ctx.strokeStyle='rgba(255,220,60,'+alpha+')';ctx.lineWidth=.7+Math.random()*.5;
+          ctx.beginPath();ctx.moveTo(Math.cos(sa)*sd,Math.sin(sa)*sd);ctx.lineTo(Math.cos(sa)*(sd+slen),Math.sin(sa)*(sd+slen));ctx.stroke();
+        }
+        ctx.restore();
+
+        // ── 2. OUTER GLOW HALO ──
+        const aHalo=ctx.createRadialGradient(cx,cy,aR*.6,cx,cy,aR*2.4);
+        aHalo.addColorStop(0,'rgba(255,230,80,'+(.18+gcPulse*.15)+')');
+        aHalo.addColorStop(.5,'rgba(255,200,20,0.06)');
+        aHalo.addColorStop(1,'rgba(255,180,0,0)');
+        ctx.fillStyle=aHalo;ctx.beginPath();ctx.arc(cx,cy,aR*2.4,0,Math.PI*2);ctx.fill();
+
+        ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle);
+
+        // ── 3. SWEPT KITE / DIAMOND HOUSING ──
+        // A forward-pointing diamond shape that looks aerodynamic
+        const hw=aR-1, hf=aR+3, hb=aR-3; // half-width, forward reach, back reach
+        ctx.beginPath();
+        ctx.moveTo(hf,0);            // front tip (toward barrel)
+        ctx.lineTo(0, hw);           // right flare
+        ctx.lineTo(-hb,0);           // rear tip
+        ctx.lineTo(0,-hw);           // left flare
+        ctx.closePath();
+        ctx.fillStyle='#1a1000';ctx.fill();
+        const hGradA=ctx.createRadialGradient(-2,-2,1,0,0,hf);
+        hGradA.addColorStop(0,'#fffae0');hGradA.addColorStop(.28,'#ffd700');hGradA.addColorStop(.60,'#c8860a');hGradA.addColorStop(1,'#4a2e00');
+        ctx.fillStyle=hGradA;ctx.globalAlpha=.78;
+        ctx.beginPath();ctx.moveTo(hf,0);ctx.lineTo(0,hw);ctx.lineTo(-hb,0);ctx.lineTo(0,-hw);ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+        // glowing rim
+        ctx.strokeStyle='#ffe566';ctx.lineWidth=1.8;
+        ctx.beginPath();ctx.moveTo(hf,0);ctx.lineTo(0,hw);ctx.lineTo(-hb,0);ctx.lineTo(0,-hw);ctx.closePath();ctx.stroke();
+        // specular slash on top-left face
+        ctx.save();ctx.globalAlpha=.45;ctx.strokeStyle='#fffae0';ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(-hb*.5,-hw*.15);ctx.lineTo(hf*.5,-hw*.5);ctx.stroke();ctx.restore();
+
+        // ── 4. HEAT VENTS on housing sides (glowing amber slits) ──
+        const ventCount=1+Math.min(gcLvl-2,2);
+        for(let vi=0;vi<ventCount;vi++){
+          const vx=-hb*.3+vi*(hf+hb*.3)/(ventCount+1);
+          // upper vent
+          ctx.strokeStyle='rgba(255,160,20,0.8)';ctx.lineWidth=1.2;
+          ctx.beginPath();ctx.moveTo(vx,hw*.4);ctx.lineTo(vx,hw*.75);ctx.stroke();
+          const vgU=ctx.createLinearGradient(vx,hw*.4,vx,hw*.75);vgU.addColorStop(0,'rgba(255,220,60,0.0)');vgU.addColorStop(.5,'rgba(255,200,40,0.55)');vgU.addColorStop(1,'rgba(255,160,0,0.0)');
+          ctx.strokeStyle=vgU;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(vx,hw*.4);ctx.lineTo(vx,hw*.75);ctx.stroke();
+          // lower vent (mirror)
+          ctx.strokeStyle='rgba(255,160,20,0.8)';ctx.lineWidth=1.2;
+          ctx.beginPath();ctx.moveTo(vx,-hw*.4);ctx.lineTo(vx,-hw*.75);ctx.stroke();
+          const vgL=ctx.createLinearGradient(vx,-hw*.4,vx,-hw*.75);vgL.addColorStop(0,'rgba(255,220,60,0.0)');vgL.addColorStop(.5,'rgba(255,200,40,0.55)');vgL.addColorStop(1,'rgba(255,160,0,0.0)');
+          ctx.strokeStyle=vgL;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(vx,-hw*.4);ctx.lineTo(vx,-hw*.75);ctx.stroke();
+        }
+
+        // ── 5. STAGGERED BARRELS ──
+        // Barrel offsets: 2 barrels spread ±3.8, 3rd center barrel (lvl4+) slightly shorter
+        const barrelOffsets=barrelCount===3?[4.2,-4.2,0]:[4.2,-4.2];
+        const barrelLens=barrelCount===3?[barrelLen,barrelLen,barrelLen-2]:[barrelLen,barrelLen];
+        for(let bi=0;bi<barrelCount;bi++){
+          const bOff=barrelOffsets[bi];const bLen=barrelLens[bi];
+          // barrel gradient (per-barrel, vertical across its width)
+          const bgr=ctx.createLinearGradient(hf,bOff-2,hf,bOff+2);
+          bgr.addColorStop(0,'#fffae0');bgr.addColorStop(.35,'#ffd700');bgr.addColorStop(.7,'#c8860a');bgr.addColorStop(1,'#4a2e00');
+          ctx.strokeStyle=bgr;ctx.lineWidth=bi===2?2.5:3;ctx.lineCap='butt';
+          ctx.beginPath();ctx.moveTo(hf,bOff);ctx.lineTo(bLen,bOff);ctx.stroke();
+          // shine line on top of each barrel
+          ctx.strokeStyle='rgba(255,250,200,0.45)';ctx.lineWidth=.8;ctx.lineCap='round';
+          ctx.beginPath();ctx.moveTo(hf+1,bOff-1.1);ctx.lineTo(bLen-2,bOff-1.1);ctx.stroke();
+          // muzzle brake notches (scale with level)
+          const notchCount=1+Math.min(gcLvl-2,3);
+          for(let ni=0;ni<notchCount;ni++){
+            const nx=hf+2+ni*((bLen-hf-4)/Math.max(notchCount,1));
+            ctx.strokeStyle='rgba(80,48,0,0.8)';ctx.lineWidth=.9;
+            ctx.beginPath();ctx.moveTo(nx,bOff+(bi===2?1.8:2.2));ctx.lineTo(nx,bOff+(bi===2?3.2:4.5));ctx.stroke();
+            ctx.beginPath();ctx.moveTo(nx,bOff-(bi===2?1.8:2.2));ctx.lineTo(nx,bOff-(bi===2?3.2:4.5));ctx.stroke();
+          }
+          // muzzle cap ring
+          ctx.beginPath();ctx.arc(bLen,bOff,bi===2?1.8:2.2,0,Math.PI*2);ctx.fillStyle='#1a1000';ctx.fill();
+          const mcg=ctx.createRadialGradient(bLen-.5,bOff-.5,0,bLen,bOff,bi===2?1.8:2.2);
+          mcg.addColorStop(0,'#fffae0');mcg.addColorStop(1,'#c8860a');
+          ctx.fillStyle=mcg;ctx.globalAlpha=.9;ctx.beginPath();ctx.arc(bLen,bOff,bi===2?1.8:2.2,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+          ctx.strokeStyle='#ffe566';ctx.lineWidth=.7;ctx.beginPath();ctx.arc(bLen,bOff,bi===2?1.8:2.2,0,Math.PI*2);ctx.stroke();
+          // muzzle bloom glow
+          const mglow=ctx.createRadialGradient(bLen,bOff,0,bLen,bOff,6+lvlX);
+          mglow.addColorStop(0,'rgba(255,250,160,'+(.6+gcPulse*.25)+')');mglow.addColorStop(1,'rgba(255,200,0,0)');
+          ctx.fillStyle=mglow;ctx.beginPath();ctx.arc(bLen,bOff,6+lvlX,0,Math.PI*2);ctx.fill();
+        }
+
+        // ── 6. TURBINE HUB (spinning blades) ──
+        const hubR=5.5;
+        // dark backing
+        ctx.beginPath();ctx.arc(0,0,hubR+1,0,Math.PI*2);ctx.fillStyle='#1a1000';ctx.fill();
+        // spinning blade ring
+        ctx.save();ctx.rotate(_frm*0.22);
+        const bladeCount=6;
+        for(let bli=0;bli<bladeCount;bli++){
+          const ba=bli/bladeCount*Math.PI*2;
+          const bgd=ctx.createLinearGradient(Math.cos(ba)*2,Math.sin(ba)*2,Math.cos(ba)*hubR,Math.sin(ba)*hubR);
+          bgd.addColorStop(0,'#ffd700');bgd.addColorStop(1,'rgba(255,150,0,0.1)');
+          ctx.fillStyle=bgd;ctx.beginPath();
+          ctx.moveTo(Math.cos(ba)*2,Math.sin(ba)*2);
+          ctx.lineTo(Math.cos(ba+.55)*hubR,Math.sin(ba+.55)*hubR);
+          ctx.lineTo(Math.cos(ba+.85)*hubR*.6,Math.sin(ba+.85)*hubR*.6);
+          ctx.closePath();ctx.fill();
+        }
+        ctx.restore();
+        // hub outer ring
+        const hubRG=ctx.createRadialGradient(-.8,-.8,0,0,0,hubR);
+        hubRG.addColorStop(0,'#fffae0');hubRG.addColorStop(.5,'#ffd700');hubRG.addColorStop(1,'#7a4500');
+        ctx.beginPath();ctx.arc(0,0,hubR,0,Math.PI*2);
+        ctx.strokeStyle='#ffe566';ctx.lineWidth=1.4;ctx.stroke();
+        // hub center gem
+        ctx.beginPath();ctx.arc(0,0,2.5,0,Math.PI*2);ctx.fillStyle='#fffae0';ctx.fill();
+        ctx.beginPath();ctx.arc(0,0,1.2,0,Math.PI*2);ctx.fillStyle='#ffffff';ctx.fill();
+
+        ctx.restore(); // end translate+rotate
+
+        // ── 7. LEVEL GLOW + SPARKS ──
+        const aGl=ctx.createRadialGradient(cx,cy,0,cx,cy,aR*2.2);
+        aGl.addColorStop(0,'rgba(255,230,80,'+(.08+gcPulse*.16)+')');
+        aGl.addColorStop(.5,'rgba(255,200,30,0.04)');
+        aGl.addColorStop(1,'transparent');
+        ctx.fillStyle=aGl;ctx.beginPath();ctx.arc(cx,cy,aR*2.2,0,Math.PI*2);ctx.fill();
+
+        // Muzzle sparks at each barrel tip
+        const muzzA=t.angle;
+        for(let bi=0;bi<barrelCount;bi++){
+          const bOff=barrelOffsets[bi];const bLen=barrelLens[bi];
+          const mx=cx+Math.cos(muzzA)*bLen+Math.cos(muzzA+Math.PI/2)*bOff;
+          const my=cy+Math.sin(muzzA)*bLen+Math.sin(muzzA+Math.PI/2)*bOff;
+          if(_frm%(bi===2?4:3)===0) sparks(mx,my,'#ffe566',1,.65);
+        }
+        if(gcLvl>=3&&_frm%5===0) sparks(cx+(Math.random()-.5)*26,cy+(Math.random()-.5)*26,'#ffd700',1,.4);
+        if(gcLvl>=4&&_frm%4===0) sparks(cx+(Math.random()-.5)*28,cy+(Math.random()-.5)*28,'#ffcc00',1,.45);
+        if(gcLvl>=5&&_frm%3===0) sparks(cx+(Math.random()-.5)*30,cy+(Math.random()-.5)*30,'#ffe088',1,.55);
+
+      // ── PATH B (DEVASTATOR) — massive single barrel, wide armored housing ──
+      } else if(gcIsB){
+        // heavy armored hexagonal housing
+        const bR=hR+2;
+        // outer heavy glow halo
+        const bHalo=ctx.createRadialGradient(cx,cy,bR*.8,cx,cy,bR*2.2);bHalo.addColorStop(0,'rgba(255,180,0,'+(.18+gcPulse*.16*(gcLvl/5))+')');bHalo.addColorStop(1,'rgba(255,120,0,0)');ctx.fillStyle=bHalo;ctx.beginPath();ctx.arc(cx,cy,bR*2.2,0,Math.PI*2);ctx.fill();
+        const hGradB=ctx.createRadialGradient(cx-3,cy-3,1,cx,cy,bR);hGradB.addColorStop(0,'#fffae0');hGradB.addColorStop(.3,'#ffd700');hGradB.addColorStop(.65,'#c8860a');hGradB.addColorStop(1,'#5c3800');
+        ctx.save();ctx.translate(cx,cy);
+        // hex housing — dark base
+        ctx.beginPath();for(let hi=0;hi<6;hi++){const ha=hi/6*Math.PI*2-Math.PI/6;ctx[hi===0?'moveTo':'lineTo'](Math.cos(ha)*bR,Math.sin(ha)*bR);}ctx.closePath();
+        ctx.fillStyle='#1a1000';ctx.fill();
+        ctx.fillStyle=hGradB;ctx.globalAlpha=.70;ctx.beginPath();for(let hi=0;hi<6;hi++){const ha=hi/6*Math.PI*2-Math.PI/6;ctx[hi===0?'moveTo':'lineTo'](Math.cos(ha)*bR,Math.sin(ha)*bR);}ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+        // glowing hex rim
+        ctx.strokeStyle='#ffe066';ctx.lineWidth=2.4;ctx.beginPath();for(let hi=0;hi<6;hi++){const ha=hi/6*Math.PI*2-Math.PI/6;ctx[hi===0?'moveTo':'lineTo'](Math.cos(ha)*bR,Math.sin(ha)*bR);}ctx.closePath();ctx.stroke();
+        // face engrave lines (center to mid-edge on each face)
+        ctx.strokeStyle='#5c3800';ctx.lineWidth=.7;ctx.globalAlpha=.55;
+        for(let hi=0;hi<6;hi++){const ha=(hi+.5)/6*Math.PI*2-Math.PI/6;const mx=(Math.cos(ha/1+0)*bR*.5+Math.cos((ha+Math.PI/3)*.9)*bR*.5);const my=(Math.sin(ha/1+0)*bR*.5+Math.sin((ha+Math.PI/3)*.9)*bR*.5);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(ha)*bR*.55,Math.sin(ha)*bR*.55);ctx.stroke();}
+        ctx.globalAlpha=1;
+        // armor rivets at hex corners — richer gold
+        for(let hi=0;hi<6;hi++){const ha=hi/6*Math.PI*2-Math.PI/6;const vx=Math.cos(ha)*bR,vy=Math.sin(ha)*bR;const rg=ctx.createRadialGradient(vx-.5,vy-.5,0,vx,vy,2.2);rg.addColorStop(0,'#fffae0');rg.addColorStop(1,'#c8860a');ctx.beginPath();ctx.arc(vx,vy,2.2,0,Math.PI*2);ctx.fillStyle=rg;ctx.fill();ctx.strokeStyle='#5c3800';ctx.lineWidth=.6;ctx.stroke();}
+        // specular shine
+        ctx.strokeStyle='#fffae0';ctx.lineWidth=1.2;ctx.globalAlpha=.40;ctx.beginPath();ctx.arc(-3,-3,bR*.48,Math.PI*.85,Math.PI*1.50);ctx.stroke();ctx.globalAlpha=1;
+        // inner rotating detail ring (faster at higher levels)
+        ctx.save();ctx.rotate(_frm*0.022*(1+Math.min(gcLvl-2,3)*.3));ctx.strokeStyle='#ffd700';ctx.lineWidth=1.0;ctx.setLineDash([3,4]);ctx.beginPath();ctx.arc(0,0,bR*.55,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+        // rotate for barrel
+        ctx.rotate(t.angle);
+        // massive single barrel — width & length scales with level
+        const barrelW=5.5+Math.min(gcLvl-2,3)*.9, barrelLen=15+Math.min(gcLvl-2,3)*2.2;
+        const bGradB=ctx.createLinearGradient(4,-barrelW*.5,4,barrelW*.5);bGradB.addColorStop(0,'#fffae0');bGradB.addColorStop(.3,'#ffd700');bGradB.addColorStop(.7,'#c8860a');bGradB.addColorStop(1,'#5c3800');
+        ctx.strokeStyle=bGradB;ctx.lineWidth=barrelW;ctx.lineCap='square';ctx.beginPath();ctx.moveTo(4,0);ctx.lineTo(barrelLen,0);ctx.stroke();
+        // top shine line on barrel
+        ctx.strokeStyle='rgba(255,250,200,0.5)';ctx.lineWidth=1.2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(5,-barrelW*.5+1.5);ctx.lineTo(barrelLen-2,-barrelW*.5+1.5);ctx.stroke();
+        // barrel reinforcement bands
+        const bandCount=1+Math.min(gcLvl-2,3);
+        for(let bi=0;bi<bandCount;bi++){const bx=7+bi*((barrelLen-7)/Math.max(bandCount,1));const bng=ctx.createLinearGradient(bx,-barrelW*.5-1.5,bx,barrelW*.5+1.5);bng.addColorStop(0,'#fffae0');bng.addColorStop(.5,'#ffd700');bng.addColorStop(1,'#5c3800');ctx.strokeStyle=bng;ctx.lineWidth=2;ctx.lineCap='butt';ctx.beginPath();ctx.moveTo(bx,-barrelW*.5-1.5);ctx.lineTo(bx,barrelW*.5+1.5);ctx.stroke();}
+        // muzzle crown — gilded cap with glow
+        ctx.fillStyle='#1a1000';ctx.fillRect(barrelLen,-barrelW*.5-2.5,5,barrelW+5);
+        const mzGrad=ctx.createLinearGradient(barrelLen,-barrelW*.5,barrelLen+5,barrelW*.5);mzGrad.addColorStop(0,'#fffae0');mzGrad.addColorStop(.5,'#ffd700');mzGrad.addColorStop(1,'#5c3800');
+        ctx.fillStyle=mzGrad;ctx.globalAlpha=.90;ctx.fillRect(barrelLen,-barrelW*.5-2.5,5,barrelW+5);ctx.globalAlpha=1;
+        ctx.strokeStyle='#ffe066';ctx.lineWidth=1.2;ctx.strokeRect(barrelLen,-barrelW*.5-2.5,5,barrelW+5);
+        // muzzle tip glow
+        const mzGl=ctx.createRadialGradient(barrelLen+2,0,0,barrelLen+2,0,barrelW*.8);mzGl.addColorStop(0,'rgba(255,250,180,0.6)');mzGl.addColorStop(1,'rgba(255,200,0,0)');ctx.fillStyle=mzGl;ctx.beginPath();ctx.arc(barrelLen+2,0,barrelW*.8,0,Math.PI*2);ctx.fill();
+        // center hub — large layered gilded disk
+        ctx.restore();
+        const hubGB=ctx.createRadialGradient(cx-1.5,cy-1.5,0,cx,cy,7);hubGB.addColorStop(0,'#fffae0');hubGB.addColorStop(.4,'#ffd700');hubGB.addColorStop(.8,'#c8860a');hubGB.addColorStop(1,'#5c3800');
+        ctx.beginPath();ctx.arc(cx,cy,7,0,Math.PI*2);ctx.fillStyle=hubGB;ctx.fill();ctx.strokeStyle='#ffe066';ctx.lineWidth=1.4;ctx.stroke();
+        ctx.beginPath();ctx.arc(cx,cy,3.5,0,Math.PI*2);ctx.fillStyle='#fffae0';ctx.fill();ctx.strokeStyle='#5c3800';ctx.lineWidth=.7;ctx.stroke();
+        ctx.beginPath();ctx.arc(cx,cy,1.5,0,Math.PI*2);ctx.fillStyle='#ffffff';ctx.fill();
+        // heavy AOE glow halo — grows with level
+        const haloR=bR*(1.5+Math.min(gcLvl-2,3)*.2);
+        const haloGl=ctx.createRadialGradient(cx,cy,bR*.9,cx,cy,haloR);haloGl.addColorStop(0,'rgba(255,215,0,'+(.14+gcPulse*.16*(gcLvl/5))+')');haloGl.addColorStop(.6,'rgba(255,150,0,0.06)');haloGl.addColorStop(1,'transparent');
+        ctx.fillStyle=haloGl;ctx.beginPath();ctx.arc(cx,cy,haloR,0,Math.PI*2);ctx.fill();
+        // muzzle flash effect
+        const baMuzzX=cx+Math.cos(t.angle)*(barrelLen+2);const baMuzzY=cy+Math.sin(t.angle)*(barrelLen+2);
+        if(_frm%5===0) sparks(baMuzzX,baMuzzY,'#fffae0',2,.75);
+        if(_frm%4===0) sparks(baMuzzX,baMuzzY,'#ffd700',2,.65);
+        if(gcLvl>=3&&_frm%3===0) sparks(cx+(Math.random()-.5)*28,cy+(Math.random()-.5)*28,'#ffd700',1,.55);
+        if(gcLvl>=5&&_frm%3===0){const gr=ctx.createRadialGradient(cx,cy,0,cx,cy,haloR*1.2);gr.addColorStop(0,'rgba(255,220,50,'+gcPulse*.12+')');gr.addColorStop(1,'transparent');ctx.fillStyle=gr;ctx.globalAlpha=gcPulse*.75;ctx.beginPath();ctx.arc(cx,cy,haloR*1.2,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;sparks(cx+(Math.random()-.5)*30,cy+(Math.random()-.5)*30,'#ffe088',1,.6);}
+      }
+    }
   } else if(cfg.t===CT.ELECTRIC){
     if(t.skins?t.skins['skin_classic_tesla']:mgEquipped['skin_classic_tesla']){
       // ── CLASSIC TESLA SKIN (copied from the original v4 look) ──
@@ -10538,7 +10924,7 @@ window.addEventListener('beforeunload', () => {
   </div>
   <div id="chat-msgs"></div>
   <div id="chat-input-row">
-    <input id="chat-input" placeholder="Type message..." maxlength="100" onkeydown="if(event.key==='Enter')sendChat()">
+    <input id="chat-input" placeholder="Type message..." maxlength="100" onkeydown="if(event.key==='Enter'&&!event.repeat)sendChat()">
     <button id="chat-send" onclick="sendChat()">▶</button>
   </div>
 </div>
@@ -10635,7 +11021,9 @@ async function checkChatPermission(){
   }catch(e){_chatAllowed=false;}
 }
 
+let _sendingGlobalChat=false;
 async function sendChat(){
+  if(_sendingGlobalChat) return; // guard against double-send (fast double-click, key repeat, slow network)
   const input=document.getElementById('chat-input');
   const msg=input.value.trim();
   if(!msg) return;
@@ -10654,10 +11042,18 @@ async function sendChat(){
   }
   // Global chat: everyone can send
   const name=playerName||(currentUser?currentUser.email:'Anonymous');
+  _sendingGlobalChat=true;
+  input.value=''; // clear immediately so repeated Enter/click can't resubmit the same text
+  const sendBtn=document.getElementById('chat-send');
+  if(sendBtn) sendBtn.disabled=true;
   try{
     await sb.from('game_chat').insert({player_name:name,message:msg,channel:chatChannel});
-    input.value='';fetchChat();
+    await fetchChat();
   }catch(e){console.warn('Chat send:',e);}
+  finally{
+    _sendingGlobalChat=false;
+    if(sendBtn) sendBtn.disabled=false;
+  }
 }
 
 let _bgLastId=0,_bgPollInterval=null;
