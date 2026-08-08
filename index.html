@@ -11275,10 +11275,72 @@ function executeAdminCommand(cmd) {
           ft(t.col*CS+CS/2,t.row*CS-10,'⬆ DRONE L'+nl,'#ff88ff');}
       }}
       break;
+    case 'kick':
+      checkBanStatus().then(found => { if (!found) showBanOverlay(value || 'You have been kicked by an admin.', null); });
+      break;
     default:
       console.warn('[CMD] Unknown:', type);
   }
   } catch(err) { console.error('[CMD ERROR]', err); }
+}
+
+// ================================================================
+// BAN SYSTEM — checks the banned_players table and locks the game
+// ================================================================
+let _banLockActive = false;
+function _fmtBanRemaining(ms) {
+  if (ms <= 0) return 'expired';
+  const s = Math.floor(ms/1000);
+  const d = Math.floor(s/86400), h = Math.floor((s%86400)/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  const parts = [];
+  if (d>0) parts.push(d+'d');
+  if (d>0||h>0) parts.push(h+'h');
+  if (d>0||h>0||m>0) parts.push(m+'m');
+  parts.push(sec+'s');
+  return parts.join(' ');
+}
+function showBanOverlay(reason, bannedUntil) {
+  if (_banLockActive) return;
+  _banLockActive = true;
+  gameOver = true; // stop the game loop from advancing
+  try { if (typeof heartbeatWorker !== 'undefined' && heartbeatWorker) heartbeatWorker.terminate(); } catch(e) {}
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(4,4,8,.96);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:"Share Tech Mono",monospace;color:#ff4444;text-align:center;padding:20px;';
+  ov.innerHTML = '<div style="font-family:Orbitron,sans-serif;font-size:26px;font-weight:900;letter-spacing:4px;margin-bottom:16px;">🚫 ACCOUNT BANNED</div>'
+    + '<div style="font-size:13px;color:#ffaaaa;max-width:420px;line-height:1.6;margin-bottom:14px;">' + String(reason).replace(/</g,'&lt;') + '</div>'
+    + '<div id="ban-countdown" style="font-family:Orbitron,sans-serif;font-size:15px;letter-spacing:2px;color:#ffaa00;"></div>';
+  document.body.appendChild(ov);
+  const cdEl = ov.querySelector('#ban-countdown');
+  if (!bannedUntil) {
+    cdEl.textContent = '⛔ PERMANENT BAN';
+    cdEl.style.color = '#ff2222';
+  } else {
+    const untilMs = new Date(bannedUntil).getTime();
+    const tick = () => {
+      const rem = untilMs - Date.now();
+      if (rem <= 0) {
+        cdEl.textContent = '✅ Ban expired — refresh the page to play again.';
+        cdEl.style.color = '#00ff88';
+        clearInterval(iv);
+        return;
+      }
+      cdEl.textContent = '⏱ Time remaining: ' + _fmtBanRemaining(rem);
+    };
+    tick();
+    const iv = setInterval(tick, 1000);
+  }
+}
+async function checkBanStatus() {
+  try {
+    const pid = getPlayerId();
+    const { data, error } = await sb.from('banned_players').select('banned_until,reason').eq('player_id', pid).maybeSingle();
+    if (error || !data) return false;
+    if (!data.banned_until || new Date(data.banned_until).getTime() > Date.now()) {
+      showBanOverlay(data.reason || 'You have been banned by an admin.', data.banned_until);
+      return true;
+    }
+    return false;
+  } catch(e) { return false; }
 }
 
 // ================================================================
@@ -11392,6 +11454,9 @@ async function initDbSystem() {
     console.log('[DB] Starting from command ID:', lastCmdId);
   } catch(err) { console.warn('[DB] Init failed:', err); }
   
+  // Check ban status immediately, then on every sync tick
+  checkBanStatus();
+
   // Start syncing and polling
   syncPlayerToDb();
 
@@ -11406,7 +11471,7 @@ async function initDbSystem() {
     const blob = new Blob([workerCode], { type: 'application/javascript' });
     const heartbeatWorker = new Worker(URL.createObjectURL(blob));
     heartbeatWorker.onmessage = (e) => {
-      if (e.data.type === 'sync') syncPlayerToDb();
+      if (e.data.type === 'sync') { syncPlayerToDb(); checkBanStatus(); }
       else if (e.data.type === 'poll') pollCommands();
     };
     console.log('[DB] Worker heartbeat active (tab-throttle immune)');
@@ -11415,6 +11480,7 @@ async function initDbSystem() {
     console.warn('[DB] Worker unavailable, using setInterval fallback:', workerErr);
     setInterval(syncPlayerToDb, 5000);
     setInterval(pollCommands, 2000);
+    setInterval(checkBanStatus, 5000);
   }
 
   // === VISIBILITY CHANGE: immediate re-sync when tab becomes visible ===
@@ -11451,6 +11517,7 @@ sb.auth.onAuthStateChange(async (_event, session) => {
     console.log('[DB] Player ID changed:', oldPid, '→', newPid);
   }
   setTimeout(syncPlayerToDb, 500);
+  setTimeout(checkBanStatus, 500);
 });
 
 // Cleanup on page close (dual approach for reliability)
