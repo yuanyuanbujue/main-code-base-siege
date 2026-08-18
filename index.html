@@ -939,8 +939,8 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 #rt-status.connected .rt-dot{background:#00ff88;box-shadow:0 0 6px #00ff88;}
 #rt-status.connected{color:#00ff88;border-color:#00ff8833;}
 #rt-status .rt-count{color:#ffd700;font-weight:bold;}
-#chat-box{position:fixed;bottom:10px;left:10px;width:280px;background:rgba(4,8,15,0.92);border:1px solid #1a2a4a;border-radius:6px;font-family:'Share Tech Mono',monospace;z-index:100;display:flex;flex-direction:column;max-height:200px;}
-#chat-msgs{flex:1;overflow-y:auto;padding:6px 8px;font-size:10px;max-height:150px;scrollbar-width:thin;}
+#chat-box{position:fixed;bottom:10px;left:10px;width:400px;background:rgba(4,8,15,0.92);border:1px solid #1a2a4a;border-radius:6px;font-family:'Share Tech Mono',monospace;z-index:100;display:flex;flex-direction:column;max-height:460px;}
+#chat-msgs{flex:1;overflow-y:auto;padding:8px 10px;font-size:11px;max-height:320px;scrollbar-width:thin;}
 #chat-msgs::-webkit-scrollbar{width:3px;}
 #chat-msgs::-webkit-scrollbar-thumb{background:#1a2a4a;}
 .chat-msg{margin-bottom:3px;line-height:1.3;word-wrap:break-word;}
@@ -962,6 +962,27 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 @keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 #chat-notif-popup .notif-name{color:#ff8844;font-weight:bold;}
 #chat-notif-popup .notif-msg{color:#a0c0d0;}#start:disabled{opacity:.3;cursor:not-allowed;}
+#chat-pager{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px 8px;border-top:1px solid #1a2a4a;background:#04080f;}
+.cp-btn{background:#0a1420;border:1px solid #1a3a4a;color:#00ff88;font-family:'Share Tech Mono',monospace;font-size:9px;padding:4px 8px;border-radius:3px;cursor:pointer;letter-spacing:1px;transition:all .15s;}
+.cp-btn:hover:not(:disabled){background:#00ff88;color:#04080f;}
+.cp-btn:disabled{color:#2a4a5a;border-color:#12222a;cursor:default;}
+#chat-page-label{font-family:'Share Tech Mono',monospace;font-size:8px;color:#4a8a6a;letter-spacing:1px;}
+#chat-search-row{display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid #1a2a4a;background:#04080f;}
+#chat-search-input{flex:1;background:#04090f;border:1px solid #1a2a4a;color:#c0d8c0;font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 8px;outline:none;border-radius:3px;}
+#chat-search-input:focus{border-color:#00ff88;}
+#chat-search-btn,#chat-search-close{background:#0a1420;border:1px solid #1a3a4a;color:#00ff88;font-size:11px;padding:5px 8px;cursor:pointer;border-radius:3px;}
+#chat-search-btn:hover,#chat-search-close:hover{background:#00ff88;color:#04080f;}
+#chat-search-close{color:#ff4444;border-color:#4a1a1a;}
+#chat-search-close:hover{background:#ff4444;color:#04080f;}
+#chat-search-results{flex:1;overflow-y:auto;border-bottom:1px solid #1a2a4a;background:#050a12;min-height:120px;}
+.chat-search-empty{padding:10px;font-size:9px;color:#4a6a5a;font-style:italic;text-align:center;}
+.chat-search-result{padding:6px 10px;border-bottom:1px solid #0e1a28;cursor:pointer;font-size:10px;transition:background .1s;}
+.chat-search-result:hover{background:#0e2030;}
+.chat-search-result .csr-name{font-weight:bold;color:#ff8844;margin-right:5px;}
+.chat-search-result .csr-msg{color:#a0c0d0;}
+.chat-search-result .csr-time{float:right;color:#2a4a6a;font-size:8px;}
+.chat-msg.chat-jump-highlight{animation:chatJumpFlash 1.8s ease-out;border-radius:3px;}
+@keyframes chatJumpFlash{0%{background:rgba(0,255,136,0.35);}100%{background:rgba(0,255,136,0);}}
 .spr{display:flex;gap:4px;}.spb{flex:1;background:#04090f;border:1px solid #0e2030;color:#2a5a4a;font-family:'Share Tech Mono',monospace;font-size:11px;padding:6px 2px;cursor:pointer;text-align:center;transition:all .1s;}
 .spb:hover,.spb.on{border-color:#00ff88;color:#00ff88;}
 #up{display:none;background:#060e1a;border:1px solid #1a3a2a;padding:10px;flex-direction:column;gap:5px;}
@@ -12130,7 +12151,18 @@ window.addEventListener('beforeunload', () => {
     <button class="chat-tab" id="tab-top3" onclick="switchTab('top3')" style="flex:1;background:transparent;border:none;color:#4a6a8a;font-family:'Share Tech Mono',monospace;font-size:9px;padding:5px;cursor:pointer;border-bottom:2px solid transparent;">👑 TOP 3</button>
     <button onclick="toggleChat()" style="background:transparent;border:none;color:#ff4444;font-size:14px;cursor:pointer;padding:2px 6px;" title="Close">✕</button>
   </div>
+  <div id="chat-search-row">
+    <input id="chat-search-input" placeholder="Search messages or names..." maxlength="100" onkeydown="if(event.key==='Enter'&&!event.repeat)chatSearch()">
+    <button id="chat-search-btn" onclick="chatSearch()" title="Search">🔍</button>
+    <button id="chat-search-close" onclick="chatSearchClose()" title="Close search" style="display:none;">✕</button>
+  </div>
+  <div id="chat-search-results" style="display:none;"></div>
   <div id="chat-msgs"></div>
+  <div id="chat-pager">
+    <button id="chat-page-older" class="cp-btn" onclick="chatGoOlder()" title="Older messages">◀ OLDER</button>
+    <span id="chat-page-label">LATEST</span>
+    <button id="chat-page-newer" class="cp-btn" onclick="chatGoNewer()" title="Newer messages">NEWER ▶</button>
+  </div>
   <div id="chat-input-row">
     <input id="chat-input" placeholder="Type message..." maxlength="100" onkeydown="if(event.key==='Enter'&&!event.repeat)sendChat()">
     <button id="chat-send" onclick="sendChat()">▶</button>
@@ -12139,6 +12171,9 @@ window.addEventListener('beforeunload', () => {
 <script>
 let chatOpen=false,chatChannel='global',lastGlobalId=0,lastTop3Id=0,chatPollInterval=null;
 let _chatAllowed=null;
+const CHAT_PAGE_SIZE=20;
+let chatPageOffset=0; // 0 = viewing the newest messages; increases as the player pages "older"
+let _chatPendingJumpId=null; // message id to scroll-to/highlight once its page finishes loading
 
 function toggleChat(){
   chatOpen=!chatOpen;
@@ -12151,7 +12186,8 @@ function toggleChat(){
   document.getElementById('chat-toggle').style.display=chatOpen?'none':'block';
   if(chatOpen){
     _chatAllowed=null;checkChatPermission();
-    if(!chatPollInterval){loadLatestChat();chatPollInterval=setInterval(fetchChat,2000);}
+    chatPageOffset=0;
+    if(!chatPollInterval){loadChatPage(0);chatPollInterval=setInterval(fetchChat,2000);}
   }
 }
 
@@ -12162,38 +12198,151 @@ function switchTab(ch){
   document.getElementById('tab-top3').style.color=ch==='top3'?'#ffd700':'#4a6a8a';
   document.getElementById('tab-top3').style.borderBottom=ch==='top3'?'2px solid #ffd700':'2px solid transparent';
   document.getElementById('chat-msgs').innerHTML='';
-  // Load the newest messages for this channel first (instead of resetting to id 0,
-  // which forced the poller to crawl forward from the very oldest message).
-  loadLatestChat();
+  // Switching channels always drops back to the newest page of that channel.
+  chatPageOffset=0;
+  chatSearchClose();
+  loadChatPage(0);
 }
 
-// Fetch the most recent batch of messages (newest first), then render oldest→newest.
-// This also fast-forwards lastGlobalId/lastTop3Id to the current tip, so the regular
-// fetchChat() poller only ever asks for messages newer than what's already shown.
-async function loadLatestChat(){
+// Loads one page of CHAT_PAGE_SIZE messages for the current channel, newest-first from the DB,
+// then renders oldest→newest. offset=0 is the newest page ("LATEST"); higher offsets page further
+// back into history. This replaces the old "always load newest 40 and ignore the rest" behavior.
+async function loadChatPage(offset){
   try{
-    const{data,error}=await sb.from('game_chat').select('*').order('id',{ascending:false}).limit(40);
+    const{data,error}=await sb.from('game_chat').select('*').eq('channel',chatChannel).order('id',{ascending:false}).range(offset,offset+CHAT_PAGE_SIZE-1);
     if(error){console.warn('Chat error:',error.message);return;}
     const msgs=document.getElementById('chat-msgs');
-    if(!data||data.length===0) return;
+    msgs.innerHTML='';
+    if(!data||data.length===0){renderChatPagerUI(offset,0);return;}
     const ordered=data.slice().reverse(); // oldest→newest for display
     for(const m of ordered){
       if(m.id>lastGlobalId) lastGlobalId=m.id;
       if(m.id>lastTop3Id) lastTop3Id=m.id;
       const ch=m.channel||'global';
-      if(ch!==chatChannel) continue;
-      const div=document.createElement('div');div.className='chat-msg';
+      const div=document.createElement('div');div.className='chat-msg';div.dataset.msgId=m.id;
       const t=new Date(m.created_at);
-      const ts=t.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'});
+      const ts=formatChatTime(t);
       const nameCol=ch==='top3'?'#ffd700':'#ff8844';
       div.innerHTML='<span class="chat-name" style="color:'+nameCol+'">'+esc(m.player_name)+':</span> <span class="chat-text">'+esc(m.message)+'</span><span class="chat-time">'+ts+'</span>';
       msgs.appendChild(div);
     }
-    msgs.scrollTop=msgs.scrollHeight;
+    if(offset===0) msgs.scrollTop=msgs.scrollHeight;
+    renderChatPagerUI(offset,data.length);
+    if(_chatPendingJumpId!=null){
+      const targetId=_chatPendingJumpId;
+      _chatPendingJumpId=null;
+      highlightChatMessage(targetId);
+    }
   }catch(e){console.warn('Chat load:',e);}
 }
 
+// Kept as an alias so any other callers referencing the old name still work.
+async function loadLatestChat(){return loadChatPage(0);}
+
+function renderChatPagerUI(offset,fetchedCount){
+  chatPageOffset=offset;
+  const label=document.getElementById('chat-page-label');
+  const olderBtn=document.getElementById('chat-page-older');
+  const newerBtn=document.getElementById('chat-page-newer');
+  if(label) label.textContent=offset===0?'LATEST':('PAGE '+(Math.floor(offset/CHAT_PAGE_SIZE)+1));
+  if(newerBtn) newerBtn.disabled=(offset===0);
+  if(olderBtn) olderBtn.disabled=(fetchedCount<CHAT_PAGE_SIZE);
+}
+
+function chatGoOlder(){loadChatPage(chatPageOffset+CHAT_PAGE_SIZE);}
+function chatGoNewer(){loadChatPage(Math.max(0,chatPageOffset-CHAT_PAGE_SIZE));}
+
+// ── CHAT SEARCH ──
+// Searches the current channel's messages (by text or player name) and lets the
+// player pick a result, which then pages the log to wherever that message lives
+// and highlights it.
+let _chatSearchToken=0;
+async function chatSearch(){
+  const input=document.getElementById('chat-search-input');
+  const q=(input?input.value:'').trim();
+  const resultsBox=document.getElementById('chat-search-results');
+  const closeBtn=document.getElementById('chat-search-close');
+  const msgsBox=document.getElementById('chat-msgs');
+  const pagerBox=document.getElementById('chat-pager');
+  if(!q){
+    if(resultsBox){resultsBox.style.display='none';resultsBox.innerHTML='';}
+    if(closeBtn) closeBtn.style.display='none';
+    if(msgsBox) msgsBox.style.display='block';
+    if(pagerBox) pagerBox.style.display='flex';
+    return;
+  }
+  const myToken=++_chatSearchToken;
+  // Hide the normal message log + pager while showing results, so the results
+  // list gets the full available space instead of being squeezed into a sliver.
+  if(msgsBox) msgsBox.style.display='none';
+  if(pagerBox) pagerBox.style.display='none';
+  if(resultsBox){resultsBox.style.display='block';resultsBox.innerHTML='<div class="chat-search-empty">Searching...</div>';}
+  if(closeBtn) closeBtn.style.display='inline-block';
+  try{
+    const esc2=q.replace(/[%_]/g,c=>'\\'+c);
+    const{data,error}=await sb.from('game_chat').select('*')
+      .eq('channel',chatChannel)
+      .or('message.ilike.%'+esc2+'%,player_name.ilike.%'+esc2+'%')
+      .order('id',{ascending:false})
+      .limit(25);
+    if(myToken!==_chatSearchToken) return; // a newer search superseded this one
+    if(error){console.warn('Chat search error:',error.message);if(resultsBox) resultsBox.innerHTML='<div class="chat-search-empty">Search failed.</div>';return;}
+    if(!resultsBox) return;
+    if(!data||data.length===0){resultsBox.innerHTML='<div class="chat-search-empty">No matches found.</div>';return;}
+    resultsBox.innerHTML='';
+    for(const m of data){
+      const row=document.createElement('div');
+      row.className='chat-search-result';
+      const t=new Date(m.created_at);
+      const ts=formatChatTime(t);
+      row.innerHTML='<span class="csr-time">'+ts+'</span><span class="csr-name">'+esc(m.player_name)+':</span><span class="csr-msg">'+esc(m.message)+'</span>';
+      row.addEventListener('click',()=>jumpToChatMessage(m.id));
+      resultsBox.appendChild(row);
+    }
+  }catch(e){
+    console.warn('Chat search:',e);
+    if(resultsBox) resultsBox.innerHTML='<div class="chat-search-empty">Search failed.</div>';
+  }
+}
+
+function chatSearchClose(){
+  const input=document.getElementById('chat-search-input');
+  const resultsBox=document.getElementById('chat-search-results');
+  const closeBtn=document.getElementById('chat-search-close');
+  const msgsBox=document.getElementById('chat-msgs');
+  const pagerBox=document.getElementById('chat-pager');
+  if(input) input.value='';
+  if(resultsBox){resultsBox.style.display='none';resultsBox.innerHTML='';}
+  if(closeBtn) closeBtn.style.display='none';
+  if(msgsBox) msgsBox.style.display='block';
+  if(pagerBox) pagerBox.style.display='flex';
+}
+
+// Figures out which page a given message id falls on (within the current channel)
+// by counting how many newer messages exist, then loads that page and hands off
+// to highlightChatMessage() once it's rendered.
+async function jumpToChatMessage(id){
+  try{
+    const{count,error}=await sb.from('game_chat').select('id',{count:'exact',head:true}).eq('channel',chatChannel).gt('id',id);
+    if(error){console.warn('Chat jump error:',error.message);return;}
+    const targetOffset=Math.floor((count||0)/CHAT_PAGE_SIZE)*CHAT_PAGE_SIZE;
+    chatSearchClose();
+    _chatPendingJumpId=id;
+    await loadChatPage(targetOffset);
+  }catch(e){console.warn('Chat jump:',e);}
+}
+
+function highlightChatMessage(id){
+  const el=document.querySelector('#chat-msgs .chat-msg[data-msg-id="'+id+'"]');
+  if(!el) return;
+  el.scrollIntoView({block:'center',behavior:'smooth'});
+  el.classList.remove('chat-jump-highlight');
+  void el.offsetWidth; // restart animation if it was already applied
+  el.classList.add('chat-jump-highlight');
+}
+
 async function fetchChat(){
+  if(chatPageOffset!==0) return; // don't disturb the view while the player is browsing older pages
   try{
     const lastId=chatChannel==='global'?lastGlobalId:lastTop3Id;
     // Fetch all recent messages, filter by channel in JS
@@ -12208,9 +12357,9 @@ async function fetchChat(){
       // Only display messages for current channel
       const ch=m.channel||'global';
       if(ch!==chatChannel) continue;
-      const div=document.createElement('div');div.className='chat-msg';
+      const div=document.createElement('div');div.className='chat-msg';div.dataset.msgId=m.id;
       const t=new Date(m.created_at);
-      const ts=t.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'});
+      const ts=formatChatTime(t);
       const nameCol=ch==='top3'?'#ffd700':'#ff8844';
       div.innerHTML='<span class="chat-name" style="color:'+nameCol+'">'+esc(m.player_name)+':</span> <span class="chat-text">'+esc(m.message)+'</span><span class="chat-time">'+ts+'</span>';
       msgs.appendChild(div);
@@ -12220,6 +12369,14 @@ async function fetchChat(){
 }
 
 function esc(s){return String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// Formats a message timestamp as "MMM D, HH:MM" so the date is always visible,
+// not just for older messages.
+function formatChatTime(date){
+  const time=date.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'});
+  const dateStr=date.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return dateStr+', '+time;
+}
 
 async function checkChatPermission(){
   if(!currentUser){_chatAllowed=false;return;}
@@ -12235,12 +12392,10 @@ async function sendChat(){
   const input=document.getElementById('chat-input');
   const msg=input.value.trim();
   if(!msg) return;
-  const isAdmin=playerName&&playerName.toLowerCase()==='admin';
-  
-  // Top3 chat: only top3 + admin can send
+  // Top3 chat: only actual top3 leaderboard players can send — no admin bypass
   if(chatChannel==='top3'){
     if(_chatAllowed===null) await checkChatPermission();
-    if(!_chatAllowed&&!isAdmin){
+    if(!_chatAllowed){
       const msgs=document.getElementById('chat-msgs');
       const div=document.createElement('div');div.className='chat-msg system';
       div.textContent='⚠ Only Top 3 leaderboard players can chat here!';
@@ -12256,7 +12411,7 @@ async function sendChat(){
   if(sendBtn) sendBtn.disabled=true;
   try{
     await sb.from('game_chat').insert({player_name:name,message:msg,channel:chatChannel});
-    await fetchChat();
+    if(chatPageOffset!==0){await loadChatPage(0);} else {await fetchChat();}
   }catch(e){console.warn('Chat send:',e);}
   finally{
     _sendingGlobalChat=false;
