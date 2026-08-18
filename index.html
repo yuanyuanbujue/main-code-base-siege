@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>BASE SIEGE v29.7</title>
+<title>BASE SIEGE v30.0</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -254,10 +254,10 @@ const MP={
 
   // ── REMOTE EVENT HANDLERS ──
   onRemoteTowerPlace(d){
-    const cfg=TS[d.key]?TS[d.key][d.lvl||1]:null;
+    const cfg=d.key==='basic'&&d.evolvedBlaster?getCfg(d.key,d.lvl||1,d.path||null,d.evolvedBlaster):(TS[d.key]?TS[d.key][d.lvl||1]:null);
     if(!cfg) return;
     {const dsz=d.size||1;if(dsz>1){for(let ddr=0;ddr<dsz;ddr++)for(let ddc=0;ddc<dsz;ddc++)grid[d.row+ddr][d.col+ddc]=cfg.t;}else{grid[d.row][d.col]=cfg.t;}}bfs();
-    const t={row:d.row,col:d.col,key:d.key,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,level:d.lvl||1,path:null,size:d.size,id:++_towerIdCounter,owner:d.pid,ownerColor:PLAYER_COLORS[d.colorIdx]||'#888',ownerName:d.name||'?',totalDmgDealt:0,totalKills:0,totalGoldSpent:0,skins:d.skins||{}};
+    const t={row:d.row,col:d.col,key:d.key,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,level:d.lvl||1,path:null,size:d.size,id:++_towerIdCounter,owner:d.pid,ownerColor:PLAYER_COLORS[d.colorIdx]||'#888',ownerName:d.name||'?',totalDmgDealt:0,totalKills:0,totalGoldSpent:0,skins:d.skins||{},evolvedBlaster:d.evolvedBlaster};
     if(cfg.healAmt){t.healTick=0;}
     towers.push(t);
     // Spawn helicopter for remote heli pads
@@ -270,17 +270,17 @@ const MP={
   onRemoteTowerUpgrade(d){
     const t=towers.find(t=>t.row===d.row&&t.col===d.col);
     if(!t) return;
-    const newCfg=TS[t.key]?TS[t.key][d.newKey]:null;
+    let newCfg=t.key==='basic'&&t.evolvedBlaster?null:(TS[t.key]?TS[t.key][d.newKey]:null);
+    let parsedLvl,parsedPath;
+    if(typeof d.newKey==='string'&&/^[0-9]+[A-Z]$/.test(d.newKey)){
+      parsedLvl=parseInt(d.newKey,10);parsedPath=d.newKey[d.newKey.length-1];
+    } else {
+      parsedLvl=Number(d.newKey);parsedPath=null;
+    }
+    if(t.key==='basic'&&t.evolvedBlaster) newCfg=getCfg('basic',parsedLvl,parsedPath,t.evolvedBlaster);
     if(!newCfg) return;
     t.cfg=newCfg;t.hp=newCfg.hp;t.maxHp=newCfg.hp;
-    if(typeof d.newKey==='string'&&/^[0-9]+[A-Z]$/.test(d.newKey)){
-      const pathChar=d.newKey[d.newKey.length-1];
-      t.level=parseInt(d.newKey,10);
-      t.path=pathChar;
-    } else {
-      t.level=Number(d.newKey);
-      t.path=null;
-    }
+    t.level=parsedLvl;t.path=parsedPath;
     grid[t.row][t.col]=newCfg.t;
     syncUI();
   },
@@ -662,7 +662,7 @@ const MP={
   async saveRoom(slotName){
     if(!this.roomId||!this.isHost) return;
     const towerData=towers.map(t=>({
-      row:t.row,col:t.col,key:t.key,level:t.level,path:t.path,hp:t.hp,owner:t.owner,size:t.size
+      row:t.row,col:t.col,key:t.key,level:t.level,path:t.path,hp:t.hp,owner:t.owner,size:t.size,evolvedBlaster:t.evolvedBlaster
     }));
     const saveData={
       towers:towerData,wave,baseHP,baseMaxHP,baseUpgPath,baseUpgLevel,selectedMap,
@@ -686,10 +686,10 @@ const MP={
     if(_map.locked&&_map.path){for(const[r,c] of _map.path){if(grid[r]&&grid[r][c]!==undefined) grid[r][c]=CT.PATH;}}
     grid[BASE_R][BASE_C]=CT.BASE;grid[SPAWN_R][SPAWN_C]=CT.SPAWN;
     s.towers.forEach(t=>{
-      const cfg=getCfg(t.key,t.level||1,t.path);
+      const cfg=getCfg(t.key,t.level||1,t.path,t.evolvedBlaster);
       if(!cfg) return;
       {const tsz2=t.size||1;if(tsz2>1){for(let tdr=0;tdr<tsz2;tdr++)for(let tdc=0;tdc<tsz2;tdc++)grid[t.row+tdr][t.col+tdc]=cfg.t;}else{grid[t.row][t.col]=cfg.t;}}
-      const newT={row:t.row,col:t.col,key:t.key,cfg,hp:t.hp||cfg.hp,maxHp:cfg.hp,cd:0,level:t.level,path:t.path,size:t.size,railCharge:0,id:++_towerIdCounter,owner:t.owner,ownerColor:t.owner?PLAYER_COLORS[this.players[t.owner]?.color_index||0]:'#8888aa',ownerName:t.owner?(this.players[t.owner]?.name||'?'):'GLOBAL'};
+      const newT={row:t.row,col:t.col,key:t.key,cfg,hp:t.hp||cfg.hp,maxHp:cfg.hp,cd:0,level:t.level,path:t.path,size:t.size,railCharge:0,id:++_towerIdCounter,owner:t.owner,ownerColor:t.owner?PLAYER_COLORS[this.players[t.owner]?.color_index||0]:'#8888aa',ownerName:t.owner?(this.players[t.owner]?.name||'?'):'GLOBAL',evolvedBlaster:t.evolvedBlaster};
       towers.push(newT);
       if(t.key==='heli') spawnHelicopter(newT);
       if(t.key==='admindrone') spawnAdminDrones(newT);
@@ -1358,6 +1358,71 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 .ach-prog.done .ach-prog-txt{color:#ffd700;}
 
 #shop-modal{display:none;position:fixed;inset:0;background:#04080fee;z-index:10001;align-items:center;justify-content:center;}
+/* Hexagon nodes use a two-layer clip (outer=border colour, inner=fill) so the
+   outline itself is hexagonal instead of a square border getting clipped. */
+.hex-shape{clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);}
+.hex-node{position:relative;width:150px;height:170px;cursor:pointer;transition:transform .18s cubic-bezier(.2,.8,.3,1.3);z-index:1;will-change:transform;filter:drop-shadow(0 0 0 transparent);}
+.hex-node:hover{transform:translateY(-6px) scale(1.06);filter:drop-shadow(0 8px 14px #000a) drop-shadow(0 0 18px #00ff8877);z-index:5;}
+.hex-node:hover .hex-icon{transform:scale(1.15) rotate(-3deg);}
+.hex-node:active{transform:translateY(-2px) scale(1.02);}
+.hex-border{position:absolute;inset:0;background:linear-gradient(160deg,#16324a,#0e2030 55%);transition:background .18s ease;}
+.hex-node:hover .hex-border{background:linear-gradient(160deg,#00ff88,#0a6a44 60%);}
+.hex-fill{position:absolute;inset:3px;background:#0a1420;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:background .18s ease;}
+.hex-node:hover .hex-fill{background:#0a2016;}
+.hex-node.maxed .hex-border{background:linear-gradient(160deg,#ffd700,#a67c00 60%);}
+.hex-node.maxed .hex-fill{background:#1a1400;}
+.hex-node.maxed:hover{filter:drop-shadow(0 8px 14px #000a) drop-shadow(0 0 18px #ffd70088);}
+.hex-node.maxed:hover .hex-fill{background:#241d00;}
+.hex-node.sel{filter:drop-shadow(0 0 16px #00ff8899);}
+.hex-node.sel .hex-border{background:linear-gradient(160deg,#5cffb0,#00ff88 60%);}
+.hex-node .hex-icon{font-size:36px;margin-bottom:6px;transition:transform .18s cubic-bezier(.2,.8,.3,1.3);filter:drop-shadow(0 0 6px #00ff8855);}
+.hex-node.maxed .hex-icon{filter:drop-shadow(0 0 8px #ffd70099);}
+.hex-node .hex-name{font-family:'Share Tech Mono',monospace;font-size:10px;color:#00ff88;letter-spacing:1px;text-align:center;padding:0 10px;}
+.hex-node.maxed .hex-name{color:#ffd700;}
+.hex-node .hex-lvl{font-family:'Share Tech Mono',monospace;font-size:9px;color:#4a8a6a;margin-top:4px;}
+.hex-node .hex-pips{display:flex;gap:3px;margin-top:6px;}
+.hex-pip{width:6px;height:6px;border-radius:1px;background:#123322;border:1px solid #1a4a2a;transition:background .15s ease,border-color .15s ease,transform .2s ease;}
+.hex-pip.on{background:#00ff88;border-color:#00ff88;box-shadow:0 0 4px #00ff8899;}
+.hex-node.maxed .hex-pip.on{background:#ffd700;border-color:#ffd700;box-shadow:0 0 4px #ffd70099;}
+.hex-flash{position:absolute;inset:3px;background:#fff;opacity:0;pointer-events:none;mix-blend-mode:screen;}
+.hex-node.hex-upgrade-flash{animation:hexNodePulse .65s ease-out;}
+.hex-node.hex-upgrade-flash .hex-flash{animation:hexFlashPulse .65s ease-out;}
+.hex-node.hex-upgrade-flash .hex-border{animation:hexBorderFlash .65s ease-out;}
+.hex-node.hex-nearby-shake{animation:hexNearbyShake .4s ease-out;}
+@keyframes hexNearbyShake{
+  0%{transform:translate(0,0);}
+  15%{transform:translate(-3px,2px);}
+  30%{transform:translate(3px,-2px);}
+  45%{transform:translate(-2px,1px);}
+  60%{transform:translate(2px,-1px);}
+  75%{transform:translate(-1px,1px);}
+  100%{transform:translate(0,0);}
+}
+#skilltree-hexfield.skilltree-shake{animation:skilltreeShake .4s ease-out;}
+@keyframes skilltreeShake{
+  0%{transform:translate(0,0);}
+  10%{transform:translate(-8px,4px);}
+  20%{transform:translate(9px,-5px);}
+  30%{transform:translate(-7px,-3px);}
+  40%{transform:translate(6px,4px);}
+  50%{transform:translate(-5px,-3px);}
+  60%{transform:translate(4px,3px);}
+  70%{transform:translate(-3px,-2px);}
+  80%{transform:translate(2px,2px);}
+  90%{transform:translate(-1px,-1px);}
+  100%{transform:translate(0,0);}
+}
+@keyframes hexNodePulse{0%{transform:scale(1);}20%{transform:scale(1.14);}100%{transform:scale(1);}}
+@keyframes hexFlashPulse{0%{opacity:0;}18%{opacity:.95;}100%{opacity:0;}}
+@keyframes hexBorderFlash{0%{background:linear-gradient(160deg,#00ff88,#0a6a44 60%);}20%{background:#fff;}100%{background:linear-gradient(160deg,#00ff88,#0a6a44 60%);}}
+.hex-upgrade-ring{position:fixed;width:20px;height:20px;margin:-10px 0 0 -10px;border:3px solid #00ff88;border-radius:50%;z-index:10004;pointer-events:none;animation:hexRingExpand .8s ease-out forwards;box-shadow:0 0 12px #00ff88aa;}
+.hex-upgrade-ring.ring2{border-color:#fff;animation:hexRingExpand .55s ease-out forwards;}
+@keyframes hexRingExpand{0%{width:20px;height:20px;margin:-10px 0 0 -10px;opacity:.95;border-width:3px;}100%{width:260px;height:260px;margin:-130px 0 0 -130px;opacity:0;border-width:1px;}}
+.hex-upgrade-particle{position:fixed;font-size:16px;z-index:10004;pointer-events:none;animation:hexParticleFly .95s ease-out forwards;text-shadow:0 0 8px #00ff88;}
+@keyframes hexParticleFly{0%{transform:translate(-50%,-50%) scale(1);opacity:1;}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.25);opacity:0;}}
+.hex-levelup-text{position:fixed;font-family:'Orbitron',sans-serif;font-size:15px;font-weight:700;color:#00ff88;text-shadow:0 0 10px #00ff88,0 0 3px #fff;z-index:10005;pointer-events:none;letter-spacing:2px;animation:hexLevelUpFloat 1s ease-out forwards;white-space:nowrap;}
+.hex-levelup-text.maxed{color:#ffd700;text-shadow:0 0 10px #ffd700,0 0 3px #fff;}
+@keyframes hexLevelUpFloat{0%{transform:translate(-50%,-50%) translateY(0);opacity:0;}15%{opacity:1;transform:translate(-50%,-50%) translateY(-6px) scale(1.1);}100%{transform:translate(-50%,-50%) translateY(-52px) scale(1);opacity:0;}}
 #shop-modal.vis{display:flex;}
 .shop-box{background:#060c18;border:1px solid #ffd700;padding:22px 26px;width:92vw;max-width:640px;max-height:82vh;overflow-y:auto;}
 .shop-modal-title{font-family:'Orbitron',sans-serif;font-size:18px;letter-spacing:4px;color:#ffd700;text-align:center;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;}
@@ -1585,6 +1650,32 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     <!-- Dynamic content -->
   </div>
 </div>
+<div id="skilltree-modal" style="display:none;position:fixed;inset:0;background:#000000;z-index:10001;">
+  <span id="skilltree-modal-close" style="position:absolute;top:22px;right:28px;font-size:30px;color:#888;cursor:pointer;font-family:'Share Tech Mono',monospace;z-index:10003;line-height:1;transition:color .15s;">✕</span>
+  <div style="position:absolute;top:26px;left:32px;font-family:'Orbitron',sans-serif;font-size:16px;letter-spacing:5px;color:#00ff88;">🌳 SKILL TREE</div>
+  <div style="position:absolute;top:26px;left:32px;margin-top:26px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#ffd700;" id="skilltree-gold">$0.00</div>
+  <button id="skilltree-reset-btn" style="position:absolute;top:26px;left:32px;margin-top:52px;font-size:10px;background:#1a0606;border:1px solid #ff4444;color:#ff6666;padding:6px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;z-index:10004;">↺ RESET TREE — $1000</button>
+  <div id="skilltree-reset-confirm" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10005;align-items:center;justify-content:center;">
+    <div style="background:#060c18;border:1px solid #ff4444;padding:26px 30px;max-width:320px;text-align:center;font-family:'Share Tech Mono',monospace;">
+      <div style="color:#ff6666;font-size:14px;margin-bottom:12px;">RESET SKILL TREE?</div>
+      <div style="color:#8aa;font-size:11px;line-height:1.6;margin-bottom:20px;">This costs a $1000 fee. All skill levels will be reset and the gold spent on them will be refunded.</div>
+      <div style="display:flex;gap:12px;justify-content:center;">
+        <button id="skilltree-reset-yes" style="background:#1a0606;border:1px solid #ff4444;color:#ff6666;padding:8px 16px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:11px;">YES, RESET</button>
+        <button id="skilltree-reset-no" style="background:#04090f;border:1px solid #4a8a6a;color:#8aa;padding:8px 16px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:11px;">CANCEL</button>
+      </div>
+    </div>
+  </div>
+  <div id="skilltree-hexfield" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:60px;flex-wrap:wrap;"></div>
+  <div id="skilltree-detail" style="display:none;position:absolute;top:0;right:0;bottom:0;width:340px;background:#060c18;border-left:1px solid #0e2030;padding:26px 22px;box-sizing:border-box;z-index:10002;">
+    <span id="skilltree-detail-close" style="position:absolute;top:14px;right:16px;font-size:20px;color:#4a6a5a;cursor:pointer;">✕</span>
+    <div id="skilltree-detail-icon" style="font-size:46px;text-align:center;margin-bottom:10px;"></div>
+    <div id="skilltree-detail-name" style="font-family:'Share Tech Mono',monospace;font-size:15px;color:#00ff88;letter-spacing:1px;text-align:center;margin-bottom:4px;"></div>
+    <div id="skilltree-detail-level" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#4a8a6a;text-align:center;margin-bottom:16px;"></div>
+    <div id="skilltree-detail-desc" style="font-size:11px;color:#8aa;line-height:1.7;text-align:center;margin-bottom:10px;"></div>
+    <div id="skilltree-detail-current" style="font-size:11px;color:#ffd700;text-align:center;margin-bottom:24px;"></div>
+    <button id="skilltree-detail-buy" class="shop-buy-btn-big" style="width:100%;padding:12px;font-size:12px;"></button>
+  </div>
+</div>
 <div id="shop-modal">
   <div class="shop-box">
     <div class="shop-modal-title">
@@ -1628,9 +1719,19 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 <div id="update-popup">
 <div class="up-header">
 <div class="up-title">PATCH NOTES</div>
-<div class="up-ver">BASE SIEGE v29.9 — Golden Blaster Rework, New Achievements &amp; More</div>
+<div class="up-ver">BASE SIEGE v30.0 — Blaster Rebalance &amp; Shop Price Update</div>
 </div>
 <div class="up-body">
+<div class="up-section">
+<div class="up-section-title">⚖ blaster tower rebalance</div>
+<div class="up-item fix">🔫 BLASTER (base tier) buffed — damage 18→20, fire rate cooldown 55→52 frames, HP 80→85, cost reduced 75→70g, so the entry-level tower keeps pace early on</div>
+<div class="up-item fix">🔫 MINIGUN path (2A) damage per hit 9→10</div>
+<div class="up-item fix">🧬 EVOLVED RIFLE — damage, HP, and reload speed increased across all 5 levels; DPS still kept just under MINIGUN's ceiling per our no-outclass balance rule</div>
+<div class="up-item fix">🧬 EVOLVED SHOTGUN — damage and HP increased across all 5 levels, fire rate slightly faster; DPS still kept just under SHOCKWAVE's ceiling</div>
+<div class="up-section-title">💰 shop price increase</div>
+<div class="up-item fix">💰 All cosmetic SKIN prices increased: CLASSIC TESLA 100→150, GASTER BLASTER 120→180, VOID RAILGUN 200→300, SUKUNA SPIKE 100→150, YUJI 200→300, FORTRESS WALL 100→150, FIRE CANNON 150→225, GOLDEN BLASTER &amp; GOLDEN CANNON 4000→6000</div>
+<div class="up-item fix">🧬 EVOLVED BLASTER unlock price increased 12000→18000, reflecting its rebalanced power boost</div>
+</div>
 <div class="up-section">
 <div class="up-section-title">🟡 golden blaster skin remake</div>
 <div class="up-item new">🟡 GOLDEN BLASTER SKIN reworked from the ground up — swapped the plain circular disc for an armored hexagonal turret plate with a beveled inset, corner bolts, a raised center dome collar, and a rotating specular glint. A distinct silhouette now, not just a recolor</div>
@@ -1718,6 +1819,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
   <span id="auth-user">NOT SIGNED IN — scores won't be saved to leaderboard</span>
   <button id="name-btn" style="background:#04090f;border:1px solid #0e2030;color:#ffaa33;font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 10px;cursor:pointer;transition:all .1s;letter-spacing:1px;white-space:nowrap;display:none">✏ NAME</button>
   <button id="topbar-shop-btn" style="font-size:9px;background:#04090f;border:1px solid #ffd700;color:#ffd700;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-right:4px;transition:all .1s;">🛒 SHOP</button>
+  <button id="skilltree-open-btn" style="font-size:9px;background:#04090f;border:1px solid #00ff88;color:#00ff88;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-right:4px;transition:all .1s;">🌳 SKILL TREE</button>
   <button id="sug-btn" style="font-size:9px;background:#04090f;border:1px solid #ffaa33;color:#ffaa33;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-right:4px;transition:all .1s;" onclick="openSugModal()">💡 IDEAS</button>
   <button id="ach-btn" style="display:none;font-size:9px;background:#04090f;border:1px solid #ffd700;color:#ffd700;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-right:4px;transition:all .1s;">🏅 ACHIEVEMENTS</button>
   <button id="stats-btn" style="font-size:9px;background:#04090f;border:1px solid #00ccff;color:#00ccff;padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;margin-right:4px;transition:all .1s;">📊 STATS</button>
@@ -1787,7 +1889,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 <div id="lb-toast">✓ SCORE SUBMITTED</div>
 
 <div id="autoskip-toast">⚡ AUTO-SKIP ON</div>
-<header><h1>BASE SIEGE</h1><span class="ver">v29.7</span></header>
+<header><h1>BASE SIEGE</h1><span class="ver">v30.0</span></header>
 
 
 <!-- START SCREEN -->
@@ -1803,7 +1905,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
     </div>
   </div>
   <div class="ss-title">BASE SIEGE</div>
-  <div class="ss-ver">v29.7</div>
+  <div class="ss-ver">v30.0</div>
   <div class="ss-sub">SELECT YOUR DIFFICULTY AND DEFEND THE BASE</div>
   <div class="ss-box">
     <div class="ss-sh">── SELECT MODE ─────────────────</div>
@@ -2081,7 +2183,7 @@ let currentUser=null;
 const MODE_MAP={easy:0,normal:1,hard:2,hardcore:3};
 const MODE_LABEL=['EASY','NORMAL','HARD','HCORE'];
 
-sb.auth.onAuthStateChange((_,session)=>{const wasNull=!currentUser;currentUser=session?.user??null;updateAuthBar();if(currentUser&&wasNull){syncSavesOnLogin();if(typeof pullProgressFromCloud==='function')pullProgressFromCloud();}});
+sb.auth.onAuthStateChange((_,session)=>{const wasNull=!currentUser;currentUser=session?.user??null;updateAuthBar();if(currentUser&&wasNull){syncSavesOnLogin();if(typeof pullProgressFromCloud==='function')pullProgressFromCloud();}if(typeof enforceCreatorMoney==='function')enforceCreatorMoney();});
 (async()=>{const{data:{session}}=await sb.auth.getSession();currentUser=session?.user??null;updateAuthBar();if(currentUser){syncSavesOnLogin();if(typeof pullProgressFromCloud==='function')pullProgressFromCloud();}})();
 
 // updateAuthBar replaced by name system below
@@ -2454,7 +2556,7 @@ function refreshSaveSlotUI(){
 }
 function updateIOButtons(){const _sv=document.getElementById('save-btn'),_ld=document.getElementById('load-btn'),_de=document.getElementById('delete-btn'),_pv=document.getElementById('prev-btn');if(_sv)_sv.disabled=!gameStarted||gameOver;if(_ld)_ld.disabled=!getSaveData(selectedSaveSlot);if(_de)_de.disabled=!getSaveData(selectedSaveSlot);if(_pv)_pv.disabled=!getPrevSaveData(selectedSaveSlot);}
 function saveStatus(msg,col='#00ff88'){const el=document.getElementById('save-status');el.textContent=msg;el.style.color=col;clearTimeout(el._t);el._t=setTimeout(()=>{el.textContent='';},3000);}
-function serializeGameState(){return{version:18,selectedMap,gameMode,wave,gold,baseHP,baseMaxHP,score,kills,baseUpgPath,baseUpgLevel,towers:towers.map(t=>({row:t.row,col:t.col,key:t.key,level:t.level,path:t.path,hp:t.hp,maxHp:t.maxHp,size:t.size})),hcPoints,hcPointsSpent,hcLastPointScore,hcUnlocked:[...hcUnlocked],gfxMode:gfxMode,playTimeSeconds:playTimeSeconds,savedAt:Date.now()};}
+function serializeGameState(){return{version:18,selectedMap,gameMode,wave,gold,baseHP,baseMaxHP,score,kills,baseUpgPath,baseUpgLevel,towers:towers.map(t=>({row:t.row,col:t.col,key:t.key,level:t.level,path:t.path,hp:t.hp,maxHp:t.maxHp,size:t.size,evolvedBlaster:t.evolvedBlaster})),hcPoints,hcPointsSpent,hcLastPointScore,hcUnlocked:[...hcUnlocked],gfxMode:gfxMode,playTimeSeconds:playTimeSeconds,savedAt:Date.now()};}
 function deserializeGameState(data){
   if(!data||(data.version!==17&&data.version!==18)) return false;
   try{selectedMap=data.selectedMap||'free';gameMode=data.gameMode||'easy';wave=data.wave;gold=data.gold;baseHP=data.baseHP;baseMaxHP=data.baseMaxHP;score=data.score;kills=data.kills;baseUpgPath=data.baseUpgPath;baseUpgLevel=data.baseUpgLevel||0;
@@ -2663,7 +2765,7 @@ const GUNNER_BASE_DMG=18,GUNNER_STUN_DUR=30;
 
 const TS={
   wall:{1:{t:CT.WALL,cost:60,hp:350,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#4a708a',name:'BARRIER'},2:{t:CT.WALL,cost:60,hp:600,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#5a80a0',name:'BARRIER II'},3:{t:CT.WALL,cost:60,hp:950,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#6a90b0',name:'BARRIER III',thorns:22},4:{t:CT.WALL,cost:100,hp:1500,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#7aaac0',name:'BARRIER IV',thorns:40},5:{t:CT.WALL,cost:200,hp:2400,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#8abbd0',name:'BULWARK',thorns:65,wallRegen:12}},
-  basic:{1:{t:CT.BASIC,cost:75,hp:80,rng:148,dmg:18,cd:55,aoe:0,chn:0,col:'#33aaff',name:'BLASTER'},'2A':{t:CT.BASIC,cost:350,hp:110,rng:155,dmg:9,cd:12,aoe:0,chn:0,col:'#33aaff',name:'MINIGUN',minigun:true,antiAir:true,antiHidden:true},'2B':{t:CT.BASIC,cost:150,hp:110,rng:175,dmg:10,cd:72,aoe:0,chn:0,col:'#55ddff',name:'SHOCKWAVE',shockwave:true,shockSpd:3.2,shockMaxR:200,antiHidden:true},'3A':{t:CT.BASIC,cost:500,hp:148,rng:162,dmg:12,cd:9,aoe:0,chn:0,col:'#55aaff',name:'MINIGUN+',minigun:true,antiAir:true,antiHidden:true},'3B':{t:CT.BASIC,cost:900,hp:148,rng:220,dmg:55,cd:40,aoe:0,chn:0,col:'#44eeff',name:'SHOCKWAVE+',shockwave:true,shockSpd:4,shockMaxR:290,antiHidden:true},'4A':{t:CT.BASIC,cost:750,hp:195,rng:172,dmg:16,cd:6,aoe:0,chn:0,col:'#66bbff',name:'MINIGUN++',minigun:true,antiAir:true,antiHidden:true},'4B':{t:CT.BASIC,cost:1400,hp:195,rng:260,dmg:85,cd:30,aoe:0,chn:0,col:'#33eeff',name:'SHOCKWAVE++',shockwave:true,shockSpd:4.8,shockMaxR:360,antiHidden:true},'5A':{t:CT.BASIC,cost:1000,hp:260,rng:185,dmg:24,cd:4,aoe:0,chn:0,col:'#88ccff',name:'GATLING',minigun:true,antiAir:true,antiHidden:true},'5B':{t:CT.BASIC,cost:2200,hp:260,rng:320,dmg:165,cd:20,aoe:0,chn:0,col:'#00ffff',name:'STORM WAVE',shockwave:true,shockSpd:5.5,shockMaxR:440,antiHidden:true}},
+  basic:{1:{t:CT.BASIC,cost:70,hp:85,rng:150,dmg:20,cd:52,aoe:0,chn:0,col:'#33aaff',name:'BLASTER'},'2A':{t:CT.BASIC,cost:350,hp:110,rng:155,dmg:10,cd:12,aoe:0,chn:0,col:'#33aaff',name:'MINIGUN',minigun:true,antiAir:true,antiHidden:true,basicMinigun:true,maxHeat:16,heatDecay:.09,overheatDecayMult:2.4,coolDelayFrames:36},'2B':{t:CT.BASIC,cost:150,hp:110,rng:175,dmg:10,cd:72,aoe:0,chn:0,col:'#55ddff',name:'SHOCKWAVE',shockwave:true,shockSpd:3.2,shockMaxR:200,antiHidden:true,crowdFalloff:true},'3A':{t:CT.BASIC,cost:500,hp:148,rng:162,dmg:12,cd:9,aoe:0,chn:0,col:'#55aaff',name:'MINIGUN+',minigun:true,antiAir:true,antiHidden:true,basicMinigun:true,maxHeat:18,heatDecay:.085,overheatDecayMult:2.4,coolDelayFrames:36},'3B':{t:CT.BASIC,cost:900,hp:148,rng:220,dmg:55,cd:40,aoe:0,chn:0,col:'#44eeff',name:'SHOCKWAVE+',shockwave:true,shockSpd:4,shockMaxR:290,antiHidden:true,crowdFalloff:true},'4A':{t:CT.BASIC,cost:750,hp:195,rng:172,dmg:16,cd:6,aoe:0,chn:0,col:'#66bbff',name:'MINIGUN++',minigun:true,antiAir:true,antiHidden:true,basicMinigun:true,maxHeat:20,heatDecay:.08,overheatDecayMult:2.5,coolDelayFrames:34},'4B':{t:CT.BASIC,cost:1400,hp:195,rng:260,dmg:85,cd:30,aoe:0,chn:0,col:'#33eeff',name:'SHOCKWAVE++',shockwave:true,shockSpd:4.8,shockMaxR:360,antiHidden:true,crowdFalloff:true},'5A':{t:CT.BASIC,cost:1000,hp:260,rng:185,dmg:24,cd:4,aoe:0,chn:0,col:'#88ccff',name:'GATLING',minigun:true,antiAir:true,antiHidden:true,basicMinigun:true,maxHeat:22,heatDecay:.075,overheatDecayMult:2.5,coolDelayFrames:32},'5B':{t:CT.BASIC,cost:2200,hp:260,rng:320,dmg:165,cd:20,aoe:0,chn:0,col:'#00ffff',name:'STORM WAVE',shockwave:true,shockSpd:5.5,shockMaxR:440,antiHidden:true,crowdFalloff:true}},
   railgun_cannon:{
     1  :{t:CT.SNIPER,cost:0,   hp:520, rng:9999,dmg:1516,  cd:260,chargeTime:170,col:'#66ddff',name:'RAILGUN CANNON',railgunTower:true,beamWidth:14,antiAir:true},
     '2A':{t:CT.SNIPER,cost:2200,hp:680, rng:9999,dmg:6702,  cd:430,chargeTime:340,col:'#33bbff',name:'SIEGE RAILGUN',railgunTower:true,beamWidth:16,antiAir:true},
@@ -2892,7 +2994,38 @@ const TS={
 const PATH_NAMES={alchemist:{A:'VIRULENCE (stacking acid DoT)',B:'HEXBREW (curse: slow+shred+dmg amp)'},mace:{A:'CRUSHER (high dmg/pierce)',B:'TEMPEST (fast/range)'},railgun_cannon:{A:'SIEGE (slow/heavy)',B:'RAPID (fast/light)'},tesla_cannon:{A:'STORM CANNON (energy-fueled multi-chain lightning)',B:'PLASMA CANNON (plasma orb arcs lightning at nearby foes before impact)'},blaster_cannon:{A:'GATLING FORTRESS (5-barrel/no charge)',B:'SHOCK CANNON (charge/massive dmg+stun)'},laser_cannon:{A:'LANCE PROTOCOL (single beam, stuns target, higher dmg)',B:'HYDRA ARRAY (6 beams, hits 6 enemies at once — converges on 1 target if only 1 remains)'},siege_cannon:{A:'RAPID SIEGE (fast attack)',B:'DEVASTATOR SIEGE (high damage)'},basic:{A:'MINIGUN',B:'SHOCKWAVE'},sniper:{A:'OVERCHARGE',B:'EXPLOSIVE'},cannon:{A:'RAPID FIRE',B:'DEVASTATOR'},electric:{A:'STORM',B:'PLASMA BALL'},healer:{A:'BASE MEDIC',B:'REGEN+'},spike:{A:'RAPID STRIKE',B:'WARHAMMER'},buff:{A:'BASS BOOST',B:'DJ BOOTH'},mine:{A:'BIG FARM',B:'BANK'},heli:{A:'MISSILE+BULLETS',B:'MINIGUN SPEED'},flame:{A:'INFERNO',B:'CORROSION'},ice:{A:'FROST WAVE',B:'CRYO BULLET'},bhole:{A:'EVENT HORIZON',B:'SINGULARITY'},laser:{A:'FOCUS BEAM',B:'CRYSTAL FORGE'},barracks:{A:'DEMOLISHER',B:'GUNNER',C:'TANK DEPOT'},silo:{A:'NUKE',B:'LASER STRIKE'},hero_accel:{A:'OVERCHARGE BEAM'},hero_score:{A:'SCORE FOCUS',B:'AURA FOCUS'},hero_sacrifice:{A:'BLOOD ALTAR',B:'SOUL BEACON'},mech_base:{A:'THE TITAN',B:'WALKING ARSENAL',C:'SWARM PROTOCOL'},admindrone:{A:'SWARM PROTOCOL',B:'MULTI-ROLE'},barbwire:{A:'LONG WIRE',B:'RAZOR WIRE'},cowboy:{A:'GUNSLINGER',B:'POSSE CALLER'},necromancer:{A:'DEATH CALLER',B:'BONE WARDEN'},hunter:{A:'MARKSMAN (higher crit chance/dmg)',B:'TRACKER (marks enemies for bonus dmg+gold)'}};
 const PATH_COLORS={alchemist:{A:'#aaff00',B:'#aa44ff'},mace:{A:'#cc44ff',B:'#3399ff'},railgun_cannon:{A:'#33bbff',B:'#99eeff'},tesla_cannon:{A:'#ccff33',B:'#66ff22'},blaster_cannon:{A:'#ffcc33',B:'#ff5511'},laser_cannon:{A:'#ff3355',B:'#22ffe0'},siege_cannon:{A:'#ff9900',B:'#ff3300'},basic:{A:'#33aaff',B:'#55ddff'},sniper:{A:'#cc55ff',B:'#ff44bb'},cannon:{A:'#ff9900',B:'#ff6600'},electric:{A:'#aaff00',B:'#88ff44'},healer:{A:'#00ccff',B:'#00ffcc'},spike:{A:'#ff4488',B:'#ff2255'},buff:{A:'#ffd700',B:'#ff8800'},mine:{A:'#ffe066',B:'#ffd700'},heli:{A:'#00ffaa',B:'#44ffcc'},flame:{A:'#ff4400',B:'#44ff88'},ice:{A:'#44ccff',B:'#4488ff'},bhole:{A:'#cc66ff',B:'#ff44aa'},laser:{A:'#00ccff',B:'#ff88ff'},barracks:{A:'#ff8844',B:'#33ccff',C:'#cc8800'},silo:{A:'#ff4400',B:'#cc55ff'},hero_accel:{A:'#ffe066'},hero_score:{A:'#ff44aa',B:'#ffaa00'},hero_sacrifice:{A:'#ff1144',B:'#aa22ff'},mech_base:{A:'#ff3311',B:'#2299ee',C:'#44ee77'},admindrone:{A:'#ff44ff',B:'#44ffee'},barbwire:{A:'#c8a874',B:'#ff5533'},cowboy:{A:'#ffdca8',B:'#c8955a'},necromancer:{A:'#bb8fff',B:'#6a4a9a'},hunter:{A:'#22dd77',B:'#eeaa33'}};
 
-function getCfg(key,lvl,path){if(key==='wall') return TS.wall[Math.min(lvl,5)]||TS.wall[1];if(lvl===1) return TS[key][1];return TS[key][lvl+(path||'')]||TS[key][1];}
+function getEvolvedBlasterVariant(){
+  return !!mgEquipped['evolve_blaster'];
+}
+// Balance note: dps is kept strictly below the strongest same-level sibling upgrade path on the
+// basic tower (MINIGUN/A caps at 360 dps at lvl5, SHOCKWAVE/B caps at 495 dps at lvl5) so the
+// evolved paths stay a strong alternative without ever out-classing the towers they branch from.
+const EVO_RIFLE_LV={
+  1:{hp:125,rng:195,dmg:32,burstCd:10,reloadCd:105,allyHp:55,allyDmg:16,allyMax:1,allySpawnCd:270,allySpd:0.9,allyAtkCd:32},
+  2:{hp:195,rng:215,dmg:48,burstCd:9,reloadCd:86,allyHp:78,allyDmg:23,allyMax:2,allySpawnCd:230,allySpd:0.95,allyAtkCd:28},
+  3:{hp:255,rng:230,dmg:75,burstCd:8,reloadCd:72,allyHp:110,allyDmg:32,allyMax:3,allySpawnCd:200,allySpd:1.0,allyAtkCd:26},
+  4:{hp:325,rng:250,dmg:100,burstCd:7,reloadCd:58,allyHp:150,allyDmg:44,allyMax:4,allySpawnCd:175,allySpd:1.05,allyAtkCd:23},
+  5:{hp:415,rng:270,dmg:115,burstCd:6,reloadCd:52,allyHp:205,allyDmg:60,allyMax:5,allySpawnCd:150,allySpd:1.1,allyAtkCd:20}
+};
+const EVO_SHOTGUN_LV={
+  1:{hp:130,rng:180,dmg:65,cd:48,coneAngle:46},
+  2:{hp:210,rng:200,dmg:115,cd:44,coneAngle:50},
+  3:{hp:270,rng:215,dmg:165,cd:39,coneAngle:53},
+  4:{hp:340,rng:230,dmg:210,cd:35,coneAngle:57},
+  5:{hp:420,rng:250,dmg:260,cd:31,coneAngle:61}
+};
+function getEvolvedBlasterCfg(base,lvl,variant){
+  if(!variant) return base;
+  const L=Math.max(1,Math.min(5,lvl));
+  if(variant==='rifle'){
+    const d=EVO_RIFLE_LV[L];
+    return {...base,hp:d.hp,rng:d.rng,dmg:d.dmg,cd:d.burstCd,burstCd:d.burstCd,reloadCd:d.reloadCd,shotsPerBurst:4,evolvedRifle:true,minigun:false,shots:1,antiAir:true,antiHidden:false,shockwave:false,stunImmuneTower:false,col:'#ff2a2a',name:'EVOLVED RIFLE'+(L>1?' LV'+L:''),barracksTower:true,allyHp:d.allyHp,allySpd:d.allySpd,allyDmg:d.allyDmg,allyAtkCd:d.allyAtkCd,allyMax:d.allyMax,allySpawnCd:d.allySpawnCd,evolvedBlaster:'rifle'};
+  } else {
+    const d=EVO_SHOTGUN_LV[L];
+    return {...base,hp:d.hp,rng:d.rng,dmg:d.dmg,cd:d.cd,shockwave:true,shockMaxR:d.rng,shockSpd:Math.max(22,Math.round(d.rng/7)),coneAngle:d.coneAngle,dmgFalloff:true,minigun:false,antiAir:false,antiHidden:true,stunImmuneTower:true,col:'#ffb020',name:'EVOLVED SHOTGUN'+(L>1?' LV'+L:''),barracksTower:false,evolvedBlaster:'shotgun'};
+  }
+}
+function getCfg(key,lvl,path,evolvedVariant){if(key==='wall') return TS.wall[Math.min(lvl,5)]||TS.wall[1];const base=(lvl===1)?TS[key][1]:(TS[key][lvl+(path||'')]||TS[key][1]);if(key==='basic'&&evolvedVariant){const p=path||(evolvedVariant==='rifle'||evolvedVariant==='shotgun'?(evolvedVariant==='rifle'?'A':'B'):null);if(!p) return base;const variant=p==='A'?'rifle':'shotgun';return getEvolvedBlasterCfg(TS.basic[1],lvl,variant);}return base;}
 function upgCost(key,toLvl,path){if(key==='wall'){const s=TS.wall[Math.min(toLvl,5)];return s?s.cost:TS.wall[1].cost;}if(TS[key]&&TS[key][toLvl]&&!TS[key][toLvl+'A']&&!TS[key][toLvl+'B']) return TS[key][toLvl].cost;if(toLvl===2){const lk2='2'+(path||'A');const s2=TS[key]&&TS[key][lk2];if(s2) return s2.cost;const sA=TS[key]&&TS[key]['2A'];return sA?sA.cost:Math.round(TS[key][1].cost*0.6);}const lk=toLvl+(path||'A');const s=TS[key]&&TS[key][lk];if(s) return s.cost;const base=TS[key][1].cost;if(toLvl===3) return Math.round(base*1.0);if(toLvl===4) return Math.round(base*1.45);if(toLvl===5) return Math.round(base*2.0);if(toLvl===6) return Math.round(base*3.2);if(toLvl===7) return Math.round(base*4.5);if(toLvl===8) return Math.round(base*6.2);if(toLvl===9) return Math.round(base*8.5);if(toLvl===10) return Math.round(base*12.0);return Math.round(base*1.2);}
 
 const BASE_UPG={A:{1:{cost:200,hpBonus:50,turretDmg:25,turretRng:180,turretCd:75,name:'FORTRESS I'},2:{cost:600,hpBonus:100,turretDmg:50,turretRng:200,turretCd:40,name:'FORTRESS II'},3:{cost:2200,hpBonus:600,turretDmg:90,turretRng:220,turretCd:30,name:'FORTRESS III'},4:{cost:4500,hpBonus:2000,turretDmg:160,turretRng:250,turretCd:22,name:'CITADEL'},5:{cost:8000,hpBonus:5000,turretDmg:280,turretRng:300,turretCd:14,name:'FORTRESS MAX'}},B:{1:{cost:250,goldPerWave:30,name:'TREASURY I'},2:{cost:500,goldPerWave:65,name:'TREASURY II'},3:{cost:900,goldPerWave:110,name:'TREASURY III'},4:{cost:1800,goldPerWave:180,name:'VAULT'},5:{cost:3500,goldPerWave:300,name:'TREASURY MAX'}}};
@@ -4028,6 +4161,173 @@ function saveAchStats() {
 }
 loadAchStats();
 
+// ═══════════════════ SKILL TREE (persistent, bought with in-run gold) ═══════════════════
+const SKILL_TREE_KEY='bs_skill_tree';
+const SKILL_DEFS={
+  hero_limit:{name:'HERO SLOT',icon:'🦸',desc:'+1 max Hero Tower placed per game (each hero type only once)',baseCost:1500,growth:2.4,maxLevel:2,base:1,kind:'limit'},
+  dj_limit:{name:'DJ SLOT',icon:'🎧',desc:'+1 max DJ TOWER placed per game',baseCost:2500,growth:2.6,maxLevel:5,base:3,kind:'limit'},
+  dmg_boost:{name:'DAMAGE CORE',icon:'⚔️',desc:'+3% damage for ALL towers, every game',baseCost:500,growth:1.75,maxLevel:10,base:0,perLevel:0.03,kind:'percent'}
+};
+let skillTree={hero_limit:0,dj_limit:0,dmg_boost:0};
+function loadSkillTree(){try{const r=localStorage.getItem(SKILL_TREE_KEY);if(r)skillTree={hero_limit:0,dj_limit:0,dmg_boost:0,...JSON.parse(r)};}catch(e){}}
+function saveSkillTree(){try{localStorage.setItem(SKILL_TREE_KEY,JSON.stringify(skillTree));}catch(e){}}
+loadSkillTree();
+function skillLevel(id){return skillTree[id]||0;}
+function skillCost(id){const d=SKILL_DEFS[id];const lvl=skillLevel(id);if(lvl>=d.maxLevel)return null;return Math.round(d.baseCost*Math.pow(d.growth,lvl));}
+function getHeroLimit(){return SKILL_DEFS.hero_limit.base+skillLevel('hero_limit');}
+function getDjLimit(){return SKILL_DEFS.dj_limit.base+skillLevel('dj_limit');}
+function getSkillDmgMult(){return 1+skillLevel('dmg_boost')*SKILL_DEFS.dmg_boost.perLevel;}
+function updateBuffHint(){const el=document.getElementById('buff-hint');if(el)el.textContent='🎧 DJ TOWER: affects nearby towers in range (max '+getDjLimit()+' per game)';}
+let skillTreeSelId=null;
+function spawnHexUpgradeVFX(id,maxed){
+  const hex=document.getElementById('skilltree-hex-'+id);
+  if(!hex)return;
+  const rect=hex.getBoundingClientRect();
+  const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+  hex.classList.add('hex-upgrade-flash');
+  setTimeout(()=>hex.classList.remove('hex-upgrade-flash'),650);
+  // shake the whole tree field for impact, plus a lighter shake on the other hexes
+  const field=document.getElementById('skilltree-hexfield');
+  if(field){
+    field.classList.remove('skilltree-shake');void field.offsetWidth;
+    field.classList.add('skilltree-shake');
+    setTimeout(()=>field.classList.remove('skilltree-shake'),400);
+    field.querySelectorAll('.hex-node').forEach(n=>{
+      if(n===hex)return;
+      n.classList.remove('hex-nearby-shake');void n.offsetWidth;
+      n.classList.add('hex-nearby-shake');
+      setTimeout(()=>n.classList.remove('hex-nearby-shake'),400);
+    });
+  }
+  // double ring burst for a punchier hit
+  const ring=document.createElement('div');
+  ring.className='hex-upgrade-ring';
+  ring.style.left=cx+'px';ring.style.top=cy+'px';
+  if(maxed)ring.style.borderColor='#ffd700';
+  document.body.appendChild(ring);
+  setTimeout(()=>ring.remove(),820);
+  const ring2=document.createElement('div');
+  ring2.className='hex-upgrade-ring ring2';
+  ring2.style.left=cx+'px';ring2.style.top=cy+'px';
+  document.body.appendChild(ring2);
+  setTimeout(()=>ring2.remove(),580);
+  // floating level-up label
+  const lvlTxt=document.createElement('div');
+  lvlTxt.className='hex-levelup-text'+(maxed?' maxed':'');
+  lvlTxt.textContent=maxed?'★ MAXED!':'LEVEL UP!';
+  lvlTxt.style.left=cx+'px';lvlTxt.style.top=cy+'px';
+  document.body.appendChild(lvlTxt);
+  setTimeout(()=>lvlTxt.remove(),1000);
+  const icons=maxed?['⭐','🌟','💛','✨','🏆']:['✨','⭐','🌟','💫','🟢'];
+  const count=maxed?24:16;
+  for(let i=0;i<count;i++){
+    const p=document.createElement('div');
+    p.className='hex-upgrade-particle';
+    const ang=Math.random()*Math.PI*2;
+    const dist=50+Math.random()*90;
+    p.style.left=cx+'px';p.style.top=cy+'px';
+    p.style.setProperty('--dx',(Math.cos(ang)*dist)+'px');
+    p.style.setProperty('--dy',(Math.sin(ang)*dist)+'px');
+    p.style.animationDelay=(Math.random()*0.08)+'s';
+    p.textContent=icons[Math.floor(Math.random()*icons.length)];
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),1000);
+  }
+}
+function buySkill(id){
+  const cost=skillCost(id);
+  if(cost===null){msg('⚠ Already maxed out!',2000);return;}
+  if(mgMoney<cost){msg('⚠ Not enough shop money!',2000);return;}
+  mgMoney-=cost;skillTree[id]=(skillTree[id]||0)+1;saveSkillTree();
+  localStorage.setItem('mg_money',mgMoney.toFixed(4));
+  const hud=document.getElementById('shop-modal-money');if(hud)hud.textContent='$'+mgMoney.toFixed(2);
+  updateBuffHint();
+  spawnHexUpgradeVFX(id,skillCost(id)===null);
+  renderSkillTree();
+  showSkillDetail(id);
+}
+function renderSkillTree(){
+  const field=document.getElementById('skilltree-hexfield');if(!field)return;
+  const gEl=document.getElementById('skilltree-gold');if(gEl)gEl.textContent='$'+mgMoney.toFixed(2);
+  field.innerHTML='';
+  for(const id in SKILL_DEFS){
+    const d=SKILL_DEFS[id],lvl=skillLevel(id),cost=skillCost(id),maxed=cost===null;
+    const hex=document.createElement('div');
+    hex.id='skilltree-hex-'+id;
+    hex.className='hex-node'+(maxed?' maxed':'')+(skillTreeSelId===id?' sel':'');
+    let pips='';
+    for(let i=0;i<d.maxLevel;i++)pips+='<div class="hex-pip'+(i<lvl?' on':'')+'"></div>';
+    hex.innerHTML=
+      '<div class="hex-border hex-shape"></div>'+
+      '<div class="hex-fill hex-shape">'+
+        '<div class="hex-icon">'+d.icon+'</div>'+
+        '<div class="hex-name">'+d.name+'</div>'+
+        '<div class="hex-lvl">Lv.'+lvl+'/'+d.maxLevel+'</div>'+
+        '<div class="hex-pips">'+pips+'</div>'+
+      '</div>'+
+      '<div class="hex-flash hex-shape"></div>';
+    hex.addEventListener('click',()=>showSkillDetail(id));
+    field.appendChild(hex);
+  }
+}
+function showSkillDetail(id){
+  skillTreeSelId=id;
+  renderSkillTree();
+  const d=SKILL_DEFS[id],lvl=skillLevel(id),cost=skillCost(id),maxed=cost===null;
+  document.getElementById('skilltree-detail-icon').textContent=d.icon;
+  document.getElementById('skilltree-detail-name').textContent=d.name;
+  document.getElementById('skilltree-detail-level').textContent='LEVEL '+lvl+' / '+d.maxLevel;
+  document.getElementById('skilltree-detail-desc').textContent=d.desc;
+  if(d.kind==='percent'){
+    document.getElementById('skilltree-detail-current').textContent='Current bonus: +'+Math.round(lvl*d.perLevel*100)+'% dmg';
+  }else{
+    document.getElementById('skilltree-detail-current').textContent='Current limit: '+(d.base+lvl);
+  }
+  const buyBtn=document.getElementById('skilltree-detail-buy');
+  buyBtn.textContent=maxed?'MAXED OUT':'UPGRADE — $'+cost.toFixed(2);
+  buyBtn.disabled=maxed||mgMoney<cost;
+  buyBtn.onclick=maxed?null:()=>buySkill(id);
+  document.getElementById('skilltree-detail').style.display='block';
+}
+function hideSkillDetail(){
+  skillTreeSelId=null;
+  document.getElementById('skilltree-detail').style.display='none';
+  renderSkillTree();
+}
+const SKILL_RESET_COST=1000;
+function totalSkillRefund(){
+  let total=0;
+  for(const id in SKILL_DEFS){
+    const d=SKILL_DEFS[id],lvl=skillLevel(id);
+    for(let i=0;i<lvl;i++) total+=Math.round(d.baseCost*Math.pow(d.growth,i));
+  }
+  return total;
+}
+function openResetConfirm(){
+  const el=document.getElementById('skilltree-reset-confirm');
+  if(el)el.style.display='flex';
+}
+function closeResetConfirm(){
+  const el=document.getElementById('skilltree-reset-confirm');
+  if(el)el.style.display='none';
+}
+function resetSkillTree(){
+  closeResetConfirm();
+  if(mgMoney<SKILL_RESET_COST){msg('⚠ Not enough shop money! Need $'+SKILL_RESET_COST.toFixed(2),2000);return;}
+  const refund=totalSkillRefund();
+  if(refund<=0){msg('⚠ No skill points invested to reset.',2000);return;}
+  mgMoney-=SKILL_RESET_COST;
+  mgMoney+=refund;
+  for(const id in SKILL_DEFS) skillTree[id]=0;
+  saveSkillTree();
+  localStorage.setItem('mg_money',mgMoney.toFixed(4));
+  const hud=document.getElementById('shop-modal-money');if(hud)hud.textContent='$'+mgMoney.toFixed(2);
+  updateBuffHint();
+  hideSkillDetail();
+  renderSkillTree();
+  msg('↺ Skill tree reset! Refunded $'+refund.toFixed(2)+' (paid $'+SKILL_RESET_COST.toFixed(2)+' fee)',2500);
+}
+
 // ═══════════════════════════════════════════════
 // CLOUD SYNC — level, XP, achievements, ach stats
 // Mirrors the save_slots cloud-save pattern; syncs to the
@@ -4154,6 +4454,13 @@ document.getElementById('mg-close').addEventListener('click',()=>{
 });
 document.getElementById('topbar-shop-btn').addEventListener('click',mgOpenShopModal);
 document.getElementById('shop-modal-close').addEventListener('click',mgCloseShopModal);
+document.getElementById('skilltree-open-btn').addEventListener('click',()=>{document.getElementById('skilltree-modal').style.display='block';renderSkillTree();});
+document.getElementById('skilltree-modal-close').addEventListener('click',()=>{document.getElementById('skilltree-modal').style.display='none';hideSkillDetail();});
+document.getElementById('skilltree-detail-close').addEventListener('click',hideSkillDetail);
+document.getElementById('skilltree-reset-btn').addEventListener('click',openResetConfirm);
+document.getElementById('skilltree-reset-yes').addEventListener('click',resetSkillTree);
+document.getElementById('skilltree-reset-no').addEventListener('click',closeResetConfirm);
+updateBuffHint();
 document.getElementById('shop-modal').addEventListener('click',e=>{ if(e.target.id==='shop-modal') mgCloseShopModal(); });
 document.getElementById('shop-modal-tab-store').addEventListener('click',()=>{ mgShopTab='store'; mgRenderShopModal(); });
 document.getElementById('shop-modal-tab-backpack').addEventListener('click',()=>{ mgShopTab='backpack'; mgRenderShopModal(); });
@@ -5365,7 +5672,7 @@ function updateAllies(){try{
   }
   // Spawn allies from barracks/mech-base towers
   for(const t of towers){
-    if(!t||(t.key!=='barracks'&&t.key!=='mech_base'&&t.key!=='cowboy')||t.stunned>0) continue;
+    if(!t||(t.key!=='barracks'&&t.key!=='mech_base'&&t.key!=='cowboy'&&t.key!=='basic')||t.stunned>0) continue;
     const cfg=t.cfg;if(!cfg||!cfg.barracksTower) continue;
     if(!t.allySpawnCd) t.allySpawnCd=0;
     t.allySpawnCd--;
@@ -5823,7 +6130,7 @@ function drawAlly(a){
 
 function findBreakthrough(fr,fc){const vis=new Set(),q=[[fr,fc]],cands=[];vis.add(`${fr},${fc}`);let qi=0;while(qi<q.length){const[r,c]=q[qi++];for(const[dr,dc] of[[-1,0],[1,0],[0,-1],[0,1]]){const nr=r+dr,nc=c+dc;if(nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;const k=`${nr},${nc}`;if(vis.has(k)) continue;vis.add(k);const g=grid[nr][nc];if(g===CT.BASE||g===CT.SPAWN){q.push([nr,nc]);continue;}if(BSET.has(g)){const t=towers.find(t=>t.row===nr&&t.col===nc);if(t) cands.push(t);}else q.push([nr,nc]);}}if(!cands.length) return null;cands.sort((a,b)=>(a.hp/a.maxHp)-(b.hp/b.maxHp));return cands[0];}
 function destroyTower(t){const i=towers.indexOf(t);if(i===-1) return;towers.splice(i,1);clearTowerGrid(t);for(const e of enemies) if(e.atkTarget===t){e.atkTarget=null;e.mode='move';}if(t.key==='barracks'||t.key==='mech_base'||t.key==='cowboy'||t.key==='necromancer'){for(let ai=allies.length-1;ai>=0;ai--){if(allies[ai]&&allies[ai].towerId===t.id){try{if(allies[ai].explode)allyExplode(allies[ai]);}catch(e){}sparks(allies[ai].x,allies[ai].y,'#ff4444',5,2);allies.splice(ai,1);}}}if(t.key==='heli'){const hi=helicopters.findIndex(h=>h.towerId===t.id);if(hi!==-1) helicopters.splice(hi,1);}if(t.key==='admindrone'){adminDrones=adminDrones.filter(d=>d.towerId!==t.id);}if(selTower===t) hidePanel();bfs();sparks(t.col*CS+CS/2,t.row*CS+CS/2,t.cfg.col,24,3.5);ft(t.col*CS+CS/2,t.row*CS-4,'DESTROYED!','#ff4444');}
-function getBuffsAt(col,row){let dmgMult=1,cdDiv=1,rngMult=1,costReduce=0,goldBonusMult=0;const tx=col*CS+CS/2,ty=row*CS+CS/2;for(const bt of towers){if((bt.key!=='buff'&&bt.key!=='hero_score'&&bt.key!=='hero_sacrifice')||!bt.cfg.buffType) continue;const dx=bt.col*CS+CS/2-tx,dy=bt.row*CS+CS/2-ty;
+function getBuffsAt(col,row){let dmgMult=getSkillDmgMult(),cdDiv=1,rngMult=1,costReduce=0,goldBonusMult=0;const tx=col*CS+CS/2,ty=row*CS+CS/2;for(const bt of towers){if((bt.key!=='buff'&&bt.key!=='hero_score'&&bt.key!=='hero_sacrifice')||!bt.cfg.buffType) continue;const dx=bt.col*CS+CS/2-tx,dy=bt.row*CS+CS/2-ty;
   // For sacrifice temple, use dynamic sacrifice level stats
   const bCfg=(bt.key==='hero_sacrifice')?Object.assign({},bt.cfg,getSacrificeStats(bt)):bt.cfg;
   if(dx*dx+dy*dy>bCfg.rng*bCfg.rng) continue;dmgMult+=(bCfg.dmgBoost||0);cdDiv+=(bCfg.spdBoost||0);rngMult+=(bCfg.rngBoost||0);costReduce+=(bCfg.costReduce||0);goldBonusMult+=(bCfg.goldBonus||0);}return{dmgMult,cdDiv,rngMult,costReduce:Math.min(costReduce,.65),goldBonusMult};}
@@ -5913,7 +6220,7 @@ function showPanel(t){
   selTower=t;hideBasePanel();document.getElementById('up').classList.add('vis');
   document.querySelectorAll('.bb,.ab').forEach(b=>{if(b.style.display!=='none'){b.dataset.hiddenByPanel='1';b.style.display='none';}});
   document.querySelectorAll('.sh').forEach(h=>{if(h.textContent.includes('BUILD')){h.dataset.hiddenByPanel='1';h.style.display='none';}});
-  const c=getCfg(t.key,t.level,t.path);const isChoice=t.key!=='wall'&&t.level===1&&TS[t.key]&&(TS[t.key]['2A']||TS[t.key]['2B']);
+  const c=getCfg(t.key,t.level,t.path,t.evolvedBlaster);const isChoice=t.key!=='wall'&&t.level===1&&TS[t.key]&&(TS[t.key]['2A']||TS[t.key]['2B']);
   const pr=document.getElementById('pr'),ub=document.getElementById('up-btn');
   let title=`${c.name}  LVL ${t.level}`;if(t.level===getML(t.key)) title+=' [MAX]';
   document.getElementById('up-title').textContent=title;
@@ -5932,10 +6239,14 @@ function showPanel(t){
     s+=`\nBLAST DMG: ${c.dmg} + STUN ${(((c.stunDur||150)/60).toFixed(1))}s (hits ALL enemies in blast radius)\nCHARGE: ${(c.chargeTime/60).toFixed(1)}s  RECOVER: ${(c.cd/60).toFixed(1)}s\nDPS (per enemy hit): ${dps}`;
   }
   else{if(c.dmg) s+=`\nDMG: ${c.dmg}`;if(c.rng) s+=`\nRNG: ${c.rng}`;if(c.cd) s+=`\nCD: ${c.cd}`;
-    if(c.dmg&&c.cd){const shots=c.minigun?(c.shots||3):(c.rapidStrike?2:1);const effCd=c.cd/_dpsBf.cdDiv;const dps=Math.round((c.dmg*_dpsBf.dmgMult*shots*60)/effCd);
+    if(c.evolvedRifle){
+      const cycle=((c.burstCd||14)*4+(c.reloadCd||130))/_dpsBf.cdDiv;
+      const dps=cycle>0?Math.round((c.dmg*_dpsBf.dmgMult*4*60)/cycle):0;
+      s+=`\nDPS: ${dps} (burst-fires 4 rounds, then reloads ${((c.reloadCd||130)/60).toFixed(1)}s, single-target)`;
+    } else if(c.dmg&&c.cd){const shots=c.minigun?(c.shots||3):(c.rapidStrike?2:1);const effCd=c.cd/_dpsBf.cdDiv;const dps=Math.round((c.dmg*_dpsBf.dmgMult*shots*60)/effCd);
       let dpsLbl=`\nDPS: ${dps}`;
       if(shots>1) dpsLbl+=` (×${shots} shots/burst, single-target)`;
-      if(c.aoe||c.shockwave) dpsLbl+=` per enemy — hits ALL enemies in ${c.shockwave?'blast':'AoE'} radius`;
+      if(c.aoe||c.shockwave) dpsLbl+=` per enemy — hits ALL enemies in ${c.coneAngle?c.coneAngle+'° cone':(c.shockwave?'blast':'AoE')} radius${c.dmgFalloff?' (up to +65% dmg point-blank, falls off with range)':''}`;
       s+=dpsLbl;
     }
   }
@@ -5993,7 +6304,7 @@ function showPanel(t){
   // === NEXT LEVEL PREVIEW ===
   const nextPreview=document.getElementById('up-next-preview');
   const nextLvl=t.level+1;
-  const nextCfg=nextLvl<=maxLvl?getCfg(t.key,nextLvl,t.path||null):null;
+  const nextCfg=nextLvl<=maxLvl?getCfg(t.key,nextLvl,t.path||null,t.evolvedBlaster):null;
   if(nextCfg&&nextLvl<=maxLvl){
     const nc=nextCfg;
     const upgCost=nc.cost||0;
@@ -6080,7 +6391,7 @@ function showPanel(t){
     const _pCBtn=document.getElementById('pC');if(_pCBtn)_pCBtn.style.display='none';
   } else if(isChoice){
     pr.style.display='flex';ub.style.display='none';
-    const pN=PATH_NAMES[t.key]||{A:'A',B:'B'},pColors=PATH_COLORS[t.key]||{A:'#33aaff',B:'#ff8844'};
+    const pN=(t.key==='basic'&&t.evolvedBlaster)?{A:'🧬 EVOLVED RIFLE',B:'🧬 EVOLVED SHOTGUN'}:(PATH_NAMES[t.key]||{A:'A',B:'B'}),pColors=(t.key==='basic'&&t.evolvedBlaster)?{A:'#ff5522',B:'#ffcc00'}:(PATH_COLORS[t.key]||{A:'#33aaff',B:'#ff8844'});
     const hasB=!!(TS[t.key]&&TS[t.key]['2B']);
     const ucA=getDiscountedUpgCost(t,2,'A');
     const pa=document.getElementById('pA'),pb=document.getElementById('pB'),pCBtn=document.getElementById('pC');
@@ -6128,7 +6439,7 @@ function doUpgrade(path){
   if(MP.active&&!MP.canInteractTower(selTower)){msg(MP.getTowerOwnerMsg(selTower)||'Not your tower',2000);return;}
   const uc=getDiscountedUpgCost(selTower,selTower.level+1,path||selTower.path);
   if(gold<uc){msg('⚠ Not enough gold!');return;}
-  gold-=uc;selTower.totalGoldSpent=(selTower.totalGoldSpent||0)+uc;if(gameMode!=='sandbox'){achStats.totalGoldSpent=(achStats.totalGoldSpent||0)+uc;if(achStats.totalGoldSpent>=50000)unlockAchievement('gambler');if(achStats.totalGoldSpent%5000<uc)saveAchStats();}if(path) selTower.path=path;selTower.level++;selTower.cfg=getCfg(selTower.key,selTower.level,selTower.path);
+  gold-=uc;selTower.totalGoldSpent=(selTower.totalGoldSpent||0)+uc;if(gameMode!=='sandbox'){achStats.totalGoldSpent=(achStats.totalGoldSpent||0)+uc;if(achStats.totalGoldSpent>=50000)unlockAchievement('gambler');if(achStats.totalGoldSpent%5000<uc)saveAchStats();}if(path) selTower.path=path;selTower.level++;selTower.cfg=getCfg(selTower.key,selTower.level,selTower.path,selTower.evolvedBlaster);
   if(MP.active){const lk=selTower.path?selTower.level+''+selTower.path:selTower.level;MP.broadcast('tower:upgrade',{pid:MP.playerId,row:selTower.row,col:selTower.col,newKey:lk});MP.updatePlayerGold();}selTower.maxHp=selTower.cfg.hp;
   if(selTower.key==='healer'&&selTower.path==='A'&&selTower.cfg.baseMaxBonus){baseMaxHP+=selTower.cfg.baseMaxBonus;baseHP=Math.min(baseHP+selTower.cfg.baseMaxBonus,baseMaxHP);ft(BASE_C*CS+CS/2,BASE_R*CS,`MAX HP +${selTower.cfg.baseMaxBonus}`,'#00ccff');}
   if(selTower.key==='heli'){const h=helicopters.find(h=>h.towerId===selTower.id);if(h) syncHelicopterConfig(h,selTower);}
@@ -6405,18 +6716,20 @@ cv.addEventListener('click',e=>{
   if(selBuild==='hero_accel'&&gameMode==='hardcore'&&!hcUnlocked.has('hero_accel')){msg('⚠ Unlock Hero Towers first! (25 pts, unlocks both heroes)',2500);return;}
   if(selBuild==='hero_score'&&!_heroUnlocked&&!(gameMode==='hardcore'&&hcUnlocked.has('hero_score'))){msg('⚠ HERO SCORE MACHINE unlocks when you reach TOP 3 on the leaderboard (or unlock Hero Towers with Upgrade Points in Hardcore — 25 pts, unlocks both heroes)!',3000);return;}
   if(selBuild==='hero_sacrifice'&&typeof isUnlocked==='function'&&!isUnlocked('tower','hero_sacrifice')&&!(gameMode==='hardcore'&&hcUnlocked.has('hero_sacrifice'))){msg('⚠ HERO: SACRIFICE TEMPLE unlocks at Player Level 50 (or unlock Hero Towers with Upgrade Points in Hardcore — 25 pts)!',3000);return;}
-  if((selBuild==='hero_accel'||selBuild==='hero_score'||selBuild==='hero_sacrifice')&&towers.some(t=>t.key==='hero_accel'||t.key==='hero_score'||t.key==='hero_sacrifice')){msg('⚠ Only ONE Hero Tower allowed per game!',2500);return;}
-  if(selBuild==='buff'&&towers.filter(t=>t.key==='buff').length>=3){msg('⚠ Only 3 DJ TOWERS allowed per game!',2500);return;}
+  if((selBuild==='hero_accel'||selBuild==='hero_score'||selBuild==='hero_sacrifice')&&towers.filter(t=>t.key==='hero_accel'||t.key==='hero_score'||t.key==='hero_sacrifice').length>=getHeroLimit()){msg('⚠ Only '+getHeroLimit()+' Hero Tower(s) allowed per game! (Upgrade in Skill Tree 🌳)',2500);return;}
+  if((selBuild==='hero_accel'||selBuild==='hero_score'||selBuild==='hero_sacrifice')&&towers.some(t=>t.key===selBuild)){msg('⚠ You already placed this Hero Tower! Each hero type can only be placed once.',2500);return;}
+  if(selBuild==='buff'&&towers.filter(t=>t.key==='buff').length>=getDjLimit()){msg('⚠ Only '+getDjLimit()+' DJ TOWERS allowed per game! (Upgrade in Skill Tree 🌳)',2500);return;}
   // === HARDCORE: General allowed-set guard (catches any bypass path) ===
   {const _hcEa=gameMode==='hardcore'?getHcAllowed():null;
    if(_hcEa&&!_hcEa.has(selBuild)){msg('⚠ Tower locked — unlock via Upgrade Points!',2500);return;}}
-  const cfg=getCfg(selBuild,1,null);const actualCost=getDiscountedCost(selBuild,col,row);
+  const _evoVariant=(selBuild==='basic')?getEvolvedBlasterVariant():null;
+  const cfg=getCfg(selBuild,1,null,_evoVariant);const actualCost=getDiscountedCost(selBuild,col,row);
   if(gold<actualCost){msg('⚠ Insufficient gold!');return;}
   grid[row][col]=cfg.t;bfs();const saved=cfg.cost-actualCost;gold-=actualCost;if(gameMode!=='sandbox'){achStats.totalGoldSpent=(achStats.totalGoldSpent||0)+actualCost;if(achStats.totalGoldSpent>=50000)unlockAchievement('gambler');if(achStats.totalGoldSpent%5000<actualCost)saveAchStats();}
-  const newTower={row,col,key:selBuild,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,angle:0,level:1,path:null,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],owner:MP.active?MP.playerId:null,ownerColor:MP.active?PLAYER_COLORS[MP.colorIndex]:'#00ff88',ownerName:MP.active?MP.playerName:'YOU',totalDmgDealt:0,totalKills:0,totalGoldSpent:actualCost,skins:{...mgEquipped}};
+  const newTower={row,col,key:selBuild,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,angle:0,level:1,path:null,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],owner:MP.active?MP.playerId:null,ownerColor:MP.active?PLAYER_COLORS[MP.colorIndex]:'#00ff88',ownerName:MP.active?MP.playerName:'YOU',totalDmgDealt:0,totalKills:0,totalGoldSpent:actualCost,skins:{...mgEquipped},evolvedBlaster:_evoVariant};
   towers.push(newTower);if(selBuild!=='wall'){_sessionTowerTypes.add(selBuild);}_sessionAllTypes.add(selBuild);if(selBuild==='wall')_sessionWallCount++;
   if(typeof checkAchievements_towerPlaced==='function') checkAchievements_towerPlaced(selBuild);
-  if(MP.active){MP.broadcast('tower:place',{pid:MP.playerId,row,col,key:selBuild,lvl:1,colorIdx:MP.colorIndex,name:MP.playerName,skins:{...mgEquipped}});MP.updatePlayerGold();}if(selBuild==='heli') spawnHelicopter(newTower);if(selBuild==='admindrone') spawnAdminDrones(newTower);  if(selBuild==='barracks'||selBuild==='mech_base'){newTower.allySpawnCd=0;}
+  if(MP.active){MP.broadcast('tower:place',{pid:MP.playerId,row,col,key:selBuild,lvl:1,colorIdx:MP.colorIndex,name:MP.playerName,skins:{...mgEquipped},evolvedBlaster:_evoVariant});MP.updatePlayerGold();}if(selBuild==='heli') spawnHelicopter(newTower);if(selBuild==='admindrone') spawnAdminDrones(newTower);  if(selBuild==='barracks'||selBuild==='mech_base'){newTower.allySpawnCd=0;}
   if(selBuild==='silo'){newTower.siloCd=0;newTower.siloTarget=null;newTower.siloFiring=false;newTower.siloBeamLife=0;newTower.siloFrozenX=null;newTower.siloFrozenY=null;newTower.siloReticleFrozen=false;newTower.siloBeamHold=0;}
   sparks(col*CS+CS/2,row*CS+CS/2,cfg.col,7,1.5);if(saved>0) ft(col*CS+CS/2,row*CS-14,`DISCOUNT -${saved}g!`,'#ffd700');
   if(pathBlocked) msg('⚠ Path sealed! Enemies will breach!',2500);syncUI();
@@ -6656,7 +6969,7 @@ if(negativeWaveMode){
   else msg('\u26a0 NEGATIVE WAVE '+wave+' \u2014 REALITY IS DETERIORATING',3500);
   syncUI();return;
 }
-wave++;_negWaveClickCount=0;
+wave++;_negWaveClickCount=0;trackBlasterEvolveProgress();
 waveOn=true;if(gameMode==='hardcore'&&wave===100){updateModeUI();ft(W/2,H/2-60,'❄ ICE TOWER UNLOCKED!','#88ddff');sparks(W/2,H/2,'#88ddff',25,5);msg('❄ ICE TOWER is now available! (Wave 100+)',4000);}const wt=pickWaveType(wave);curWaveType=wt;const wdef=WAVE_TYPES[wt];const bon=Math.round((40+wave*6)*MODES[gameMode].goldBonus);gold+=bon;ft(W/2,H/2-16,`+${bon}g WAVE BONUS`,'#ffd700');if(wave>achStats.maxWave){achStats.maxWave=wave;saveAchStats();}if(gold>(achStats.maxSingleGameGold||0)&&gameMode!=='sandbox'){achStats.maxSingleGameGold=gold;}if(gameMode==='hardcore'&&wave>(achStats.maxWaveHardcore||0)){achStats.maxWaveHardcore=wave;saveAchStats();}if(wave>=100)unlockAchievement('inf_guard_1');if(wave>=200)unlockAchievement('inf_guard_2');if(wave>=300)unlockAchievement('inf_guard_3');if(wave>=600)unlockAchievement('inf_guard_4');if(wave>=1000)unlockAchievement('inf_guard_5');
     
     if(wave>=50&&_sessionTowerTypes.size===1)unlockAchievement('why_this_tower');
@@ -6816,6 +7129,36 @@ let mgMoney=parseFloat(localStorage.getItem('mg_money')||'0')||0;
 let mgBackpack=JSON.parse(localStorage.getItem('mg_backpack')||'{}');
 let mgEquipped=JSON.parse(localStorage.getItem('mg_equipped')||'{}');
 let mgMoneySaveTimer=null;
+const CREATOR_EMAIL='limziyuan87788790@gmail.com';
+const CREATOR_INF_MONEY=999999999;
+function isCreatorAccount(){return typeof currentUser!=='undefined'&&currentUser&&currentUser.email===CREATOR_EMAIL;}
+function enforceCreatorMoney(){
+  if(isCreatorAccount()&&mgMoney<CREATOR_INF_MONEY){
+    mgMoney=CREATOR_INF_MONEY;
+    localStorage.setItem('mg_money',mgMoney.toFixed(4));
+    const hud=document.getElementById('shop-modal-money');if(hud)hud.textContent='$'+mgMoney.toFixed(2);
+    const gEl=document.getElementById('skilltree-gold');if(gEl)gEl.textContent='$'+mgMoney.toFixed(2);
+  }
+  if(isCreatorAccount()) enforceCreatorEvolvedTowers();
+}
+setInterval(enforceCreatorMoney,1000);
+function enforceCreatorEvolvedTowers(){
+  let changed=false;
+  if(typeof blasterEvolveProgress!=='undefined'&&blasterEvolveProgress<100){
+    blasterEvolveProgress=100;
+    localStorage.setItem(BLASTER_EVOLVE_KEY,'100');
+  }
+  for(const it of SHOP_ITEMS){
+    if(it.slot&&it.slot.endsWith('_evolve')){
+      if(!(mgBackpack[it.id]>0)){mgBackpack[it.id]=1;changed=true;}
+      // only grant ownership here — don't force-equip every tick, or the player can never unequip it
+    }
+  }
+  if(changed){
+    localStorage.setItem('mg_backpack',JSON.stringify(mgBackpack));
+    localStorage.setItem('mg_equipped',JSON.stringify(mgEquipped));
+  }
+}
 function mgEarnMoney(killCount){
   if(typeof gameMode!=='undefined'&&gameMode==='sandbox') return;
   mgMoney+=killCount*MG_MONEY_PER_KILL;
@@ -6827,17 +7170,26 @@ function mgSaveBackpack(){ localStorage.setItem('mg_backpack',JSON.stringify(mgB
 function mgSaveEquipped(){ localStorage.setItem('mg_equipped',JSON.stringify(mgEquipped)); }
 window.addEventListener('beforeunload',()=>{ localStorage.setItem('mg_money',mgMoney.toFixed(4)); });
 
+const BLASTER_EVOLVE_KEY='bs_blaster_eprog';
+let blasterEvolveProgress=parseInt(localStorage.getItem(BLASTER_EVOLVE_KEY)||'0')||0;
+function trackBlasterEvolveProgress(){
+  if(blasterEvolveProgress>=100) return;
+  if(!towers.some(tw=>tw.key==='basic')) return;
+  blasterEvolveProgress=Math.min(100,blasterEvolveProgress+1);
+  localStorage.setItem(BLASTER_EVOLVE_KEY,String(blasterEvolveProgress));
+}
 const SHOP_ITEMS=[
-  {id:'skin_classic_tesla',name:'CLASSIC TESLA SKIN',icon:'⚡',price:50,desc:'Restores the original TESLA tower look on all Electric towers.',type:'skin',slot:'electric',maxOwn:1},
-  {id:'skin_golden_blaster',name:'GOLDEN BLASTER SKIN',icon:'🟡',price:2000,desc:'Recolors all Blaster/Minigun/Shockwave towers gold, with a glowing rim and sparkle.',type:'skin',slot:'basic',maxOwn:1},
-  {id:'skin_golden_cannon',name:'GOLDEN CANNON SKIN',icon:'🟡',price:2000,desc:'Reforges all Cannon towers in gleaming gold — gilded barrel, golden housing, and a sparkling muzzle flash with every shot.',type:'skin',slot:'cannon',maxOwn:1},
-  {id:'skin_laser_sans',name:'GASTER BLASTER SKIN',icon:'💀',price:60,desc:'Bone-white Gaster Blaster skull housing with a glowing eye for all Laser towers. Its look grows more menacing with every upgrade — horns, cracks, and a burning aura appear at higher levels.',type:'skin',slot:'laser',maxOwn:1},
-  {id:'skin_void_railgun',name:'VOID RAILGUN SKIN',icon:'🌌',price:100,desc:'Recasts the 2x2 Railgun Cannon in obsidian-black void armor with a swirling purple accretion disk and a miniature event horizon. Fires a purple void beam instead of the default color, and grows more intense — extra rings, tendrils, and crackling void lightning — with every upgrade.',type:'skin',slot:'railgun_cannon',maxOwn:1},
-  {id:'skin_sukuna_spike',name:'SUKUNA SPIKE SKIN',icon:'🔴',price:50,desc:'A recolored spike housing with some eye markings and a dark aura. Attacks get a red crescent slash effect. Nothing too fancy.',type:'skin',slot:'spike',maxOwn:1},
-  {id:'skin_yuji_hunter',name:'YUJI SKIN',icon:'⚫',price:100,desc:'Recolors the Hunter tower with a black/pink tactical look. Critical hits trigger a BLACK FLASH — a burst of pure black shockwave dealing bonus damage.',type:'skin',slot:'hunter',maxOwn:1},
-  {id:'skin_fortress_wall',name:'FORTRESS WALL SKIN',icon:'🧱',price:50,desc:'Adjacent walls fuse into one seamless stone rampart — borders vanish between connected walls so your line looks like a single solid fortress instead of separate tiles.',type:'skin',slot:'wall',maxOwn:1},
-  {id:'skin_fire_cannon',name:'FIRE CANNON SKIN',icon:'🔥',price:75,desc:'Reforges the CANNON tower in cracked obsidian with glowing molten lava veins, an ember-lit barrel bore, and a smoldering muzzle that showers embers with every shot.',type:'skin',slot:'cannon',maxOwn:1},
+  {id:'skin_classic_tesla',name:'CLASSIC TESLA SKIN',icon:'⚡',price:150,desc:'Restores the original TESLA tower look on all Electric towers.',type:'skin',slot:'electric',maxOwn:1},
+  {id:'skin_golden_blaster',name:'GOLDEN BLASTER SKIN',icon:'🟡',price:6000,desc:'Recolors all Blaster/Minigun/Shockwave towers gold, with a glowing rim and sparkle.',type:'skin',slot:'basic',maxOwn:1},
+  {id:'skin_golden_cannon',name:'GOLDEN CANNON SKIN',icon:'🟡',price:6000,desc:'Reforges all Cannon towers in gleaming gold — gilded barrel, golden housing, and a sparkling muzzle flash with every shot.',type:'skin',slot:'cannon',maxOwn:1},
+  {id:'skin_laser_sans',name:'GASTER BLASTER SKIN',icon:'💀',price:180,desc:'Bone-white Gaster Blaster skull housing with a glowing eye for all Laser towers. Its look grows more menacing with every upgrade — horns, cracks, and a burning aura appear at higher levels.',type:'skin',slot:'laser',maxOwn:1},
+  {id:'skin_void_railgun',name:'VOID RAILGUN SKIN',icon:'🌌',price:300,desc:'Recasts the 2x2 Railgun Cannon in obsidian-black void armor with a swirling purple accretion disk and a miniature event horizon. Fires a purple void beam instead of the default color, and grows more intense — extra rings, tendrils, and crackling void lightning — with every upgrade.',type:'skin',slot:'railgun_cannon',maxOwn:1},
+  {id:'skin_sukuna_spike',name:'SUKUNA SPIKE SKIN',icon:'🔴',price:150,desc:'A recolored spike housing with some eye markings and a dark aura. Attacks get a red crescent slash effect. Nothing too fancy.',type:'skin',slot:'spike',maxOwn:1},
+  {id:'skin_yuji_hunter',name:'YUJI SKIN',icon:'⚫',price:300,desc:'Recolors the Hunter tower with a black/pink tactical look. Critical hits trigger a BLACK FLASH — a burst of pure black shockwave dealing bonus damage.',type:'skin',slot:'hunter',maxOwn:1},
+  {id:'skin_fortress_wall',name:'FORTRESS WALL SKIN',icon:'🧱',price:150,desc:'Adjacent walls fuse into one seamless stone rampart — borders vanish between connected walls so your line looks like a single solid fortress instead of separate tiles.',type:'skin',slot:'wall',maxOwn:1},
+  {id:'skin_fire_cannon',name:'FIRE CANNON SKIN',icon:'🔥',price:225,desc:'Reforges the CANNON tower in cracked obsidian with glowing molten lava veins, an ember-lit barrel bore, and a smoldering muzzle that showers embers with every shot.',type:'skin',slot:'cannon',maxOwn:1},
   {id:'skin_legend_blaster',name:'LIVING LEGEND BLASTER SKIN',icon:'🌟',price:0,desc:'An exclusive star-forged blaster housing with a radiant golden-white aura and a trailing comet effect on every shot. Reserved for true legends.',type:'skin',slot:'basic',maxOwn:1,reqAch:'living_legend'},
+  {id:'evolve_blaster',name:'EVOLVED BLASTER',icon:'🧬',price:18000,desc:'Unlock permanently, then equip so every NEW Blaster tower you place can evolve. At its first upgrade, choose a path in the field — RIFLE (bigger damage, burst-fires 4 rounds then reloads, summons allies from your base, detects flying enemies) or SHOTGUN (close-range AOE blast damage, immune to being stunned, detects hidden enemies). Already-placed towers are unaffected. Requires 100 rounds played with a Blaster tower on the field.',type:'skin',slot:'basic_evolve',maxOwn:1,reqBlasterRounds:100},
 ];
 (function mgSanitizeEquippedSlots(){
   // in case an older save has two skins equipped on the same slot (a bug from before this fix), keep only one per slot
@@ -6855,6 +7207,7 @@ function mgBuyShopItem(id){
   if(!item||mgMoney<item.price) return false;
   if(item.maxOwn&&(mgBackpack[id]||0)>=item.maxOwn) return false;
   if(item.reqAch&&!earnedAchievements.has(item.reqAch)) return false;
+  if(item.reqBlasterRounds&&blasterEvolveProgress<item.reqBlasterRounds) return false;
   mgMoney-=item.price;
   mgBackpack[id]=(mgBackpack[id]||0)+1;
   localStorage.setItem('mg_money',mgMoney.toFixed(4));
@@ -6889,7 +7242,8 @@ function mgRenderShopModal(){
     content.innerHTML=`<div class="shop-grid">${SHOP_ITEMS.map(i=>{
       const owned=mgBackpack[i.id]||0;
       const maxedOut=i.maxOwn&&owned>=i.maxOwn;
-      const locked=i.reqAch&&!earnedAchievements.has(i.reqAch);
+      const roundsLocked=!!(i.reqBlasterRounds&&blasterEvolveProgress<i.reqBlasterRounds);
+      const locked=(i.reqAch&&!earnedAchievements.has(i.reqAch))||roundsLocked;
       const afford=mgMoney>=i.price&&!maxedOut&&!locked;
       const reqAchDef=i.reqAch?ACHIEVEMENTS.find(a=>a.id===i.reqAch):null;
       const btnLabel=maxedOut?'OWNED':(locked?'🔒 LOCKED':(i.price===0?'CLAIM':'$'+i.price));
@@ -6899,8 +7253,9 @@ function mgRenderShopModal(){
           <div class="shop-n">${i.name}${owned?` <span class="shop-owned">${maxedOut?'OWNED':'x'+owned}</span>`:''}</div>
           <div class="shop-d">${i.desc}</div>
           ${reqAchDef?`<div class="shop-req" style="font-size:9px;font-weight:bold;letter-spacing:.5px;margin-top:3px;color:${locked?'#ff6644':'#00ff88'};">${locked?'🔒 REQUIRES: ':'✓ UNLOCKED: '}${reqAchDef.icon} ${reqAchDef.name}</div>`:''}
+          ${i.reqBlasterRounds?`<div class="shop-req" style="font-size:9px;font-weight:bold;letter-spacing:.5px;margin-top:3px;color:${roundsLocked?'#ff6644':'#00ff88'};">${roundsLocked?'🔒 REQUIRES: ':'✓ UNLOCKED: '}${Math.min(blasterEvolveProgress,i.reqBlasterRounds)}/${i.reqBlasterRounds} rounds with Blaster</div>`:''}
         </div>
-        <button class="shop-buy-btn-big" data-id="${i.id}" ${afford?'':'disabled'} ${locked?'title="Locked — earn the required achievement first"':''}>${btnLabel}</button>
+        <button class="shop-buy-btn-big" data-id="${i.id}" ${afford?'':'disabled'} ${locked?'title="Locked — play more rounds with a Blaster tower first"':''}>${btnLabel}</button>
       </div>`;
     }).join('')}</div>`;
     content.querySelectorAll('.shop-buy-btn-big').forEach(btn=>{
@@ -7423,7 +7778,8 @@ function update(){
   updateHelicopters();
   updateAllies();
   if(baseUpgPath==='A'&&baseUpgLevel>0){const upd=BASE_UPG.A[baseUpgLevel];baseTurretCd--;if(baseTurretCd<=0){let closest=null,bd=Infinity;for(const e of enemies){if(e.isHidden) continue;const dx=e.x-bx,dy=e.y-by,d=dx*dx+dy*dy;if(d<=upd.turretRng*upd.turretRng&&d<bd){bd=d;closest=e;}}if(closest){baseTurretAngle=Math.atan2(closest.y-by,closest.x-bx);baseTurretCd=upd.turretCd;const effDmg=Math.round(upd.turretDmg*getBuffsAt(BASE_C,BASE_R).dmgMult);projs.push({x:bx,y:by,tgt:closest,lastX:closest.x,lastY:closest.y,spd:9,dmg:effDmg,aoe:0,chn:0,col:'#00ff88',sz:3,type:'normal'});sparks(bx,by,'#00ff88',4,1.2);}}}
-  for(const t of towers){if(t.hitFlash>0) t.hitFlash--;if(t.huntBuffTimer>0){t.huntBuffTimer--;if(t.huntBuffTimer<=0){t.huntBuffDmg=0;t.huntBuffRng=0;}}if(t.stunned>0){t.stunned--;continue;}const cfg=t.cfg;if(cfg.megaBlaster){if(t.overheated){t.heat=Math.max(0,t.heat-(cfg.heatDecay||.12)*(cfg.overheatDecayMult||2.2));if(t.heat<=0){t.overheated=false;ft(t.col*CS+CS*2,t.row*CS+CS*2-CS*2-6,'⚙ READY',cfg.col);sparks(t.col*CS+CS*2,t.row*CS+CS*2,'#66ccff',10,2);}}else if((t.coolDelay||0)>0){t.coolDelay--;}else if((t.heat||0)>0){t.heat=Math.max(0,t.heat-(cfg.heatDecay||.12));}if(t.cannonCd>0) t.cannonCd--;}if(cfg.teslaEnergyPath){t.teslaEnergy=Math.min(cfg.energyMax,(t.teslaEnergy||0)+cfg.energyRegen);if(t.teslaEnergy>=cfg.energyMax) t.teslaCharging=false;}if(cfg.railgunTower){
+  for(const t of towers){if(t.hitFlash>0) t.hitFlash--;if(t.huntBuffTimer>0){t.huntBuffTimer--;if(t.huntBuffTimer<=0){t.huntBuffDmg=0;t.huntBuffRng=0;}}if(t.stunned>0){t.stunned--;continue;}const cfg=t.cfg;if(cfg.megaBlaster){if(t.overheated){t.heat=Math.max(0,t.heat-(cfg.heatDecay||.12)*(cfg.overheatDecayMult||2.2));if(t.heat<=0){t.overheated=false;ft(t.col*CS+CS*2,t.row*CS+CS*2-CS*2-6,'⚙ READY',cfg.col);sparks(t.col*CS+CS*2,t.row*CS+CS*2,'#66ccff',10,2);}}else if((t.coolDelay||0)>0){t.coolDelay--;}else if((t.heat||0)>0){t.heat=Math.max(0,t.heat-(cfg.heatDecay||.12));}if(t.cannonCd>0) t.cannonCd--;}
+if(cfg.basicMinigun){const mtx=t.col*CS+CS/2,mty=t.row*CS+CS/2;if(t.overheated){t.heat=Math.max(0,(t.heat||0)-(cfg.heatDecay||.09)*(cfg.overheatDecayMult||2.4));if(t.heat<=0){t.overheated=false;ft(mtx,mty-CS*.7,'⚙ READY',cfg.col);sparks(mtx,mty,'#66ccff',6,1.6);}}else if((t.mgCoolDelay||0)>0){t.mgCoolDelay--;}else if((t.heat||0)>0){t.heat=Math.max(0,(t.heat||0)-(cfg.heatDecay||.09));}}if(cfg.teslaEnergyPath){t.teslaEnergy=Math.min(cfg.energyMax,(t.teslaEnergy||0)+cfg.energyRegen);if(t.teslaEnergy>=cfg.energyMax) t.teslaCharging=false;}if(cfg.railgunTower){
   const rFireCol=(t.skins?t.skins['skin_void_railgun']:mgEquipped['skin_void_railgun'])?'#a855ff':cfg.col;
   if(t.cd>0){t.cd--;/* passive charge while on cooldown: accumulate overcharge up to 3x */if(enemies.length===0){t.passiveCharge=(t.passiveCharge||0)+1;}continue;}
   const rsz=CS*(t.size||1);
@@ -7806,10 +8162,18 @@ if(cfg.t===CT.ALCH&&cfg.alchTower){
 }
 if(cfg.t===CT.FLAME&&cfg.flameTower){if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effRng=cfg.rng*bfx.rngMult;const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const ftx=t.col*CS+CS/2,fty=t.row*CS+CS/2;let fTgt=null,fbd=Infinity;for(const e of enemies){if(e.flying||e.isHidden) continue;const dx=e.x-ftx,dy=e.y-fty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<fbd){fbd=dEff;fTgt=e;}}if(!fTgt) continue;t.angle=Math.atan2(fTgt.y-fty,fTgt.x-ftx);t.cd=effCd;const flameHits=enemies.filter(e=>{if(e.isHidden) return false;const dx=e.x-ftx,dy=e.y-fty;return dx*dx+dy*dy<=cfg.aoe*cfg.aoe*bfx.rngMult*bfx.rngMult;});for(const e of flameHits){if(mirrorBlocked(e,t.key)) continue;const d=applyArmor(e,effDmg);e.hp-=d;mirrorTrack(e,t.key,d);if(cfg.burnDmg&&cfg.burnDur){e.burnDmg=Math.max(e.burnDmg,cfg.burnDmg);e.burnDur=Math.max(e.burnDur,cfg.burnDur);}if(cfg.armorShred){e.armorShred=Math.max(e.armorShred,cfg.armorShred);e.shredDur=Math.max(e.shredDur,cfg.shredDur||150);}}for(let fi=0;fi<8;fi++){const fa=t.angle+(Math.random()-.5)*.7,fs=2+Math.random()*3.5,fd=8+Math.random()*12;parts.push({x:ftx+Math.cos(t.angle)*fd,y:fty+Math.sin(t.angle)*fd,vx:Math.cos(fa)*fs,vy:Math.sin(fa)*fs,life:14+Math.random()*10,ml:24,col:['#ff4400','#ff6600','#ff8800','#ffaa00','#ffcc00'][Math.floor(Math.random()*5)],sz:3+Math.random()*3});}if(flameHits.length>0){for(let fj=0;fj<4;fj++){const fdx=fTgt.x-ftx,fdy=fTgt.y-fty,fdist=Math.sqrt(fdx*fdx+fdy*fdy)||1;const fmid=.3+Math.random()*.5;parts.push({x:ftx+fdx*fmid+(Math.random()-.5)*12,y:fty+fdy*fmid+(Math.random()-.5)*12,vx:(Math.random()-.5)*1.2,vy:-Math.random()*1.5,life:10+Math.random()*8,ml:18,col:['#ff4400','#ff8800','#ffcc00'][Math.floor(Math.random()*3)],sz:2+Math.random()*2.5});}}continue;}if(cfg.t===CT.BHOLE&&cfg.bhTower){t.angle+=.015;if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effRng=cfg.rng*bfx.rngMult;const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const btx=t.col*CS+CS/2,bty=t.row*CS+CS/2;const pDist=cfg.pullDist||28;const maxExp=cfg.bhMaxExp||300;t.cd=effCd;let pulled=0;for(const e of enemies){if(e.flying||e.isHidden) continue;const dx=e.x-btx,dy=e.y-bty,dist=Math.sqrt(dx*dx+dy*dy);if(dist>effRng||dist<5) continue;if(e.bhImmune) continue;const resist=Math.max(0,1-e.bhExposure/maxExp);if(resist<=0){e.bhImmune=true;ft(e.x,e.y-e.sz-6,'IMMUNE!','#aa44ff');continue;}const yank=Math.min(dist-5,pDist*resist);e.x-=dx/dist*yank;e.y-=dy/dist*yank;e.bhExposure+=8+(e.isBoss?12:0);if(mirrorBlocked(e,t.key)){pulled++;sparks(e.x,e.y,'#aa44ff',3,1.2);continue;}const dmg=applyArmor(e,effDmg);e.hp-=dmg;mirrorTrack(e,t.key,dmg);pulled++;sparks(e.x,e.y,'#aa44ff',3,1.2);}if(pulled>0){sparks(btx,bty,'#cc66ff',16,3.5);ft(btx,bty-18,'PULL!','#aa44ff');shockwaves.push({ox:btx,oy:bty,r:10,maxR:effRng,spd:8,dmg:0,col:'#aa44ff',life:1,hit:new Set(),width:2});}continue;}if(cfg.t===CT.LASER&&cfg.laserTower&&cfg.hydraBeam){const bfx=getBuffsAt(t.col,t.row);const effRng=cfg.rng*bfx.rngMult;const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const ltx=t.col*CS+CS*(t.size||1)/2,lty=t.row*CS+CS*(t.size||1)/2;const beamN=cfg.beamCount||6;if(!t.laserTargets) t.laserTargets=[];t.laserTargets=t.laserTargets.filter(e=>e&&enemies.includes(e)&&e.hp>0);const inRange=enemies.filter(e=>{if(e.flying||e.isHidden) return false;const dx=e.x-ltx,dy=e.y-lty;return dx*dx+dy*dy<=effRng*effRng;});if(inRange.length<=1){t.laserTargets=inRange.length===1?[inRange[0]]:[];}else{t.laserTargets=t.laserTargets.filter(e=>inRange.includes(e));const sorted=[...inRange].sort((a,b)=>{const da=(a.x-ltx)*(a.x-ltx)+(a.y-lty)*(a.y-lty),db=(b.x-ltx)*(b.x-ltx)+(b.y-lty)*(b.y-lty);return da-db;});for(const e of sorted){if(t.laserTargets.length>=beamN) break;if(!t.laserTargets.includes(e)) t.laserTargets.push(e);}if(t.laserTargets.length>beamN) t.laserTargets.length=beamN;}if(t.laserTargets.length>0){t.angle=Math.atan2(t.laserTargets[0].y-lty,t.laserTargets[0].x-ltx);t.laserFiring++;if(t.laserFiring%Math.max(1,cfg.cd)===0&&t.laserStacks<(cfg.maxStacks||24)) t.laserStacks++;const perBeamDmg=effDmg+t.laserStacks*(cfg.stackDmg||2);const converged=t.laserTargets.length===1;for(const tgt of t.laserTargets){if(mirrorBlocked(tgt,t.key)) continue;const hits=converged?Math.ceil(beamN/2):1;const finalD=applyArmor(tgt,Math.round(perBeamDmg*hits*bfx.dmgMult));tgt.hp-=finalD;mirrorTrack(tgt,t.key,finalD);}}else{t.laserStacks=Math.floor(t.laserStacks*.6);t.laserFiring=0;}continue;}if(cfg.t===CT.LASER&&cfg.laserTower){const bfx=getBuffsAt(t.col,t.row);const effRng=cfg.rng*bfx.rngMult;const effDmg=Math.round(cfg.dmg*bfx.dmgMult);const ltx=t.col*CS+CS*(t.size||1)/2,lty=t.row*CS+CS*(t.size||1)/2;let curTgt=t.laserTarget;if(curTgt&&(!enemies.includes(curTgt)||curTgt.hp<=0)){curTgt=null;t.laserTarget=null;t.laserStacks=Math.floor(t.laserStacks*.6);t.laserFiring=0;}if(curTgt){const dx=curTgt.x-ltx,dy=curTgt.y-lty;if(dx*dx+dy*dy>effRng*effRng){curTgt=null;t.laserTarget=null;t.laserStacks=Math.floor(t.laserStacks*.6);t.laserFiring=0;}}if(!curTgt){let bd=Infinity;for(const e of enemies){if(e.flying||e.isHidden) continue;const dx=e.x-ltx,dy=e.y-lty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;curTgt=e;}}if(curTgt){t.laserTarget=curTgt;t.laserStacks=0;t.laserFiring=0;if(cfg.heroTower){t.laserCharge=(t.laserWasIdle!==false)?(cfg.chargeTime||60):0;}t.laserWasIdle=false;}else{t.laserWasIdle=true;}}if(curTgt){t.angle=Math.atan2(curTgt.y-lty,curTgt.x-ltx);if(t.laserCharge>0){t.laserCharge--;continue;}t.laserFiring++;if(t.laserFiring%Math.max(1,cfg.cd)===0&&t.laserStacks<(cfg.maxStacks||15)){t.laserStacks++;if(cfg.laserStun&&t.laserStacks%(cfg.stunEvery||4)===0&&!curTgt.stunImmune){applyStun(curTgt,cfg.stunDur||40);ft(curTgt.x,curTgt.y-curTgt.sz-8,'⚡STUN',cfg.col);sparks(curTgt.x,curTgt.y,cfg.col,6,1.5);}}const sDmg=effDmg+t.laserStacks*(cfg.stackDmg||2);if(mirrorBlocked(curTgt,t.key)){}else{const finalD=applyArmor(curTgt,Math.round(sDmg*bfx.dmgMult));curTgt.hp-=finalD;mirrorTrack(curTgt,t.key,finalD);}if(cfg.crystalMax&&cfg.crystalMax>0&&t.laserFiring>0&&t.laserFiring%(cfg.crystalCharge||100)===0){const myCrystals=crystals.filter(cr=>cr.ownerId===t.id);if(myCrystals.length<cfg.crystalMax){const ca=Math.random()*Math.PI*2,cd2=22+Math.random()*14;crystals.push({ownerId:t.id,x:ltx+Math.cos(ca)*cd2,y:lty+Math.sin(ca)*cd2,life:cfg.crystalLife||360,maxLife:cfg.crystalLife||360,dmg:Math.max(2,Math.round(sDmg*(cfg.crystalDmgR||.4))),rng:effRng*.6,angle:0,target:null,col:cfg.col,bobPhase:Math.random()*Math.PI*2});ft(ltx,lty-14,'💎 CRYSTAL!',cfg.col);sparks(ltx+Math.cos(ca)*cd2,lty+Math.sin(ca)*cd2,cfg.col,10,2);}}}continue;}if(cfg.t===CT.HEALER){if(!t.healCd) t.healCd=0;t.healCd--;if(t.healCd<=0){t.healCd=cfg.healTick||60;const tx=t.col*CS+CS/2,ty=t.row*CS+CS/2;for(const ot of towers){if(ot===t) continue;const ddx=ot.col*CS+CS/2-tx,ddy=ot.row*CS+CS/2-ty;if(ddx*ddx+ddy*ddy<=(cfg.rng||110)**2){if(ot.hp<ot.maxHp){ot.hp=Math.min(ot.maxHp,ot.hp+(cfg.healAmt||7));addBeam(tx,ty,ot.col*CS+CS/2,ot.row*CS+CS/2);}if((cfg.healStunReduce||0)>0&&ot.stunned>0) ot.stunned=Math.max(0,ot.stunned-cfg.healStunReduce);}}if(t.path==='A'&&cfg.baseHealAmt&&baseHP<baseMaxHP){baseHP=Math.min(baseMaxHP,baseHP+cfg.baseHealAmt);syncUI();}}continue;}if(!cfg.rng){t.cd=0;continue;}
 if(cfg.megaBlaster&&t.overheated) continue;
-if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult*(1+(t.huntBuffDmg||0)));const effRng=cfg.rng*bfx.rngMult*(1+(t.huntBuffRng||0));const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const tx=t.col*CS+CS*(t.size||1)/2,ty=t.row*CS+CS*(t.size||1)/2;const _gbSkin=cfg.t===CT.BASIC&&(t.skins?t.skins['skin_golden_blaster']:mgEquipped['skin_golden_blaster']);const gbCol=_gbSkin?'#ffd700':cfg.col;if(cfg.shockwave){let closest=null,bd=Infinity;for(const e of enemies){if(e.flying&&!cfg.antiAir) continue;if(e.isHidden&&!canSeeHidden(cfg)) continue;const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;closest=e;}}if(!closest) continue;t.cd=effCd;
+if(cfg.basicMinigun&&t.overheated) continue;
+if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.round(cfg.dmg*bfx.dmgMult*(1+(t.huntBuffDmg||0)));const effRng=cfg.rng*bfx.rngMult*(1+(t.huntBuffRng||0));const effCd=Math.max(1,Math.round(cfg.cd/bfx.cdDiv));const tx=t.col*CS+CS*(t.size||1)/2,ty=t.row*CS+CS*(t.size||1)/2;const _gbSkin=cfg.t===CT.BASIC&&!t.evolvedBlaster&&(t.skins?t.skins['skin_golden_blaster']:mgEquipped['skin_golden_blaster']);const gbCol=_gbSkin?'#ffd700':cfg.col;if(cfg.evolvedRifle){if(t.rifleShotsLeft===undefined) t.rifleShotsLeft=cfg.shotsPerBurst||4;if(t.rifleReloading===undefined) t.rifleReloading=0;if(t.rifleReloading>0){t.rifleReloading--;if(t.rifleReloading<=0){t.rifleShotsLeft=cfg.shotsPerBurst||4;}continue;}let rTgt=null,rbd=Infinity;for(const e of enemies){if(e.flying&&!cfg.antiAir) continue;if(e.isHidden&&!canSeeHidden(cfg)) continue;const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<rbd){rbd=dEff;rTgt=e;}}if(!rTgt) continue;t.angle=Math.atan2(rTgt.y-ty,rTgt.x-tx);t.cd=Math.max(1,Math.round((cfg.burstCd||14)/bfx.cdDiv));projs.push({x:tx+(Math.random()-.5)*4,y:ty+(Math.random()-.5)*4,tgt:rTgt,lastX:rTgt.x,lastY:rTgt.y,spd:8,dmg:effDmg,aoe:0,chn:0,col:gbCol,sz:2.5,type:'normal',src:t});sparks(tx,ty,gbCol,3,1.6);t.rifleShotsLeft--;if(t.rifleShotsLeft<=0){t.rifleReloading=Math.max(1,Math.round((cfg.reloadCd||130)/bfx.cdDiv));ft(tx,ty-CS*.6,'RELOADING…','#ff8844');}continue;}if(cfg.shockwave){let closest=null,bd=Infinity,_swCrowdCt=0;for(const e of enemies){if(e.flying&&!cfg.antiAir) continue;if(e.isHidden&&!canSeeHidden(cfg)) continue;const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;if(d<=effRng*effRng) _swCrowdCt++;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;closest=e;}}if(!closest) continue;t.cd=effCd;
   // Update shockwave tower angle to face closest target (for cannon barrel visual)
   t.angle=Math.atan2(closest.y-ty,closest.x-tx);
-  shockwaves.push({ox:tx,oy:ty,r:CS*.3,maxR:cfg.shockMaxR||200,spd:cfg.shockSpd||3.2,dmg:effDmg,col:gbCol,life:1,hit:new Set(),width:3,srcKey:t.key,antiHidden:cfg.antiHidden||false});sparks(tx,ty,gbCol,6,1);continue;}
+  // Crowd-falloff balance: a shockwave that's swamped by a mob loses focus per-hit — dmg tapers off the more enemies are packed in range, floor at 40%
+  let _swDmg=effDmg;
+  if(cfg.crowdFalloff&&_swCrowdCt>1){
+    const _swMult=Math.max(.4,1/(1+.16*(_swCrowdCt-1)));
+    _swDmg=Math.max(1,Math.round(effDmg*_swMult));
+    if(_swMult<.7) ft(tx,ty-CS*.55,'CROWDED ×'+_swMult.toFixed(2),'#ff8844');
+  }
+  shockwaves.push({ox:tx,oy:ty,r:CS*.3,maxR:cfg.shockMaxR||200,spd:cfg.shockSpd||3.2,dmg:_swDmg,col:gbCol,life:1,hit:new Set(),width:3,srcKey:t.key,antiHidden:cfg.antiHidden||false,coneAngle:cfg.coneAngle||0,aimAngle:t.angle,dmgFalloff:!!cfg.dmgFalloff});sparks(tx,ty,gbCol,6,1);continue;}
   if(cfg.iceTower&&cfg.iceShockwave){let closest=null,bd=Infinity;for(const e of enemies){if(e.flying&&!cfg.antiAir) continue;if(e.isHidden&&!canSeeHidden(cfg)) continue;const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;closest=e;}}if(!closest) continue;t.cd=effCd;t.angle=Math.atan2(closest.y-ty,closest.x-tx);shockwaves.push({ox:tx,oy:ty,r:CS*.3,maxR:cfg.shockMaxR||180,spd:cfg.shockSpd||3.0,dmg:effDmg,col:cfg.col,life:1,hit:new Set(),width:3,isIce:true,slowFactor:cfg.slowFactor||.40,slowDur:cfg.slowDur||120,srcKey:t.key});sparks(tx,ty,'#88ddff',6,1);continue;}
   if(cfg.iceTower&&cfg.iceBullet){let closest=null,bd=Infinity;for(const e of enemies){if(e.flying&&!cfg.antiAir) continue;if(e.isHidden&&!canSeeHidden(cfg)) continue;const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;closest=e;}}if(!closest) continue;t.cd=effCd;t.angle=Math.atan2(closest.y-ty,closest.x-tx);projs.push({x:tx,y:ty,tgt:closest,lastX:closest.x,lastY:closest.y,spd:cfg.bulletSpd||12,dmg:effDmg,col:cfg.col,src:t,type:'iceBullet',slowFactor:cfg.slowFactor||.25,slowDur:cfg.slowDur||90,armorShred:cfg.armorShred||.15,shredDur:cfg.shredDur||130,flyFreeze:cfg.flyFreeze||.80,flySpdCap:cfg.flySpdCap||.25});sparks(tx,ty,'#4488ff',4,1.5);continue;}let tgt=null,bd=Infinity;for(const e of enemies){if(e.flying&&!cfg.antiAir) continue;if(e.isHidden&&!canSeeHidden(cfg)) continue;const dx=e.x-tx,dy=e.y-ty,d=dx*dx+dy*dy;const dEff=e.tauntPull?-1:d;if(d<=effRng*effRng&&dEff<bd){bd=dEff;tgt=e;}}if(!tgt) continue;t.angle=Math.atan2(tgt.y-ty,tgt.x-tx);if(cfg.teslaEnergyPath&&(t.teslaCharging||(t.teslaEnergy||0)<cfg.energyMax)){t.cd=6;continue;}t.cd=effCd;if(cfg.t===CT.ELECTRIC){if(cfg.teslaEnergyPath){t.teslaEnergy=0;t.teslaCharging=true;}if(cfg.burst&&cfg.burst>1){const inR=enemies.filter(e=>{const dx=e.x-tx,dy=e.y-ty;return dx*dx+dy*dy<=effRng*effRng;});inR.sort((a,b)=>(a.x-tx)**2+(a.y-ty)**2-(b.x-tx)**2-(b.y-ty)**2);for(const bt of inR.slice(0,cfg.burst)) fireElectric(tx,ty,bt,effDmg,cfg.chn);if(cfg.teslaEnergyPath){sparks(tx,ty,cfg.col,12,2.4);flashes.push({x:tx,y:ty,r:14,life:8,ml:8,col:cfg.col});}}else if(cfg.elecBall){projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:2.6,dmg:effDmg,aoe:cfg.aoe||0,chn:cfg.chn||3,chainRng:105,col:cfg.col,sz:8,type:'elecBall',preBolts:cfg.preBoltCount||0,preBoltRange:cfg.preBoltRange||90});}else fireElectric(tx,ty,tgt,effDmg,cfg.chn);}else if(cfg.t===CT.SPIKE){const sukunaSkin=t.skins?t.skins['skin_sukuna_spike']:mgEquipped['skin_sukuna_spike'];if(cfg.hammer) projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:6,dmg:effDmg,aoe:cfg.aoe||45,chn:0,col:sukunaSkin?'#ff1133':cfg.col,sz:6,type:'hammer',stunDur:cfg.stunDur||45,sukunaSkin});else if(cfg.rapidStrike){for(let rb=0;rb<2;rb++) projs.push({x:tx+(Math.random()-.5)*3,y:ty+(Math.random()-.5)*3,tgt,lastX:tgt.x,lastY:tgt.y,spd:8,dmg:effDmg,aoe:0,chn:0,col:sukunaSkin?'#ff1133':cfg.col,sz:sukunaSkin?8:3,type:sukunaSkin?'worldcut':'normal',ang:Math.atan2(tgt.y-ty,tgt.x-tx),src:t});}else{projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:sukunaSkin?'#ff1133':cfg.col,sz:sukunaSkin?11:4,type:sukunaSkin?'worldcut':'normal',ang:Math.atan2(tgt.y-ty,tgt.x-tx)});}}else if(cfg.minigun){
   const _mgShots=cfg.shots||3;
@@ -7854,6 +8218,18 @@ if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.
     }
   } else {
     for(let b=0;b<_mgShots;b++) projs.push({x:tx+(Math.random()-.5)*4,y:ty+(Math.random()-.5)*4,tgt,lastX:tgt.x,lastY:tgt.y,spd:7,dmg:effDmg,aoe:0,chn:0,col:gbCol,sz:2,type:'normal',src:t});
+    if(cfg.basicMinigun){
+      const maxHeat=cfg.maxHeat||18;
+      t.heat=(t.heat||0)+1;
+      t.mgCoolDelay=cfg.coolDelayFrames||36;
+      if(t.heat>=maxHeat&&!t.overheated){
+        t.heat=maxHeat;t.overheated=true;
+        ft(tx,ty-CS*.7,'🔥 OVERHEATED!','#ff4422');
+        sparks(tx,ty,'#ff8800',12,2.6);
+        sparks(tx,ty,'#ffcc00',6,2);
+        flashes.push({x:tx,y:ty,r:CS*.28,life:12,ml:12,col:'#ff6600'});
+      }
+    }
   }
 }else{if(cfg.t===CT.CANNON){sparks(tx,ty,'#ffcc00',5,2.5);sparks(tx,ty,cfg.col,4,3);flashes.push({x:tx,y:ty,r:12,life:6,ml:6,col:'#ffcc00'});}else if(cfg.t===CT.SNIPER){sparks(tx,ty,'#ffffff',3,4);flashes.push({x:tx,y:ty,r:9,life:5,ml:5,col:cfg.col});}projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:cfg.t===CT.SNIPER?10:5.5,dmg:effDmg,aoe:cfg.aoe||0,chn:0,col:cfg.t===CT.BASIC?gbCol:cfg.col,sz:cfg.t===CT.CANNON?7:3,type:'normal',src:t,ballistic:!!cfg.ballistic});}}
   // === BARBWIRE CONNECTIONS === (every barbwire tower links to every other barbwire tower in range, no chain limit)
@@ -7918,7 +8294,7 @@ if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.
     }
     if(kw.r>=kw.maxR) kingWaves.splice(ki,1);
   }
-  for(let i=shockwaves.length-1;i>=0;i--){const sw=shockwaves[i];if(!sw.hit)sw.hit=new Set();const prevR=sw.r;sw.r+=sw.spd;for(const e of enemies){if(sw.hit.has(e)) continue;if(e.isHidden&&!sw.antiHidden) continue;const dx=e.x-sw.ox,dy=e.y-sw.oy,d=Math.sqrt(dx*dx+dy*dy);if(d>=prevR-e.sz*0.5&&d<=sw.r+e.sz*0.5){sw.hit.add(e);if(mirrorBlocked(e,sw.srcKey)){}else{const swd=applyArmor(e,sw.dmg);e.hp-=swd;mirrorTrack(e,sw.srcKey,swd);}sparks(e.x,e.y,sw.col,4,1.5);if(sw.isIce){const sf=sw.slowFactor||.40;const sd=sw.slowDur||120;if(sf>e.slowFactor){e.slowFactor=sf;e.slowDur=Math.max(e.slowDur,sd);e.spd=e.spdBase*(1-e.slowFactor);if(e.flying&&sf>=.5){e.spd=Math.min(e.spd,e.spdBase*.20);}ft(e.x,e.y-e.sz-6,'❄','#88ddff');}}else{if(!e.robot) applyStun(e,6);}}}if(sw.r>=sw.maxR) shockwaves.splice(i,1);}
+  for(let i=shockwaves.length-1;i>=0;i--){const sw=shockwaves[i];if(!sw.hit)sw.hit=new Set();const prevR=sw.r;sw.r+=sw.spd;const _capR=Math.min(sw.r,sw.maxR);const _half=sw.coneAngle?(sw.coneAngle*Math.PI/360):null;for(const e of enemies){if(sw.hit.has(e)) continue;if(e.isHidden&&!sw.antiHidden) continue;const dx=e.x-sw.ox,dy=e.y-sw.oy,d=Math.sqrt(dx*dx+dy*dy);if(d>=prevR-e.sz*0.5&&d<=_capR+e.sz*0.5){if(_half!==null){let da=Math.atan2(dy,dx)-sw.aimAngle;while(da>Math.PI)da-=Math.PI*2;while(da<-Math.PI)da+=Math.PI*2;if(Math.abs(da)>_half) continue;}sw.hit.add(e);let _swDmg=sw.dmg;if(sw.dmgFalloff){const _closeness=Math.max(0,1-(d/sw.maxR));_swDmg=Math.round(sw.dmg*(0.35+0.65*_closeness));}if(mirrorBlocked(e,sw.srcKey)){}else{const swd=applyArmor(e,_swDmg);e.hp-=swd;mirrorTrack(e,sw.srcKey,swd);}sparks(e.x,e.y,sw.col,4,1.5);if(sw.isIce){const sf=sw.slowFactor||.40;const sd=sw.slowDur||120;if(sf>e.slowFactor){e.slowFactor=sf;e.slowDur=Math.max(e.slowDur,sd);e.spd=e.spdBase*(1-e.slowFactor);if(e.flying&&sf>=.5){e.spd=Math.min(e.spd,e.spdBase*.20);}ft(e.x,e.y-e.sz-6,'❄','#88ddff');}}else{if(!e.robot) applyStun(e,6);}}}if(sw.r>=sw.maxR) shockwaves.splice(i,1);}
   for(let i=projs.length-1;i>=0;i--){const p=projs[i];if(!p.ballistic&&p.tgt&&enemies.includes(p.tgt)&&p.type!=='mace'){p.lastX=p.tgt.x;p.lastY=p.tgt.y;}const dx=p.lastX-p.x,dy=p.lastY-p.y,d=Math.sqrt(dx*dx+dy*dy);
   if(p.type==='elecBall'&&p.preBolts>0){p._boltTick=(p._boltTick||0)+1;if(p._boltTick%14===0){const nearBolt=enemies.filter(e=>e!==p.tgt&&!e.isHidden&&Math.hypot(e.x-p.x,e.y-p.y)<=(p.preBoltRange||90));for(const be of nearBolt.slice(0,p.preBolts)){const preD=elecDmg(be,Math.max(1,Math.round(p.dmg*.16)));be.hp-=preD;addLx(p.x,p.y,be.x,be.y,p.col);sparks(be.x,be.y,p.col,3,1.2);if(!be.robot&&!be.stunImmune) applyStun(be,6);}}}
   // === MACE ARC PROJECTILE ===
@@ -7991,7 +8367,7 @@ if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.
     }
     continue;
   }
-  if(d<p.spd*1.5){if(p.type==='iceBullet'){const te=p.tgt;if(te&&enemies.includes(te)){te.hp-=applyArmor(te,p.dmg);if(p.armorShred>te.armorShred){te.armorShred=p.armorShred;te.shredDur=Math.max(te.shredDur,p.shredDur);}if(p.slowFactor>te.slowFactor){te.slowFactor=p.slowFactor;te.slowDur=Math.max(te.slowDur,p.slowDur);te.spd=te.spdBase*(1-te.slowFactor);}if(te.flying){const ff=p.flyFreeze||.80;te.slowFactor=Math.max(te.slowFactor,ff);te.slowDur=Math.max(te.slowDur,p.slowDur+60);te.spd=Math.min(te.spdBase*(1-ff),te.spdBase*(p.flySpdCap||.25));ft(te.x,te.y-te.sz-10,'❄ FROZEN','#4488ff');}else{ft(te.x,te.y-te.sz-6,'❄','#88ddff');}sparks(te.x,te.y,'#88ddff',8,2);}}else if(p.type==='elecBall') explodeElecBall(p);else if(p.type==='towershot'){const tw=p.stunTwr;if(tw&&towers.includes(tw)){const wallBonus=tw.cfg.t===CT.WALL?2.5:1;tw.hp-=Math.round(p.dmg*wallBonus);tw.hitFlash=12;if(tw.cfg.t!==CT.WALL) tw.stunned=(tw.stunned||0)+p.stunDur;sparks(p.lastX,p.lastY,'#ff8800',10,2.5);if(tw.cfg.t===CT.WALL) ft(tw.col*CS+CS/2,tw.row*CS,'HIT!','#ff6600');if(tw.hp<=0) destroyTower(tw);}}else if(p.type==='missile'){explodeFx(p.lastX,p.lastY,'#00ffaa',Math.max(p.aoe||60,60));if(p.aoe>0){for(const e of enemies){if(e.isHidden&&!(p.src&&canSeeHidden(p.src.cfg))) continue;const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){if(mirrorBlocked(e,p.src&&p.src.key)) continue;const md=e.shielded?Math.round(p.dmg*0.4):p.dmg;e.hp-=md;mirrorTrack(e,p.src&&p.src.key,md);}}}else if(p.tgt&&enemies.includes(p.tgt)){if(!mirrorBlocked(p.tgt,p.src&&p.src.key)){const md=applyArmor(p.tgt,p.dmg);p.tgt.hp-=md;mirrorTrack(p.tgt,p.src&&p.src.key,md);}}}else if(p.type==='hammer'){if(p.aoe>0){for(const e of enemies){if(e.isHidden&&!(p.src&&canSeeHidden(p.src.cfg))) continue;const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){if(mirrorBlocked(e,p.src&&p.src.key)){applyStun(e,p.stunDur||45);continue;}const hd=applyArmor(e,p.dmg);e.hp-=hd;mirrorTrack(e,p.src&&p.src.key,hd);applyStun(e,p.stunDur||45);sparks(e.x,e.y,p.col,4,1.5);}}}sparks(p.lastX,p.lastY,'#ff2255',16,3.5);ft(p.lastX,p.lastY-8,'STUN!','#ff2255');}else{if(p.aoe>0){explodeFx(p.lastX,p.lastY,p.col,p.aoe);for(const e of enemies){if(e.isHidden&&!(p.src&&canSeeHidden(p.src.cfg))) continue;const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){if(mirrorBlocked(e,p.src&&p.src.key)) continue;const ad=applyArmor(e,p.dmg);e.hp-=ad;mirrorTrack(e,p.src&&p.src.key,ad);sparks(e.x,e.y,p.col,3,1);}}}else{if(p.tgt&&enemies.includes(p.tgt)){const blocker=isBlockedByShield(p.x,p.y,p.tgt);if(blocker){blocker.hp-=Math.max(1,Math.round(p.dmg*0.25));sparks(blocker.x,blocker.y,'#00ddff',8,2.5);ft(blocker.x,blocker.y-blocker.sz-6,'BLOCKED!','#00ddff');}else{if(mirrorBlocked(p.tgt,p.src&&p.src.key)){}else{let _baseDmg=p.dmg,_isCrit=false,_blackFlash=false;if(p.src&&p.src.cfg&&p.src.cfg.hunterTower){if(Math.random()<(p.src.cfg.critChance||0)){_isCrit=true;_baseDmg=Math.round(_baseDmg*(p.src.cfg.critMult||2));const _yujiSkin=p.src.skins?p.src.skins['skin_yuji_hunter']:mgEquipped['skin_yuji_hunter'];if(_yujiSkin){_blackFlash=true;_baseDmg=Math.round(_baseDmg*1.5);}}}const _pd=applyArmor(p.tgt,_baseDmg);p.tgt.hp-=_pd;if(_isCrit){ft(p.tgt.x,p.tgt.y-p.tgt.sz-6,'CRIT! -'+_pd,'#ffee33');sparks(p.tgt.x,p.tgt.y,'#ffee33',12,3);if(_blackFlash){ft(p.tgt.x,p.tgt.y-p.tgt.sz-20,'⚫ BLACK FLASH! -'+_pd,'#ff2222');addShake(14);flashes.push({x:p.tgt.x,y:p.tgt.y,r:50,life:24,ml:24,col:'#0a0a0a'});blackFlashFX.push({x:p.tgt.x,y:p.tgt.y,life:26,ml:26});sparks(p.tgt.x,p.tgt.y,'#000000',24,5.5);sparks(p.tgt.x,p.tgt.y,'#ff2222',14,4.5);}}if(p.src){p.src.totalDmgDealt=(p.src.totalDmgDealt||0)+_pd;p.tgt._lastHitTower=p.src;mirrorTrack(p.tgt,p.src.key,_pd);if(p.src.cfg&&p.src.cfg.t===CT.SNIPER){sparks(p.tgt.x,p.tgt.y,'#ffffff',6,3);sparks(p.tgt.x,p.tgt.y,p.col,10,3.5);flashes.push({x:p.tgt.x,y:p.tgt.y,r:14,life:8,ml:8,col:p.col});}else if(p.src.cfg&&p.src.cfg.hunterTower){sparks(p.tgt.x,p.tgt.y,p.col,_isCrit?10:5,_isCrit?3:2);}else if(p.type==='worldcut'){sparks(p.tgt.x,p.tgt.y,'#ffffff',6,2.8);sparks(p.tgt.x,p.tgt.y,'#ff1133',12,3.5);flashes.push({x:p.tgt.x,y:p.tgt.y,r:12,life:9,ml:9,col:'#ff1133'});}else{sparks(p.tgt.x,p.tgt.y,p.col,4,1.8);}}}}}}}projs.splice(i,1);}else{p.x+=dx/d*p.spd;p.y+=dy/d*p.spd;}}
+  if(d<p.spd*1.5){if(p.type==='iceBullet'){const te=p.tgt;if(te&&enemies.includes(te)){te.hp-=applyArmor(te,p.dmg);if(p.armorShred>te.armorShred){te.armorShred=p.armorShred;te.shredDur=Math.max(te.shredDur,p.shredDur);}if(p.slowFactor>te.slowFactor){te.slowFactor=p.slowFactor;te.slowDur=Math.max(te.slowDur,p.slowDur);te.spd=te.spdBase*(1-te.slowFactor);}if(te.flying){const ff=p.flyFreeze||.80;te.slowFactor=Math.max(te.slowFactor,ff);te.slowDur=Math.max(te.slowDur,p.slowDur+60);te.spd=Math.min(te.spdBase*(1-ff),te.spdBase*(p.flySpdCap||.25));ft(te.x,te.y-te.sz-10,'❄ FROZEN','#4488ff');}else{ft(te.x,te.y-te.sz-6,'❄','#88ddff');}sparks(te.x,te.y,'#88ddff',8,2);}}else if(p.type==='elecBall') explodeElecBall(p);else if(p.type==='towershot'){const tw=p.stunTwr;if(tw&&towers.includes(tw)){const wallBonus=tw.cfg.t===CT.WALL?2.5:1;tw.hp-=Math.round(p.dmg*wallBonus);tw.hitFlash=12;if(tw.cfg.t!==CT.WALL&&!tw.cfg.stunImmuneTower) tw.stunned=(tw.stunned||0)+p.stunDur;sparks(p.lastX,p.lastY,'#ff8800',10,2.5);if(tw.cfg.t===CT.WALL) ft(tw.col*CS+CS/2,tw.row*CS,'HIT!','#ff6600');if(tw.hp<=0) destroyTower(tw);}}else if(p.type==='missile'){explodeFx(p.lastX,p.lastY,'#00ffaa',Math.max(p.aoe||60,60));if(p.aoe>0){for(const e of enemies){if(e.isHidden&&!(p.src&&canSeeHidden(p.src.cfg))) continue;const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){if(mirrorBlocked(e,p.src&&p.src.key)) continue;const md=e.shielded?Math.round(p.dmg*0.4):p.dmg;e.hp-=md;mirrorTrack(e,p.src&&p.src.key,md);}}}else if(p.tgt&&enemies.includes(p.tgt)){if(!mirrorBlocked(p.tgt,p.src&&p.src.key)){const md=applyArmor(p.tgt,p.dmg);p.tgt.hp-=md;mirrorTrack(p.tgt,p.src&&p.src.key,md);}}}else if(p.type==='hammer'){if(p.aoe>0){for(const e of enemies){if(e.isHidden&&!(p.src&&canSeeHidden(p.src.cfg))) continue;const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){if(mirrorBlocked(e,p.src&&p.src.key)){applyStun(e,p.stunDur||45);continue;}const hd=applyArmor(e,p.dmg);e.hp-=hd;mirrorTrack(e,p.src&&p.src.key,hd);applyStun(e,p.stunDur||45);sparks(e.x,e.y,p.col,4,1.5);}}}sparks(p.lastX,p.lastY,'#ff2255',16,3.5);ft(p.lastX,p.lastY-8,'STUN!','#ff2255');}else{if(p.aoe>0){explodeFx(p.lastX,p.lastY,p.col,p.aoe);for(const e of enemies){if(e.isHidden&&!(p.src&&canSeeHidden(p.src.cfg))) continue;const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){if(mirrorBlocked(e,p.src&&p.src.key)) continue;const ad=applyArmor(e,p.dmg);e.hp-=ad;mirrorTrack(e,p.src&&p.src.key,ad);sparks(e.x,e.y,p.col,3,1);}}}else{if(p.tgt&&enemies.includes(p.tgt)){const blocker=isBlockedByShield(p.x,p.y,p.tgt);if(blocker){blocker.hp-=Math.max(1,Math.round(p.dmg*0.25));sparks(blocker.x,blocker.y,'#00ddff',8,2.5);ft(blocker.x,blocker.y-blocker.sz-6,'BLOCKED!','#00ddff');}else{if(mirrorBlocked(p.tgt,p.src&&p.src.key)){}else{let _baseDmg=p.dmg,_isCrit=false,_blackFlash=false;if(p.src&&p.src.cfg&&p.src.cfg.hunterTower){if(Math.random()<(p.src.cfg.critChance||0)){_isCrit=true;_baseDmg=Math.round(_baseDmg*(p.src.cfg.critMult||2));const _yujiSkin=p.src.skins?p.src.skins['skin_yuji_hunter']:mgEquipped['skin_yuji_hunter'];if(_yujiSkin){_blackFlash=true;_baseDmg=Math.round(_baseDmg*1.5);}}}const _pd=applyArmor(p.tgt,_baseDmg);p.tgt.hp-=_pd;if(_isCrit){ft(p.tgt.x,p.tgt.y-p.tgt.sz-6,'CRIT! -'+_pd,'#ffee33');sparks(p.tgt.x,p.tgt.y,'#ffee33',12,3);if(_blackFlash){ft(p.tgt.x,p.tgt.y-p.tgt.sz-20,'⚫ BLACK FLASH! -'+_pd,'#ff2222');addShake(14);flashes.push({x:p.tgt.x,y:p.tgt.y,r:50,life:24,ml:24,col:'#0a0a0a'});blackFlashFX.push({x:p.tgt.x,y:p.tgt.y,life:26,ml:26});sparks(p.tgt.x,p.tgt.y,'#000000',24,5.5);sparks(p.tgt.x,p.tgt.y,'#ff2222',14,4.5);}}if(p.src){p.src.totalDmgDealt=(p.src.totalDmgDealt||0)+_pd;p.tgt._lastHitTower=p.src;mirrorTrack(p.tgt,p.src.key,_pd);if(p.src.cfg&&p.src.cfg.t===CT.SNIPER){sparks(p.tgt.x,p.tgt.y,'#ffffff',6,3);sparks(p.tgt.x,p.tgt.y,p.col,10,3.5);flashes.push({x:p.tgt.x,y:p.tgt.y,r:14,life:8,ml:8,col:p.col});}else if(p.src.cfg&&p.src.cfg.hunterTower){sparks(p.tgt.x,p.tgt.y,p.col,_isCrit?10:5,_isCrit?3:2);}else if(p.type==='worldcut'){sparks(p.tgt.x,p.tgt.y,'#ffffff',6,2.8);sparks(p.tgt.x,p.tgt.y,'#ff1133',12,3.5);flashes.push({x:p.tgt.x,y:p.tgt.y,r:12,life:9,ml:9,col:'#ff1133'});}else{sparks(p.tgt.x,p.tgt.y,p.col,4,1.8);}}}}}}}projs.splice(i,1);}else{p.x+=dx/d*p.spd;p.y+=dy/d*p.spd;}}
   for(let i=enemies.length-1;i>=0;i--){if(enemies[i].hp<=0){const e=enemies[i];
     if(e.isBoss&&e.bossType==='mirror'&&(e.mirrorStage||1)<5){
       e.mirrorStage=(e.mirrorStage||1)+1;
@@ -9508,8 +9884,8 @@ function drawTower(t){
     if(sel){ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.strokeRect(x+1,y+1,CS-2,CS-2);}
     return;
   } else if(cfg.t===CT.BASIC){
-    const goldenBlaster=t.skins?t.skins['skin_golden_blaster']:mgEquipped['skin_golden_blaster'];
-    const legendBlaster=!goldenBlaster&&(t.skins?t.skins['skin_legend_blaster']:mgEquipped['skin_legend_blaster']);
+    const goldenBlaster=!t.evolvedBlaster&&(t.skins?t.skins['skin_golden_blaster']:mgEquipped['skin_golden_blaster']);
+    const legendBlaster=!t.evolvedBlaster&&!goldenBlaster&&(t.skins?t.skins['skin_legend_blaster']:mgEquipped['skin_legend_blaster']);
     const richSkin=goldenBlaster||legendBlaster;
     const bcol=legendBlaster?'#eaf6ff':(goldenBlaster?'#ffd700':col);
     // Palette swap done with plain color values (NOT ctx.filter) — canvas filters force a full rasterize
@@ -9614,6 +9990,184 @@ function drawTower(t){
         if(_frm%12===0) sparks(cx+(Math.random()-.5)*20,cy+(Math.random()-.5)*20,'#aeefff',1,.6);
       }
     }
+    // ── EVOLVED BLASTER (🧬 RIFLE / SHOTGUN): tactical SWAT-plated turret — gunmetal/black armor with
+    // tan trim, a red laser-sight dot, and hazard striping, instead of the golden-skin bling look.
+    // More trim/rivets unlock as the tower levels up so a fresh evolve still reads as a plain tactical
+    // rig while a maxed one looks fully kitted-out.
+    if(t.evolvedBlaster){
+      const isRifle=t.evolvedBlaster==='rifle';
+      const lvl=Math.max(1,Math.min(5,t.level||1));
+      const evAccent=isRifle?'#ff3b30':'#ffb020'; // red laser tell for rifle, amber warning tell for shotgun
+      const evTan=isRifle?'#c9a876':'#d99a3c'; // sandy tan for rifle, burnt-orange trim for shotgun
+      const evSteelHi=isRifle?'#8a939c':'#9c8a72', evSteelMid=isRifle?'#454c54':'#544a3c', evSteelDk=isRifle?'#15181c':'#1c1712', evBlack='#050608';
+      const evPulse=(Math.sin(_frm*.09)+1)*.5;
+      const reloading=isRifle&&(t.rifleReloading||0)>0;
+      // recoil kick: strongest the instant after a shot (cd freshly reset), settles out as cd counts down toward the next shot
+      const evCdMax=isRifle?(cfg.burstCd||14):(cfg.cd||40);
+      const evRecoil=reloading?0:Math.max(0,Math.min(1,(t.cd||0)/Math.max(1,evCdMax)));
+      const evR=11+lvl*0.7; // plate grows visibly with each upgrade level
+      const evTierGrad=lvl>=4?evSteelHi:(lvl>=2?evSteelMid:evSteelDk); // scuffed gunmetal early, polished steel once ranked up
+      // faint tactical glow — subdued compared to a "skin", dims further while reloading
+      gl(evAccent,(reloading?3:6)+evPulse*2.5);
+      ctx.save();ctx.globalAlpha=reloading?.18:.3+evPulse*.08;
+      const evHalo=ctx.createRadialGradient(cx,cy,evR*.6,cx,cy,evR*1.6);
+      evHalo.addColorStop(0,evAccent);evHalo.addColorStop(1,'transparent');
+      ctx.fillStyle=evHalo;ctx.beginPath();ctx.arc(cx,cy,evR*1.6,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+      if(isRifle){
+        // ── RIFLE PATH: octagonal gunmetal armor plate — angular, precision-military silhouette
+        ctx.save();ctx.translate(cx,cy);ctx.rotate(Math.PI/8);
+        const plateGrad=ctx.createRadialGradient(-evR*.3,-evR*.35,1,0,0,evR*1.15);
+        plateGrad.addColorStop(0,evTierGrad);plateGrad.addColorStop(.45,evSteelMid);plateGrad.addColorStop(1,evSteelDk);
+        ctx.beginPath();
+        for(let i=0;i<8;i++){const a=i/8*Math.PI*2;ctx.lineTo(Math.cos(a)*evR,Math.sin(a)*evR);}
+        ctx.closePath();
+        ctx.fillStyle=plateGrad;ctx.fill();
+        ctx.strokeStyle=evBlack;ctx.lineWidth=1.6;ctx.stroke();
+        // inset bevel — reads as a raised armor plate
+        ctx.strokeStyle=evSteelHi+'99';ctx.lineWidth=.8;
+        ctx.beginPath();
+        for(let i=0;i<8;i++){const a=i/8*Math.PI*2;const px=Math.cos(a)*(evR-3),py=Math.sin(a)*(evR-3);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+        ctx.closePath();ctx.stroke();
+        // tan tactical trim stripe — level-scaled: more panels light up as it ranks up
+        ctx.strokeStyle=evTan;ctx.lineWidth=1;
+        for(let i=0;i<lvl;i++){const a=(i/8)*Math.PI*2;ctx.beginPath();ctx.moveTo(Math.cos(a)*(evR-1),Math.sin(a)*(evR-1));ctx.lineTo(Math.cos(a)*(evR-5),Math.sin(a)*(evR-5));ctx.stroke();}
+        // corner rivets
+        for(let i=0;i<8;i+=2){const a=i/8*Math.PI*2;const rx=Math.cos(a)*(evR-1.5),ry=Math.sin(a)*(evR-1.5);ctx.beginPath();ctx.arc(rx,ry,.9,0,Math.PI*2);ctx.fillStyle=evSteelHi;ctx.fill();}
+        ctx.restore();
+        // secondary layered shoulder plates — unlock at level 3, sell a heavier-armored silhouette
+        if(lvl>=3){
+          ctx.save();ctx.translate(cx,cy);
+          for(const sa of[Math.PI*.28,Math.PI*.72,-Math.PI*.28,-Math.PI*.72]){
+            ctx.save();ctx.rotate(sa);
+            ctx.beginPath();ctx.moveTo(evR-1,-3.2);ctx.lineTo(evR+4,-2.2);ctx.lineTo(evR+4,2.2);ctx.lineTo(evR-1,3.2);ctx.closePath();
+            ctx.fillStyle=evSteelMid;ctx.fill();ctx.strokeStyle=evBlack;ctx.lineWidth=.7;ctx.stroke();
+            ctx.restore();
+          }
+          ctx.restore();
+        }
+        // twin antenna mast — unlocks at max level, reads as a fully kitted-out unit
+        if(lvl>=5){
+          ctx.save();ctx.translate(cx,cy);
+          for(const ax of[-4,4]){
+            ctx.strokeStyle=evSteelHi;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(ax,-evR+1);ctx.lineTo(ax*1.3,-evR-6);ctx.stroke();
+            ctx.beginPath();ctx.arc(ax*1.3,-evR-6,.9,0,Math.PI*2);ctx.fillStyle=evAccent;ctx.fill();
+          }
+          ctx.restore();
+        }
+      } else {
+        // ── SHOTGUN PATH: rounded, riveted riot-bunker drum — squat, heavy-armor silhouette (never confused with the rifle's angular plate)
+        ctx.save();ctx.translate(cx,cy);
+        const plateGrad=ctx.createRadialGradient(-evR*.3,-evR*.35,1,0,0,evR*1.15);
+        plateGrad.addColorStop(0,evTierGrad);plateGrad.addColorStop(.45,evSteelMid);plateGrad.addColorStop(1,evSteelDk);
+        const drawScallop=(rad)=>{ctx.beginPath();for(let i=0;i<12;i++){const a=i/12*Math.PI*2;const rr=rad+(i%2===0?0:-1.1);const px=Math.cos(a)*rr,py=Math.sin(a)*rr;i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}ctx.closePath();};
+        drawScallop(evR);
+        ctx.fillStyle=plateGrad;ctx.fill();
+        ctx.strokeStyle=evBlack;ctx.lineWidth=1.6;ctx.stroke();
+        // inset bevel ring — bunker-hatch look
+        ctx.strokeStyle=evSteelHi+'99';ctx.lineWidth=.8;
+        ctx.beginPath();ctx.arc(0,0,evR-3.2,0,Math.PI*2);ctx.stroke();
+        // amber hazard-stripe band — level-scaled wedges light up as it ranks up
+        ctx.strokeStyle=evTan;ctx.lineWidth=2.2;
+        for(let i=0;i<lvl;i++){const a=(i/8)*Math.PI*2-Math.PI/2;ctx.beginPath();ctx.arc(0,0,evR-4.5,a,a+.28);ctx.stroke();}
+        // ring of squat rivets — denser than rifle's, sells a heavy bunker plate
+        for(let i=0;i<12;i+=1){const a=i/12*Math.PI*2;const rx=Math.cos(a)*(evR-1.8),ry=Math.sin(a)*(evR-1.8);ctx.beginPath();ctx.arc(rx,ry,.85,0,Math.PI*2);ctx.fillStyle=evSteelHi;ctx.fill();}
+        ctx.restore();
+        // side-mounted shell drum — unlocks at level 3, bulks out the silhouette opposite the muzzle
+        if(lvl>=3){
+          ctx.save();ctx.translate(cx,cy);ctx.rotate((t.angle||0)+Math.PI);
+          ctx.beginPath();ctx.arc(evR*.55,0,4.6,0,Math.PI*2);
+          ctx.fillStyle=evSteelMid;ctx.fill();ctx.strokeStyle=evBlack;ctx.lineWidth=1;ctx.stroke();
+          for(let si=0;si<5;si++){const a=si/5*Math.PI*2;ctx.beginPath();ctx.arc(evR*.55+Math.cos(a)*2.4,Math.sin(a)*2.4,.8,0,Math.PI*2);ctx.fillStyle=evTan;ctx.fill();}
+          ctx.restore();
+        }
+        // low warning beacon — unlocks at max level, slow amber strobe atop the bunker plate
+        if(lvl>=5){
+          ctx.save();ctx.translate(cx,cy);
+          ctx.strokeStyle=evSteelHi;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,-evR+1);ctx.lineTo(0,-evR-5);ctx.stroke();
+          const beaconOn=Math.sin(_frm*.12)>0;
+          ctx.beginPath();ctx.arc(0,-evR-5,1.4,0,Math.PI*2);ctx.fillStyle=beaconOn?evAccent:evSteelDk;ctx.fill();
+          ctx.restore();
+        }
+      }
+      ng();
+      // weapon housing, aimed at target angle
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle||0);
+      const evKick=-evRecoil*2.2; // whole housing punches back into the plate on the recoil frame
+      ctx.translate(evKick,0);
+      if(isRifle){
+        // quad-barrel angular burst rifle, dims+droops slightly while reloading
+        const barrelA=reloading?-2:0;
+        for(const bo of[-3,3]){
+          ctx.strokeStyle=evBlack;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(4,bo);ctx.lineTo(18,bo+barrelA);ctx.stroke();
+          ctx.strokeStyle=reloading?evSteelMid:evSteelHi;ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(4,bo);ctx.lineTo(18,bo+barrelA);ctx.stroke();
+          // bright top-edge highlight — sells a polished metal barrel instead of a flat line
+          ctx.strokeStyle=(reloading?evSteelMid:'#e8edf2')+'99';ctx.lineWidth=.6;ctx.beginPath();ctx.moveTo(4,bo-.7);ctx.lineTo(17,bo+barrelA-.7);ctx.stroke();
+        }
+        // rail/sight bridge on top of the barrels
+        ctx.strokeStyle=evTan;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(6,-4.5);ctx.lineTo(15,-4.5);ctx.stroke();
+        ctx.fillStyle=reloading?evSteelMid:evBlack;ctx.beginPath();ctx.moveTo(18,-3.5);ctx.lineTo(21,0);ctx.lineTo(18,3.5);ctx.closePath();ctx.fill();
+        ctx.strokeStyle=evAccent;ctx.lineWidth=.8;ctx.stroke();
+        // muzzle flash flare — flashes bright the instant a burst round fires
+        if(evRecoil>.6){
+          ctx.save();ctx.globalAlpha=(evRecoil-.6)/.4;
+          const mf=ctx.createRadialGradient(20,0,0,20,0,7);
+          mf.addColorStop(0,'#ffffff');mf.addColorStop(.4,evAccent);mf.addColorStop(1,'transparent');
+          ctx.fillStyle=mf;ctx.beginPath();ctx.arc(20,0,7,0,Math.PI*2);ctx.fill();
+          ctx.restore();
+        }
+        if(!reloading&&(t.rifleShotsLeft!==undefined)){
+          // small ammo pips showing burst rounds remaining
+          for(let pi=0;pi<(cfg.shotsPerBurst||4);pi++){ctx.beginPath();ctx.arc(-6+pi*2.2,-evR-3,.9,0,Math.PI*2);ctx.fillStyle=pi<t.rifleShotsLeft?evAccent:evSteelDk;ctx.fill();}
+        }
+      } else {
+        // flared shotgun muzzle — short, squat double-barrel with a wide conical bell, reads as close-range AOE
+        for(const bo of[-1.6,1.6]){
+          ctx.strokeStyle=evBlack;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(2,bo);ctx.lineTo(10,bo);ctx.stroke();
+          ctx.strokeStyle=evSteelHi;ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(2,bo);ctx.lineTo(10,bo);ctx.stroke();
+        }
+        ctx.beginPath();ctx.moveTo(9,-3.2);ctx.lineTo(18,-8);ctx.lineTo(18,8);ctx.lineTo(9,3.2);ctx.closePath();
+        const bellGrad=ctx.createLinearGradient(9,0,18,0);
+        bellGrad.addColorStop(0,evSteelDk);bellGrad.addColorStop(1,'#000000');
+        ctx.fillStyle=bellGrad;ctx.fill();ctx.strokeStyle=evTan;ctx.lineWidth=1.4;ctx.stroke();
+        ctx.strokeStyle=evAccent+'aa';ctx.lineWidth=.7;
+        ctx.beginPath();ctx.moveTo(11,-1.6);ctx.lineTo(16,-4.2);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(11,1.6);ctx.lineTo(16,4.2);ctx.stroke();
+        // wide blast flash across the bell mouth — punchy tell for a shell that just went off
+        if(evRecoil>.55){
+          ctx.save();ctx.globalAlpha=(evRecoil-.55)/.45*.9;
+          const bf=ctx.createRadialGradient(18,0,0,18,0,9);
+          bf.addColorStop(0,'#fff6e0');bf.addColorStop(.45,evAccent);bf.addColorStop(1,'transparent');
+          ctx.fillStyle=bf;ctx.beginPath();ctx.arc(18,0,9,0,Math.PI*2);ctx.fill();
+          ctx.restore();
+        }
+      }
+      ctx.restore();
+      if(isRifle){
+        // laser-sight beam toward current target angle — the signature "SWAT sniper" tell
+        if(!reloading){
+          ctx.save();ctx.globalAlpha=.5+evPulse*.2;ctx.translate(cx,cy);ctx.rotate(t.angle||0);
+          ctx.strokeStyle=evAccent;ctx.lineWidth=.6;
+          ctx.beginPath();ctx.moveTo(19,0);ctx.lineTo(19+(cfg.rng?Math.min(cfg.rng*.28,40):24),0);ctx.stroke();
+          ctx.restore();
+        }
+      } else {
+        // translucent spread cone toward current target angle — the shotgun's signature AOE tell, matches its blast pattern
+        ctx.save();ctx.globalAlpha=.16+evPulse*.08;ctx.translate(cx,cy);ctx.rotate(t.angle||0);
+        const coneLen=cfg.rng?Math.min(cfg.rng*.32,46):26,coneHalf=(cfg.coneAngle||.5)*.5;
+        ctx.beginPath();ctx.moveTo(18,0);ctx.lineTo(18+Math.cos(coneHalf)*coneLen,Math.sin(coneHalf)*coneLen);ctx.lineTo(18+Math.cos(coneHalf)*coneLen,-Math.sin(coneHalf)*coneLen);ctx.closePath();
+        ctx.fillStyle=evAccent;ctx.fill();
+        ctx.restore();
+      }
+      // dome sensor/eye
+      ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fillStyle=evSteelDk;ctx.fill();
+      ctx.strokeStyle=evSteelHi;ctx.lineWidth=1.2;ctx.stroke();
+      ctx.beginPath();ctx.arc(cx,cy,1.7,0,Math.PI*2);ctx.fillStyle=reloading?evSteelMid:evAccent;ctx.fill();
+      if(!reloading&&_frm%14===0) sparks(cx+(Math.random()-.5)*14,cy+(Math.random()-.5)*14,evSteelHi,1,.4);
+      if(reloading){ctx.fillStyle=evAccent+'cc';ctx.font='6px Share Tech Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('⟳',cx,cy+13);}
+      // level badge tick — small tan rank marks under the tower, unit-style
+      if(lvl>1){for(let li=0;li<lvl-1;li++){ctx.fillStyle=evTan;ctx.fillRect(cx-6+li*3.2,cy+evR+2,2,1.6);}}
+    } else
     // ── SHOCKWAVE path: cannon-style body with rotating barrel + shockwave ring indicator
     if(cfg.shockwave){
       if(!richSkin){
@@ -9654,8 +10208,20 @@ function drawTower(t){
       if(legendBlaster&&_frm%8===0) sparks(cx+Math.cos(_frm*.075)*15,cy+Math.sin(_frm*.075)*15,'#aeefff',1,.5);
     } else {
       // Standard Blaster / Minigun
+      const mgHeatPct=cfg.basicMinigun?Math.min(1,(t.heat||0)/(cfg.maxHeat||18)):0;
+      const mgOverheated=cfg.basicMinigun&&!!t.overheated;
+      const mgBarrelCol=mgOverheated?'#ff3311':(mgHeatPct>.7?'#ff8833':bcol);
       if(!richSkin){
         ctx.beginPath();ctx.arc(cx,cy,12,0,Math.PI*2);ctx.fillStyle='#0a1828';ctx.fill();ctx.strokeStyle=bcol;ctx.lineWidth=2;ctx.stroke();
+      }
+      // heat haze glow once the minigun is running hot
+      if(cfg.basicMinigun&&mgHeatPct>.55){
+        const hzPulse=(Math.sin(_frm*.3)+1)*.5;
+        ctx.save();ctx.globalAlpha=(mgHeatPct-.55)*.6+hzPulse*.1;
+        const hzG=ctx.createRadialGradient(cx,cy,4,cx,cy,16);
+        hzG.addColorStop(0,mgOverheated?'#ff4400':'#ff8800');hzG.addColorStop(1,'transparent');
+        ctx.fillStyle=hzG;ctx.beginPath();ctx.arc(cx,cy,16,0,Math.PI*2);ctx.fill();
+        ctx.restore();
       }
       ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle);
       if(richSkin){
@@ -9668,14 +10234,28 @@ function drawTower(t){
         }
         ctx.fillStyle=pal.rim;ctx.beginPath();ctx.arc(17,0,1.6,0,Math.PI*2);ctx.fill();
       } else {
-        ctx.strokeStyle=bcol;ctx.lineWidth=cfg.minigun?2:2.5;ctx.beginPath();ctx.moveTo(4,0);ctx.lineTo(17,0);ctx.stroke();
-        if(cfg.minigun){ctx.strokeStyle=bcol+'cc';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(4,-3);ctx.lineTo(15,-3);ctx.stroke();ctx.beginPath();ctx.moveTo(4,3);ctx.lineTo(15,3);ctx.stroke();}
+        ctx.strokeStyle=mgBarrelCol;ctx.lineWidth=cfg.minigun?2:2.5;ctx.beginPath();ctx.moveTo(4,0);ctx.lineTo(17,0);ctx.stroke();
+        if(cfg.minigun){ctx.strokeStyle=mgBarrelCol+'cc';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(4,-3);ctx.lineTo(15,-3);ctx.stroke();ctx.beginPath();ctx.moveTo(4,3);ctx.lineTo(15,3);ctx.stroke();}
       }
       ctx.restore();
       ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fillStyle=richSkin?pal.bright:bcol;ctx.fill();
       if(richSkin){ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.strokeStyle=pal.bolt;ctx.lineWidth=.8;ctx.stroke();}
       if(goldenBlaster&&_frm%10===0) sparks(cx+(Math.random()-.5)*14,cy+(Math.random()-.5)*14,'#ffd700',1,.5);
       if(legendBlaster&&_frm%10===0) sparks(cx+(Math.random()-.5)*14,cy+(Math.random()-.5)*14,'#aeefff',1,.5);
+      // heat gauge bar under the tower — only for minigun path towers
+      if(cfg.basicMinigun){
+        const hgW=20,hgX=cx-10,hgY=cy+15;
+        ctx.fillStyle='#0a0505';ctx.fillRect(hgX,hgY,hgW,3);
+        const hgCol=mgOverheated?'#ff2222':(mgHeatPct>.7?'#ff8800':'#66ccff');
+        ctx.fillStyle=hgCol;ctx.fillRect(hgX,hgY,hgW*(mgOverheated?1:mgHeatPct),3);
+        ctx.strokeStyle='#000';ctx.lineWidth=.5;ctx.strokeRect(hgX,hgY,hgW,3);
+        if(mgOverheated){
+          const oPulse2=(Math.sin(_frm*.35)+1)*.5;
+          ctx.fillStyle='#ff4422';ctx.font='bold 6px Share Tech Mono';ctx.textAlign='center';ctx.globalAlpha=.65+oPulse2*.35;
+          ctx.fillText('OVERHEAT',cx,cy-16);ctx.globalAlpha=1;
+          if(_frm%9===0) sparks(cx+(Math.random()-.5)*10,cy+(Math.random()-.5)*10,'#ff8833',1,.7);
+        }
+      }
     }
   } else if(cfg.t===CT.SNIPER){
     ctx.save();ctx.translate(cx,cy);ctx.beginPath();for(let i=0;i<8;i++){const a=i/8*Math.PI*2-Math.PI/8,R=12;ctx[i===0?'moveTo':'lineTo'](Math.cos(a)*R,Math.sin(a)*R);}ctx.closePath();ctx.fillStyle='#0d0818';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();ctx.rotate(t.angle);ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(4,0);ctx.lineTo(22,0);ctx.stroke();ctx.strokeStyle=col+'99';ctx.lineWidth=0.8;ctx.beginPath();ctx.moveTo(14,-2);ctx.lineTo(14,2);ctx.stroke();ctx.beginPath();ctx.moveTo(18,-2);ctx.lineTo(18,2);ctx.stroke();ctx.restore();ctx.beginPath();ctx.arc(cx,cy,3,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
@@ -10664,7 +11244,8 @@ function draw(){
 
   if(hov&&!sellMode&&!upgMode&&!baseUpgMode&&!gameOver&&gameStarted){
     const{col,row}=hov;if(grid[row][col]===CT.EMPTY){
-      const cfg=getCfg(selBuild,1,null),x=col*CS,y=row*CS;const dCost=getDiscountedCost(selBuild,col,row),ok=gold>=dCost&&!(selBuild==='heli'&&gameMode==='hardcore');
+      const _hovEvo=(selBuild==='basic')?getEvolvedBlasterVariant():null;
+      const cfg=getCfg(selBuild,1,null,_hovEvo),x=col*CS,y=row*CS;const dCost=getDiscountedCost(selBuild,col,row),ok=gold>=dCost&&!(selBuild==='heli'&&gameMode==='hardcore');
       ctx.fillStyle=ok?'rgba(0,255,136,0.07)':'rgba(255,50,50,0.07)';ctx.fillRect(x,y,CS,CS);ctx.strokeStyle=ok?'rgba(0,255,136,0.5)':'rgba(255,50,50,0.5)';ctx.lineWidth=1;ctx.strokeRect(x+1,y+1,CS-2,CS-2);
       if(cfg.rng>0){const bfx=getBuffsAt(col,row),effRng=cfg.rng*bfx.rngMult;ctx.beginPath();ctx.arc(x+CS/2,y+CS/2,effRng,0,Math.PI*2);ctx.strokeStyle=cfg.col+'44';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle=cfg.col+'06';ctx.fill();}
     }
@@ -10675,7 +11256,7 @@ function draw(){
   for(const t of towers){if(!t.cfg.hydraBeam||!t.laserTargets||!t.laserTargets.length) continue;const htx2=t.col*CS+CS*(t.size||1)/2,hty2=t.row*CS+CS*(t.size||1)/2;const hsp=Math.min(1,(t.laserStacks||0)/(t.cfg.maxStacks||24));const converged=t.laserTargets.length===1;for(const tgt of t.laserTargets){if(!enemies.includes(tgt)) continue;ctx.save();ctx.globalAlpha=.45+hsp*.5;ctx.strokeStyle=t.cfg.col;ctx.lineWidth=(converged?1.6:.7)+hsp*1.4;ctx.beginPath();ctx.moveTo(htx2,hty2);ctx.lineTo(tgt.x,tgt.y);ctx.stroke();if(hsp>.3){ctx.strokeStyle='#ffffff';ctx.lineWidth=hsp*.6;ctx.globalAlpha=hsp*.3;ctx.beginPath();ctx.moveTo(htx2,hty2);ctx.lineTo(tgt.x,tgt.y);ctx.stroke();}ctx.globalAlpha=1;ctx.restore();}}
   if(gfxMode<2){for(const cr of crystals){const bob=Math.sin(cr.bobPhase)*3;ctx.save();ctx.translate(cr.x,cr.y+bob);ctx.rotate(frame*.03);ctx.beginPath();ctx.moveTo(0,-6);ctx.lineTo(5,0);ctx.lineTo(0,6);ctx.lineTo(-5,0);ctx.closePath();ctx.fillStyle=cr.col+'66';ctx.fill();ctx.strokeStyle=cr.col;ctx.lineWidth=1.5;ctx.stroke();ctx.restore();const lifeR=cr.life/cr.maxLife;ctx.fillStyle='#0a0a1a';ctx.fillRect(cr.x-6,cr.y+bob+8,12,2);ctx.fillStyle=cr.col;ctx.fillRect(cr.x-6,cr.y+bob+8,12*lifeR,2);if(cr.target&&enemies.includes(cr.target)){ctx.save();ctx.globalAlpha=.5;ctx.strokeStyle=cr.col;ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(cr.x,cr.y+bob);ctx.lineTo(cr.target.x,cr.target.y);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;ctx.restore();}}
 
-  if(gfxMode<3){for(const sw of shockwaves){const alpha=Math.max(0,1-sw.r/sw.maxR);ctx.beginPath();ctx.arc(sw.ox,sw.oy,sw.r,0,Math.PI*2);ctx.strokeStyle=sw.col;ctx.lineWidth=gfxMode>=2?1:3*(1-sw.r/sw.maxR)+1;ctx.globalAlpha=gfxMode>=1?alpha*.5:alpha*.8;ctx.stroke();if(sw.isIce&&gfxMode===0){ctx.beginPath();ctx.arc(sw.ox,sw.oy,sw.r*.85,0,Math.PI*2);ctx.strokeStyle='rgba(136,221,255,'+alpha*.4+')';ctx.lineWidth=1;ctx.stroke();}ctx.globalAlpha=1;}}
+  if(gfxMode<3){for(const sw of shockwaves){const _rr=Math.min(sw.r,sw.maxR);const alpha=Math.max(0,1-_rr/sw.maxR);if(sw.coneAngle){const half=sw.coneAngle*Math.PI/360;ctx.beginPath();ctx.moveTo(sw.ox,sw.oy);ctx.arc(sw.ox,sw.oy,_rr,sw.aimAngle-half,sw.aimAngle+half);ctx.closePath();ctx.fillStyle=sw.col;ctx.globalAlpha=gfxMode>=1?alpha*.22+.08:alpha*.32+.1;ctx.fill();ctx.strokeStyle=sw.col;ctx.lineWidth=gfxMode>=2?1:2;ctx.globalAlpha=gfxMode>=1?alpha*.6+.1:alpha*.9+.1;ctx.stroke();ctx.globalAlpha=1;continue;}ctx.beginPath();ctx.arc(sw.ox,sw.oy,_rr,0,Math.PI*2);ctx.strokeStyle=sw.col;ctx.lineWidth=gfxMode>=2?1:3*(1-_rr/sw.maxR)+1;ctx.globalAlpha=gfxMode>=1?alpha*.5:alpha*.8;ctx.stroke();if(sw.isIce&&gfxMode===0){ctx.beginPath();ctx.arc(sw.ox,sw.oy,_rr*.85,0,Math.PI*2);ctx.strokeStyle='rgba(136,221,255,'+alpha*.4+')';ctx.lineWidth=1;ctx.stroke();}ctx.globalAlpha=1;}}
   }
   // BARBWIRE connection wires
   if(barbWireSegs.length&&gfxMode<2){
