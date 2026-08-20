@@ -14,6 +14,29 @@ const MP_SUPABASE_URL='https://qzupfyqizurpkvifkmnn.supabase.co';
 const MP_SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6dXBmeXFpenVycGt2aWZrbW5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjEyNDYsImV4cCI6MjA5MTYzNzI0Nn0.fRfg6wAeCMteat6Jf9yNT__g-N97LFCnWqlSF9rg6jo';
 const PLAYER_COLORS=['#00ff88','#ff6644','#4488ff','#ffcc00','#ff44cc','#44ffcc','#ff8800','#aa66ff','#88ff44','#ff4488'];
 
+// ══════════════════════════════════════════════
+// TOWER BUILD COUNTER (global, cross-game stats)
+// Every build bumps a running total for that tower key in the
+// `tower_build_counts` table (one row per tower, value increments).
+// View/query it directly in the Supabase Table Editor or SQL editor
+// to see which towers are least/most used across ALL players/games.
+// ══════════════════════════════════════════════
+const TowerStats={
+  sb:null,
+  init(){
+    if(this.sb) return;
+    this.sb=supabase.createClient(MP_SUPABASE_URL,MP_SUPABASE_ANON);
+  },
+  log(towerKey){
+    try{
+      this.init();
+      this.sb.rpc('increment_tower_build',{p_tower_key:towerKey}).then(({error})=>{
+        if(error) console.warn('[TowerStats] log failed:',error.message);
+      });
+    }catch(e){console.warn('[TowerStats] log error:',e);}
+  }
+};
+
 const MP={
   active:false,
   sb:null,
@@ -2850,8 +2873,8 @@ const TS={
   electric:{1:{t:CT.ELECTRIC,cost:175,hp:70,rng:155,dmg:22,cd:80,aoe:0,chn:3,col:'#aaff00',name:'TESLA'},'2A':{t:CT.ELECTRIC,cost:500,hp:100,rng:163,dmg:26,cd:52,aoe:0,chn:5,col:'#aaff00',name:'STORM',burst:3,antiAir:true},'2B':{t:CT.ELECTRIC,cost:600,hp:100,rng:172,dmg:40,cd:88,aoe:0,chn:3,col:'#88ff44',name:'PLASMA BALL',elecBall:true,antiHidden:true},'3A':{t:CT.ELECTRIC,cost:700,hp:132,rng:170,dmg:32,cd:36,aoe:0,chn:7,col:'#ccff00',name:'STORM+',burst:6,antiAir:true},'3B':{t:CT.ELECTRIC,cost:1000,hp:132,rng:188,dmg:58,cd:80,aoe:90,chn:5,col:'#66ff22',name:'PLASMA BALL+',elecBall:true,antiHidden:true},'4A':{t:CT.ELECTRIC,cost:1400,hp:175,rng:178,dmg:45,cd:25,aoe:0,chn:9,col:'#ddff00',name:'STORM++',burst:9,antiAir:true},'4B':{t:CT.ELECTRIC,cost:2000,hp:175,rng:210,dmg:85,cd:72,aoe:125,chn:7,col:'#44ff00',name:'PLASMA BALL++',elecBall:true,antiHidden:true},'5A':{t:CT.ELECTRIC,cost:2500,hp:235,rng:192,dmg:65,cd:16,aoe:0,chn:12,col:'#eeff00',name:'THUNDER GOD',burst:12,antiAir:true},'5B':{t:CT.ELECTRIC,cost:3200,hp:235,rng:235,dmg:125,cd:60,aoe:175,chn:9,col:'#22ff00',name:'PLASMA CANNON',elecBall:true,antiHidden:true}},
   healer:{1:{t:CT.HEALER,cost:250,hp:90,rng:114,dmg:0,cd:0,aoe:0,chn:0,col:'#00ffcc',name:'MEDIC',healAmt:4,healTick:80,healWalls:true,healStunReduce:8},'2A':{t:CT.HEALER,cost:500,hp:128,rng:124,dmg:0,cd:0,aoe:0,chn:0,col:'#00ccff',name:'BASE MEDIC',healAmt:6,healTick:70,healWalls:true,baseHealAmt:4,baseMaxBonus:25,healStunReduce:12},'2B':{t:CT.HEALER,cost:1000,hp:128,rng:150,dmg:0,cd:0,aoe:0,chn:0,col:'#00ffcc',name:'REGEN+',healAmt:13,healTick:42,healWalls:true,healStunReduce:16},'3A':{t:CT.HEALER,cost:800,hp:168,rng:136,dmg:0,cd:0,aoe:0,chn:0,col:'#00ccff',name:'BASE MEDIC+',healAmt:9,healTick:56,healWalls:true,baseHealAmt:10,baseMaxBonus:55,healStunReduce:20},'3B':{t:CT.HEALER,cost:2500,hp:168,rng:182,dmg:0,cd:0,aoe:0,chn:0,col:'#00ffcc',name:'REGEN++',healAmt:22,healTick:26,healWalls:true,healStunReduce:28},'4A':{t:CT.HEALER,cost:15000,hp:220,rng:150,dmg:0,cd:0,aoe:0,chn:0,col:'#00bbff',name:'ARCH MEDIC',healAmt:14,healTick:44,healWalls:true,baseHealAmt:18,baseMaxBonus:590,healStunReduce:30},'4B':{t:CT.HEALER,cost:5000,hp:220,rng:215,dmg:0,cd:0,aoe:0,chn:0,col:'#00ffaa',name:'REGEN+++',healAmt:32,healTick:18,healWalls:true,healStunReduce:45},'5A':{t:CT.HEALER,cost:20000,hp:1295,rng:168,dmg:0,cd:0,aoe:0,chn:0,col:'#00aaff',name:'DIVINE MEDIC',healAmt:22,healTick:32,healWalls:true,baseHealAmt:34,baseMaxBonus:1040,healStunReduce:50},'5B':{t:CT.HEALER,cost:15700,hp:295,rng:350,dmg:0,cd:0,aoe:0,chn:0,col:'#00ff88',name:'LIFE SURGE',healAmt:10,healTick:2,healWalls:true,healStunReduce:100}},
   spike:{1:{t:CT.SPIKE,cost:175,hp:90,rng:85,dmg:38,cd:60,aoe:0,chn:0,col:'#ff4488',name:'SPIKE'},'2A':{t:CT.SPIKE,cost:300,hp:122,rng:90,dmg:36,cd:22,aoe:0,chn:0,col:'#ff4488',name:'RAPID STRIKE',rapidStrike:true},'2B':{t:CT.SPIKE,cost:600,hp:122,rng:92,dmg:100,cd:80,aoe:45,chn:0,col:'#ff2255',name:'WARHAMMER',hammer:true,stunDur:45},'3A':{t:CT.SPIKE,cost:500,hp:160,rng:95,dmg:44,cd:14,aoe:0,chn:0,col:'#ff66aa',name:'RAPID STRIKE+',rapidStrike:true},'3B':{t:CT.SPIKE,cost:900,hp:160,rng:100,dmg:158,cd:68,aoe:65,chn:0,col:'#ff0044',name:'WARHAMMER+',hammer:true,stunDur:70},'4A':{t:CT.SPIKE,cost:700,hp:215,rng:102,dmg:63,cd:9,aoe:0,chn:0,col:'#ff88cc',name:'RAPID STRIKE++',rapidStrike:true},'4B':{t:CT.SPIKE,cost:1400,hp:215,rng:108,dmg:258,cd:58,aoe:92,chn:0,col:'#ff0033',name:'WARHAMMER++',hammer:true,stunDur:95},'5A':{t:CT.SPIKE,cost:1000,hp:290,rng:112,dmg:93,cd:6,aoe:0,chn:0,col:'#ffaadd',name:'CYCLONE',rapidStrike:true},'5B':{t:CT.SPIKE,cost:2200,hp:290,rng:120,dmg:400,cd:48,aoe:130,chn:0,col:'#cc0022',name:'MJOLNIR',hammer:true,stunDur:130}},
-  buff:{1:{t:CT.BUFF,cost:220,hp:110,rng:140,dmg:0,cd:0,col:'#ffaa33',name:'DJ TOWER',buffType:'base',dmgBoost:.10,spdBoost:.06,rngBoost:.05},'2A':{t:CT.BUFF,cost:250,hp:148,rng:150,dmg:0,cd:0,col:'#ffd700',name:'BASS BOOST',buffType:'cost',costReduce:.18,dmgBoost:.06},'2B':{t:CT.BUFF,cost:550,hp:148,rng:150,dmg:0,cd:0,col:'#ff8800',name:'DJ BOOTH',buffType:'combat',dmgBoost:.30,spdBoost:.24,rngBoost:.14},'3A':{t:CT.BUFF,cost:380,hp:196,rng:168,dmg:0,cd:0,col:'#ffdd00',name:'BASS BOOST+',buffType:'cost',costReduce:.26,dmgBoost:.10},'3B':{t:CT.BUFF,cost:900,hp:196,rng:168,dmg:0,cd:0,col:'#ff6600',name:'DJ BOOTH+',buffType:'combat',dmgBoost:.48,spdBoost:.36,rngBoost:.24},'4A':{t:CT.BUFF,cost:1100,hp:255,rng:185,dmg:0,cd:0,col:'#ffe444',name:'BASS BOOST++',buffType:'cost',costReduce:.35,dmgBoost:.15},'4B':{t:CT.BUFF,cost:2600,hp:255,rng:185,dmg:0,cd:0,col:'#ff4400',name:'DJ BOOTH++',buffType:'combat',dmgBoost:.68,spdBoost:.50,rngBoost:.35},'5A':{t:CT.BUFF,cost:42000,hp:340,rng:210,dmg:0,cd:0,col:'#ffffff',name:'GOLDEN TURNTABLE',buffType:'cost',costReduce:.45,dmgBoost:.22,goldBonus:.60},'5B':{t:CT.BUFF,cost:16000,hp:1000,rng:99999,dmg:0,cd:0,col:'#ff2200',name:'HEADLINE DJ',buffType:'combat',dmgBoost:1.15,spdBoost:1.10,rngBoost:0.70}},
-  mine:{1:{t:CT.MINE,cost:375,hp:80,rng:0,dmg:0,cd:0,col:'#ffe066',name:'FARM',mineType:'basic',goldPerWave:15},'2A':{t:CT.MINE,cost:500,hp:110,rng:0,dmg:0,cd:0,col:'#ffe066',name:'BIG FARM',mineType:'compound',goldPerWave:50},'2B':{t:CT.MINE,cost:1000,hp:110,rng:0,dmg:0,cd:0,col:'#ffd700',name:'BANK',mineType:'bank',interestRate:.04,maxInterest:150},'3A':{t:CT.MINE,cost:3200,hp:145,rng:0,dmg:0,cd:0,col:'#ffe066',name:'BIG FARM+',mineType:'compound',goldPerWave:280},'3B':{t:CT.MINE,cost:1800,hp:145,rng:0,dmg:0,cd:0,col:'#ffd700',name:'BANK+',mineType:'bank',interestRate:.07,maxInterest:300},'4A':{t:CT.MINE,cost:8000,hp:190,rng:0,dmg:0,cd:0,col:'#ffe066',name:'MEGA FARM',mineType:'compound',goldPerWave:1000},'4B':{t:CT.MINE,cost:7800,hp:190,rng:0,dmg:0,cd:0,col:'#ffd700',name:'BANK++',mineType:'bank',interestRate:.10,maxInterest:1200},'5A':{t:CT.MINE,cost:20000,hp:255,rng:0,dmg:0,cd:0,col:'#ffe066',name:'GOLD FARM',mineType:'compound',goldPerWave:2000},'5B':{t:CT.MINE,cost:100000,hp:255,rng:0,dmg:0,cd:0,col:'#ffd700',name:'MONEY PRINTER',mineType:'bank',interestRate:.10,maxInterest:50000}},
+  buff:{1:{t:CT.BUFF,cost:220,hp:110,rng:140,dmg:0,cd:0,col:'#ffaa33',name:'DJ TOWER',buffType:'base',dmgBoost:.10,spdBoost:.06,rngBoost:.05},'2A':{t:CT.BUFF,cost:250,hp:148,rng:150,dmg:0,cd:0,col:'#ffd700',name:'BASS BOOST',buffType:'cost',costReduce:.18,dmgBoost:.06},'2B':{t:CT.BUFF,cost:550,hp:148,rng:150,dmg:0,cd:0,col:'#ff8800',name:'DJ BOOTH',buffType:'combat',dmgBoost:.30,spdBoost:.24,rngBoost:.14},'3A':{t:CT.BUFF,cost:380,hp:196,rng:168,dmg:0,cd:0,col:'#ffdd00',name:'BASS BOOST+',buffType:'cost',costReduce:.26,dmgBoost:.10},'3B':{t:CT.BUFF,cost:900,hp:196,rng:168,dmg:0,cd:0,col:'#ff6600',name:'DJ BOOTH+',buffType:'combat',dmgBoost:.48,spdBoost:.36,rngBoost:.24},'4A':{t:CT.BUFF,cost:1100,hp:255,rng:185,dmg:0,cd:0,col:'#ffe444',name:'BASS BOOST++',buffType:'cost',costReduce:.35,dmgBoost:.15},'4B':{t:CT.BUFF,cost:2600,hp:255,rng:185,dmg:0,cd:0,col:'#ff4400',name:'DJ BOOTH++',buffType:'combat',dmgBoost:.68,spdBoost:.50,rngBoost:.35},'5A':{t:CT.BUFF,cost:42000,hp:340,rng:210,dmg:0,cd:0,col:'#ffffff',name:'GOLDEN TURNTABLE',buffType:'cost',costReduce:.32,dmgBoost:.14,goldBonus:.25},'5B':{t:CT.BUFF,cost:16000,hp:1000,rng:99999,dmg:0,cd:0,col:'#ff2200',name:'HEADLINE DJ',buffType:'combat',dmgBoost:1.15,spdBoost:1.10,rngBoost:0.70}},
+  mine:{1:{t:CT.MINE,cost:375,hp:80,rng:0,dmg:0,cd:0,col:'#ffe066',name:'FARM',mineType:'basic',goldPerWave:15},'2A':{t:CT.MINE,cost:500,hp:110,rng:0,dmg:0,cd:0,col:'#ffe066',name:'BIG FARM',mineType:'compound',goldPerWave:50},'2B':{t:CT.MINE,cost:1000,hp:110,rng:0,dmg:0,cd:0,col:'#ffd700',name:'BANK',mineType:'bank',interestRate:.04,maxInterest:150},'3A':{t:CT.MINE,cost:3200,hp:145,rng:0,dmg:0,cd:0,col:'#ffe066',name:'BIG FARM+',mineType:'compound',goldPerWave:150},'3B':{t:CT.MINE,cost:1800,hp:145,rng:0,dmg:0,cd:0,col:'#ffd700',name:'BANK+',mineType:'bank',interestRate:.06,maxInterest:220},'4A':{t:CT.MINE,cost:8000,hp:190,rng:0,dmg:0,cd:0,col:'#ffe066',name:'MEGA FARM',mineType:'compound',goldPerWave:420},'4B':{t:CT.MINE,cost:7800,hp:190,rng:0,dmg:0,cd:0,col:'#ffd700',name:'BANK++',mineType:'bank',interestRate:.07,maxInterest:650},'5A':{t:CT.MINE,cost:20000,hp:255,rng:0,dmg:0,cd:0,col:'#ffe066',name:'GOLD FARM',mineType:'compound',goldPerWave:900},'5B':{t:CT.MINE,cost:100000,hp:255,rng:0,dmg:0,cd:0,col:'#ffd700',name:'MONEY PRINTER',mineType:'bank',interestRate:.075,maxInterest:4000}},
   heli:{1:{t:CT.HELI,cost:400,hp:120,rng:0,dmg:0,cd:0,col:'#44ffcc',name:'HELI PAD',heliSpd:1.8,heliDmg:28,heliCd:70,heliRng:240,heliAoe:0,antiAir:true},'2A':{t:CT.HELI,cost:1200,hp:160,rng:0,dmg:0,cd:0,col:'#00ffaa',name:'missile heli',heliSpd:2.0,heliDmg:35,heliCd:55,heliRng:260,heliAoe:55,heliMissile:true,antiAir:true},'2B':{t:CT.HELI,cost:900,hp:160,rng:0,dmg:0,cd:0,col:'#44ffcc',name:'military heli',heliSpd:2.8,heliDmg:20,heliCd:14,heliRng:250,heliAoe:0,heliMinigun:true,antiAir:true,antiHidden:true},'3A':{t:CT.HELI,cost:2000,hp:210,rng:0,dmg:0,cd:0,col:'#00ffaa',name:'missile heli+',heliSpd:2.2,heliDmg:200,heliCd:50,heliRng:280,heliAoe:80,heliMissile:true,antiAir:true},'3B':{t:CT.HELI,cost:3200,hp:210,rng:0,dmg:0,cd:0,col:'#44ffcc',name:'military heli+',heliSpd:3.4,heliDmg:40,heliCd:8,heliRng:265,heliAoe:0,heliMinigun:true,antiAir:true,antiHidden:true},'4A':{t:CT.HELI,cost:4500,hp:280,rng:0,dmg:0,cd:0,col:'#00ffaa',name:'missile heli++',heliSpd:2.5,heliDmg:500,heliCd:43,heliRng:310,heliAoe:110,heliMissile:true,antiAir:true},'4B':{t:CT.HELI,cost:6000,hp:280,rng:0,dmg:0,cd:0,col:'#44ffcc',name:'military heli++',heliSpd:4.0,heliDmg:60,heliCd:5,heliRng:280,heliAoe:0,heliMinigun:true,antiAir:true,antiHidden:true},'5A':{t:CT.HELI,cost:8000,hp:380,rng:0,dmg:0,cd:0,col:'#00ffdd',name:'APACHE',heliSpd:2.8,heliDmg:950,heliCd:35,heliRng:350,heliAoe:160,heliMissile:true,antiAir:true},'5B':{t:CT.HELI,cost:10000,hp:380,rng:0,dmg:0,cd:0,col:'#66ffdd',name:'THUNDERBOLT',heliSpd:5.0,heliDmg:100,heliCd:1,heliRng:320,heliAoe:0,heliMinigun:true,antiAir:true,antiHidden:true}},
   admindrone:{1:{t:CT.DRONE,cost:600,hp:200,rng:0,dmg:0,cd:0,col:'#ff88ff',name:'DRONE PAD',droneCount:1,droneDmg:20,droneCd:50,droneRng:220,droneSpd:2.0,droneHeal:0,droneBuff:0,droneMissile:false},
     '2A':{t:CT.DRONE,cost:1200,hp:250,rng:0,dmg:0,cd:0,col:'#ff66ff',name:'SWARM PAD II',droneCount:3,droneDmg:25,droneCd:45,droneRng:240,droneSpd:2.2,droneHeal:0,droneBuff:0,droneMissile:false},
@@ -3049,7 +3072,7 @@ function getEvolvedBlasterCfg(base,lvl,variant){
 function getCfg(key,lvl,path,evolvedVariant){if(key==='wall') return TS.wall[Math.min(lvl,5)]||TS.wall[1];const base=(lvl===1)?TS[key][1]:(TS[key][lvl+(path||'')]||TS[key][1]);if(key==='basic'&&evolvedVariant){const p=path||(evolvedVariant==='rifle'||evolvedVariant==='shotgun'?(evolvedVariant==='rifle'?'A':'B'):null);if(!p) return base;const variant=p==='A'?'rifle':'shotgun';return getEvolvedBlasterCfg(TS.basic[1],lvl,variant);}return base;}
 function upgCost(key,toLvl,path){if(key==='wall'){const s=TS.wall[Math.min(toLvl,5)];return s?s.cost:TS.wall[1].cost;}if(TS[key]&&TS[key][toLvl]&&!TS[key][toLvl+'A']&&!TS[key][toLvl+'B']) return TS[key][toLvl].cost;if(toLvl===2){const lk2='2'+(path||'A');const s2=TS[key]&&TS[key][lk2];if(s2) return s2.cost;const sA=TS[key]&&TS[key]['2A'];return sA?sA.cost:Math.round(TS[key][1].cost*0.6);}const lk=toLvl+(path||'A');const s=TS[key]&&TS[key][lk];if(s) return s.cost;const base=TS[key][1].cost;if(toLvl===3) return Math.round(base*1.0);if(toLvl===4) return Math.round(base*1.45);if(toLvl===5) return Math.round(base*2.0);if(toLvl===6) return Math.round(base*3.2);if(toLvl===7) return Math.round(base*4.5);if(toLvl===8) return Math.round(base*6.2);if(toLvl===9) return Math.round(base*8.5);if(toLvl===10) return Math.round(base*12.0);return Math.round(base*1.2);}
 
-const BASE_UPG={A:{1:{cost:200,hpBonus:50,turretDmg:25,turretRng:180,turretCd:75,name:'FORTRESS I'},2:{cost:600,hpBonus:100,turretDmg:50,turretRng:200,turretCd:40,name:'FORTRESS II'},3:{cost:2200,hpBonus:600,turretDmg:90,turretRng:220,turretCd:30,name:'FORTRESS III'},4:{cost:4500,hpBonus:2000,turretDmg:160,turretRng:250,turretCd:22,name:'CITADEL'},5:{cost:8000,hpBonus:5000,turretDmg:280,turretRng:300,turretCd:14,name:'FORTRESS MAX'}},B:{1:{cost:250,goldPerWave:30,name:'TREASURY I'},2:{cost:500,goldPerWave:65,name:'TREASURY II'},3:{cost:900,goldPerWave:110,name:'TREASURY III'},4:{cost:1800,goldPerWave:180,name:'VAULT'},5:{cost:3500,goldPerWave:300,name:'TREASURY MAX'}}};
+const BASE_UPG={A:{1:{cost:200,hpBonus:50,turretDmg:25,turretRng:180,turretCd:75,name:'FORTRESS I'},2:{cost:600,hpBonus:100,turretDmg:50,turretRng:200,turretCd:40,name:'FORTRESS II'},3:{cost:2200,hpBonus:600,turretDmg:90,turretRng:220,turretCd:30,name:'FORTRESS III'},4:{cost:4500,hpBonus:2000,turretDmg:160,turretRng:250,turretCd:22,name:'CITADEL'},5:{cost:8000,hpBonus:5000,turretDmg:280,turretRng:300,turretCd:14,name:'FORTRESS MAX'}},B:{1:{cost:250,goldPerWave:30,name:'TREASURY I'},2:{cost:500,goldPerWave:60,name:'TREASURY II'},3:{cost:900,goldPerWave:95,name:'TREASURY III'},4:{cost:1800,goldPerWave:145,name:'VAULT'},5:{cost:3500,goldPerWave:210,name:'TREASURY MAX'}}};
 const BASE_ML=5;
 
 // ── MODES — sandbox added with 10x gold multiplier
@@ -3131,7 +3154,7 @@ var MUSIC_TRACKS = [
   {name:'🎶 Chirp (C418)', isAudio:true, src:'mc_chirp.mp3'},
   {name:'🎹 Mellohi (C418)', isAudio:true, src:'mc_mellohi.mp3'},
   {name:'⏳ Wait (C418)', isAudio:true, src:'mc_wait.mp3'},
-  {name:'🔗 Custom Track(broken)', isAudio:true, isCustom:true, src:''},
+  {name:'🔗 Custom Track', isAudio:true, isCustom:true, src:''},
   {name:'\u2753\u2753\u2753 Secret Track', isAudio:true, isRickRoll:true, src:'secret_track.mp3'}
 ];
 
@@ -3148,9 +3171,14 @@ function musicPlayTrack(idx){
   if(!musicEnabled)return;
   var trk=MUSIC_TRACKS[idx];if(!trk)return;
   if(trk.isRickRoll){try{if(typeof unlockAchievement==='function')unlockAchievement('rickrolled');}catch(e){}}
-  if(trk.isAudio){
+  if(trk.isYouTube){
+    gameAudioStop();
+    if(trk.ytId)ytPlayVideo(trk.ytId);
+    else{var m=document.getElementById('yt-status-msg');if(m){m.textContent='\u26a0 Paste a YouTube link or audio URL below';setTimeout(function(){m.textContent='';},5000);}}
+  }else if(trk.isAudio){
+    ytStop();
     if(trk.src)gameAudioPlay(trk.src);
-    else{var m=document.getElementById('yt-status-msg');if(m){m.textContent='\u26a0 Paste an audio URL below';setTimeout(function(){m.textContent='';},5000);}}
+    else{var m=document.getElementById('yt-status-msg');if(m){m.textContent='\u26a0 Paste a YouTube link or audio URL below';setTimeout(function(){m.textContent='';},5000);}}
   }
   musicCurrentIdx=idx;updateMusicUI();
 }
@@ -3158,7 +3186,7 @@ function musicPlayTrack(idx){
 function musicPlayRandom(excludeIdx){
   if(excludeIdx===undefined)excludeIdx=musicCurrentIdx;
   var n=MUSIC_TRACKS.length,cands=[];
-  for(var i=0;i<n;i++){if(i===excludeIdx||MUSIC_TRACKS[i].isRickRoll||(MUSIC_TRACKS[i].isCustom&&!MUSIC_TRACKS[i].src))continue;cands.push(i);}
+  for(var i=0;i<n;i++){if(i===excludeIdx||MUSIC_TRACKS[i].isRickRoll||(MUSIC_TRACKS[i].isCustom&&!MUSIC_TRACKS[i].src&&!MUSIC_TRACKS[i].ytId))continue;cands.push(i);}
   if(!cands.length)for(var j=0;j<n;j++){if(!MUSIC_TRACKS[j].isRickRoll)cands.push(j);}
   if(!cands.length)for(var k=0;k<n;k++)cands.push(k);
   musicPlayTrack(cands[Math.floor(Math.random()*cands.length)]);
@@ -3169,7 +3197,7 @@ function musicSkipRandom(){if(musicEnabled)musicPlayRandom();}
 function musicToggle(){
   musicEnabled=!musicEnabled;
   if(musicEnabled){if(musicCurrentIdx<0)musicPlayRandom(-1);else musicPlayTrack(musicCurrentIdx);}
-  else gameAudioStop();
+  else{gameAudioStop();ytStop();}
   updateMusicUI();
   try{localStorage.setItem('bs_mus_vol',String(musicVolume));}catch(e){}
 }
@@ -3177,6 +3205,7 @@ function musicToggle(){
 function musicSetVolume(v){
   musicVolume=Math.max(0,Math.min(1,v));
   if(gameAudio)gameAudio.volume=musicVolume;
+  ytSetVolume(musicVolume);
   var p=document.getElementById('sett-vol-pct');if(p)p.textContent=Math.round(musicVolume*100)+'%';
   var sl=document.getElementById('sett-vol');if(sl)sl.value=Math.round(musicVolume*100);
   try{localStorage.setItem('bs_mus_vol',String(musicVolume));}catch(e){}
@@ -3372,23 +3401,192 @@ function gameAudioPlay(src){
 
 function gameAudioStop(){if(gameAudio){gameAudio.pause();gameAudio.currentTime=0;}}
 
+/* ================================================================
+   YOUTUBE MUSIC SUPPORT
+   Chrome's autoplay-with-sound policy is based on that frame's own
+   per-site engagement history, which our page can't grant or fake —
+   no client-side trick reliably forces it. The one thing that IS
+   always guaranteed to work is a direct user click on the actual
+   YouTube player's own play button. So instead of hiding the player
+   and trying to remote-trigger it, we show a small real YouTube
+   player (native controls) and have the person click play on it
+   once. After that, our UI (skip / volume slider / stop) controls
+   it normally via the JS API.
+   ================================================================ */
+var ytPlayer=null, ytPlayerReady=false, _ytCurrentVideoId=null;
+
+function extractYouTubeId(url){
+  var m=url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return m?m[1]:null;
+}
+
+function ytShowStatus(text,ms){
+  var m=document.getElementById('yt-status-msg');
+  if(!m)return;
+  m.textContent=text;
+  if(ms)setTimeout(function(){if(m.textContent===text)m.textContent='';},ms);
+}
+
+function ytEnsureAPI(cb){
+  if(window.YT&&window.YT.Player){cb();return;}
+  var prevCb=window.onYouTubeIframeAPIReady;
+  var settled=false;
+  var failTimer=setTimeout(function(){
+    if(settled)return;
+    settled=true;
+    console.warn('[YT] iframe_api did not become ready in time (blocked by ad-blocker/extension, or network issue)');
+    ytShowStatus('\u26a0 Couldn\u2019t load the YouTube player (an ad-blocker or browser extension may be blocking it). Try disabling it for this page, or paste a direct audio URL (.mp3/.ogg) instead.',9000);
+    var hint=document.getElementById('yt-visible-hint');
+    if(hint)hint.style.display='none';
+    var wrap=document.getElementById('yt-visible-player-wrap');
+    if(wrap)wrap.style.display='none';
+  },7000);
+  window.onYouTubeIframeAPIReady=function(){
+    if(typeof prevCb==='function'){try{prevCb();}catch(e){}}
+    if(settled)return;
+    settled=true;
+    clearTimeout(failTimer);
+    cb();
+  };
+  if(!window._ytApiTagAdded){
+    window._ytApiTagAdded=true;
+    var tag=document.createElement('script');
+    tag.src='https://www.youtube.com/iframe_api';
+    tag.onerror=function(){
+      console.warn('[YT] failed to load iframe_api script (network/ad-blocker?)');
+      if(settled)return;
+      settled=true;
+      clearTimeout(failTimer);
+      ytShowStatus('\u26a0 Couldn\u2019t load the YouTube player (blocked by an ad-blocker/extension, or network issue). Try disabling it for this page, or paste a direct audio URL (.mp3/.ogg) instead.',9000);
+      var hint=document.getElementById('yt-visible-hint');
+      if(hint)hint.style.display='none';
+      var wrap=document.getElementById('yt-visible-player-wrap');
+      if(wrap)wrap.style.display='none';
+    };
+    document.head.appendChild(tag);
+  }
+}
+
+/* Build (or rebuild) a small VISIBLE player with real YouTube controls.
+   The person clicks its play button themselves — that is a direct,
+   unambiguous user gesture on the media element and browsers always
+   allow it, unlike a script calling playVideo() on a hidden frame. */
+function ytBuildIframe(videoId){
+  _ytCurrentVideoId=videoId;
+  ytPlayerReady=false;
+  if(ytPlayer){try{ytPlayer.destroy();}catch(e){}ytPlayer=null;}
+
+  var wrap=document.getElementById('yt-visible-player-wrap');
+  var mount=document.getElementById('yt-visible-player');
+  if(!mount)return; // settings panel not in DOM yet
+  mount.innerHTML='';
+  if(wrap)wrap.style.display='block';
+
+  var holder=document.createElement('div');
+  holder.id='yt-audio-player';
+  mount.appendChild(holder);
+
+  ytEnsureAPI(function(){
+    try{
+      ytPlayer=new YT.Player(holder,{
+        width:'220',height:'124',
+        videoId:videoId,
+        playerVars:(function(){
+          var pv={autoplay:0,controls:1,disablekb:0,fs:0,modestbranding:1,playsinline:1,rel:0,enablejsapi:1};
+          if(/^https?:$/.test(location.protocol))pv.origin=location.origin;
+          return pv;
+        })(),
+        events:{
+          onReady:function(e){
+            ytPlayerReady=true;
+            try{e.target.setVolume(Math.round(musicVolume*100));}catch(er){}
+            ytShowStatus('\u25b2 Click play on the video above to start the music',0);
+          },
+          onStateChange:function(e){
+            if(e.data===YT.PlayerState.PLAYING){ytShowStatus('',1);var hint=document.getElementById('yt-visible-hint');if(hint)hint.style.display='none';}
+            if(e.data===YT.PlayerState.ENDED&&musicEnabled){
+              var trk=MUSIC_TRACKS[musicCurrentIdx];
+              if(trk&&trk.isYouTube)musicPlayRandom(musicCurrentIdx);
+            }
+          },
+          onError:function(){
+            ytShowStatus('\u26a0 That YouTube video can\u2019t be embedded/played',5000);
+            if(typeof msg==='function')msg('⚠ YouTube track failed to load (blocked or unavailable)',3000);
+            var trk=MUSIC_TRACKS[musicCurrentIdx];
+            if(musicEnabled&&trk&&trk.isYouTube)musicPlayRandom(musicCurrentIdx);
+          }
+        }
+      });
+    }catch(err){console.warn('[YT] player init failed:',err);}
+  });
+}
+
+function ytPlayVideo(videoId){
+  if(!videoId)return;
+  ytBuildIframe(videoId);
+}
+
+function ytStop(){
+  var wrap=document.getElementById('yt-visible-player-wrap');
+  if(wrap)wrap.style.display='none';
+  var mount=document.getElementById('yt-visible-player');
+  if(mount)mount.innerHTML='';
+  if(ytPlayer){try{ytPlayer.destroy();}catch(e){}}
+  ytPlayer=null;ytPlayerReady=false;_ytCurrentVideoId=null;
+}
+
+function ytSetVolume(v){
+  if(ytPlayer&&ytPlayerReady){try{ytPlayer.setVolume(Math.round(v*100));}catch(e){}}
+}
+
 function ytSetCustom(){
   var input=document.getElementById('yt-custom-url-input');if(!input)return;
   var url=input.value.trim();
   var m=document.getElementById('yt-status-msg');
-  if(!url){if(m)m.textContent='\u26a0 Paste an audio URL (.mp3, .ogg, etc.)';return;}
+  if(!url){if(m)m.textContent='\u26a0 Paste a YouTube link or direct audio URL';return;}
   if(m)m.textContent='';
   var customIdx=-1;
   for(var ci=0;ci<MUSIC_TRACKS.length;ci++){
-    if(MUSIC_TRACKS[ci].isCustom){
-      MUSIC_TRACKS[ci].src=url;
-      MUSIC_TRACKS[ci].name='🔗 '+(url.split('/').pop().split('?')[0].slice(0,28)||'Custom');
-      customIdx=ci;break;
-    }
+    if(MUSIC_TRACKS[ci].isCustom){customIdx=ci;break;}
+  }
+  if(customIdx<0)return;
+  var ytId=extractYouTubeId(url);
+  if(ytId){
+    MUSIC_TRACKS[customIdx].isYouTube=true;
+    MUSIC_TRACKS[customIdx].ytId=ytId;
+    MUSIC_TRACKS[customIdx].src='';
+    MUSIC_TRACKS[customIdx].name='📺 YT: '+ytId;
+  }else{
+    MUSIC_TRACKS[customIdx].isYouTube=false;
+    MUSIC_TRACKS[customIdx].ytId=null;
+    MUSIC_TRACKS[customIdx].src=url;
+    MUSIC_TRACKS[customIdx].name='🔗 '+(url.split('/').pop().split('?')[0].slice(0,28)||'Custom');
   }
   renderMusicTracklist();
   musicEnabled=true;
-  if(customIdx>=0)musicPlayTrack(customIdx);
+  musicPlayTrack(customIdx);
+}
+/* ---- Local file music (loaded from the player's own computer) ---- */
+var _localMusicObjectUrl=null;
+function loadLocalMusicFile(file){
+  if(!file)return;
+  var m=document.getElementById('yt-status-msg');
+  ytStop(); /* hide/kill any YouTube player, not relevant to local files */
+  var customIdx=-1;
+  for(var ci=0;ci<MUSIC_TRACKS.length;ci++){
+    if(MUSIC_TRACKS[ci].isCustom){customIdx=ci;break;}
+  }
+  if(customIdx<0)return;
+  if(_localMusicObjectUrl){try{URL.revokeObjectURL(_localMusicObjectUrl);}catch(e){}}
+  _localMusicObjectUrl=URL.createObjectURL(file);
+  MUSIC_TRACKS[customIdx].isYouTube=false;
+  MUSIC_TRACKS[customIdx].ytId=null;
+  MUSIC_TRACKS[customIdx].src=_localMusicObjectUrl;
+  MUSIC_TRACKS[customIdx].name='\ud83d\udcbb '+(file.name.replace(/\.[^.]+$/,'').slice(0,28)||'Local Track');
+  if(m)m.textContent='';
+  renderMusicTracklist();
+  musicEnabled=true;
+  musicPlayTrack(customIdx);
 }
 /* ================================================================
    END HTML5 AUDIO MUSIC SYSTEM
@@ -6517,7 +6715,7 @@ document.getElementById('up-merge-btn').addEventListener('click',()=>{
   const cfg=getCfg('railgun_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'railgun_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.sniper[1].cost),0)};
-  towers.push(nt);bfs();hidePanel();msg('⚡ RAILGUN CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('railgun_cannon');bfs();hidePanel();msg('⚡ RAILGUN CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:railgunMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn2').addEventListener('click',()=>{
@@ -6527,7 +6725,7 @@ document.getElementById('up-merge-btn2').addEventListener('click',()=>{
   const cfg=getCfg('blaster_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'blaster_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.basic[1].cost),0)};
-  towers.push(nt);bfs();hidePanel();msg('🔫 BLASTER CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('blaster_cannon');bfs();hidePanel();msg('🔫 BLASTER CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:blasterMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn3').addEventListener('click',()=>{
@@ -6537,7 +6735,7 @@ document.getElementById('up-merge-btn3').addEventListener('click',()=>{
   const cfg=getCfg('siege_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'siege_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.cannon[1].cost),0)};
-  towers.push(nt);bfs();hidePanel();msg('💣 SIEGE CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('siege_cannon');bfs();hidePanel();msg('💣 SIEGE CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:siegeMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn4').addEventListener('click',()=>{
@@ -6547,7 +6745,7 @@ document.getElementById('up-merge-btn4').addEventListener('click',()=>{
   const cfg=getCfg('barrier_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'barrier_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.wall[1].cost),0)};
-  towers.push(nt);bfs();hidePanel();msg('🛡 BARRIER CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('barrier_cannon');bfs();hidePanel();msg('🛡 BARRIER CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:barrierMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn5').addEventListener('click',()=>{
@@ -6557,7 +6755,7 @@ document.getElementById('up-merge-btn5').addEventListener('click',()=>{
   const cfg=getCfg('mega_blaster_cannon',1,null);
   for(let ddr=0;ddr<4;ddr++)for(let ddc=0;ddc<4;ddc++)grid[ar+ddr][ac+ddc]=cfg.t;
   const nt={row:ar,col:ac,size:4,key:'mega_blaster_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||0),0)};
-  towers.push(nt);bfs();hidePanel();msg('💥 MEGA BLASTER CANNON ASSEMBLED!',2500);syncUI();
+  towers.push(nt);TowerStats.log('mega_blaster_cannon');bfs();hidePanel();msg('💥 MEGA BLASTER CANNON ASSEMBLED!',2500);syncUI();
   if(MP.active) MP.broadcast('tower:megaBlasterMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn6').addEventListener('click',()=>{
@@ -6567,7 +6765,7 @@ document.getElementById('up-merge-btn6').addEventListener('click',()=>{
   const cfg=getCfg('tesla_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'tesla_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,teslaEnergy:0,teslaCharging:true,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.electric[1].cost),0)};
-  towers.push(nt);bfs();hidePanel();msg('⚡ TESLA CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('tesla_cannon');bfs();hidePanel();msg('⚡ TESLA CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:teslaMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn7').addEventListener('click',()=>{
@@ -6577,7 +6775,7 @@ document.getElementById('up-merge-btn7').addEventListener('click',()=>{
   const cfg=getCfg('laser_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'laser_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserTargets:[],laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.laser[1].cost),0)};
-  towers.push(nt);bfs();hidePanel();msg('💎 LASER CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('laser_cannon');bfs();hidePanel();msg('💎 LASER CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:laserCannonMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-sell-btn').addEventListener('click',()=>{if(!selTower) return;const t=selTower;const ti=towers.indexOf(t);if(ti===-1) return;if(MP.active&&!MP.canInteractTower(t)){msg(MP.getTowerOwnerMsg(t)||'Not your tower',2000);return;}const ref=Math.floor((t.totalGoldSpent||TS[t.key][1].cost)*.5);if(t.key==='healer'&&t.path==='A'&&t.level>=2){const bon=t.level===2?25:t.level===3?55:t.level===4?90:140;baseMaxHP=Math.max(150,baseMaxHP-bon);baseHP=Math.min(baseHP,baseMaxHP);}if(t.key==='heli'){const hi=helicopters.findIndex(h=>h.towerId===t.id);if(hi!==-1) helicopters.splice(hi,1);}if(t.key==='barracks'||t.key==='mech_base'||t.key==='cowboy'||t.key==='necromancer'){for(let ai=allies.length-1;ai>=0;ai--){if(allies[ai]&&allies[ai].towerId===t.id){sparks(allies[ai].x,allies[ai].y,'#ff4444',5,2);allies.splice(ai,1);}}}gold+=ref;const row=t.row,col=t.col;towers.splice(ti,1);clearTowerGrid(t);bfs();ft(col*CS+CS/2,row*CS,'+'+ref+'g');hidePanel();syncUI();if(MP.active){MP.broadcast('tower:sell',{pid:MP.playerId,row,col});MP.updatePlayerGold();}});
@@ -6748,7 +6946,7 @@ cv.addEventListener('click',e=>{
   if(gold<actualCost){msg('⚠ Insufficient gold!');return;}
   grid[row][col]=cfg.t;bfs();const saved=cfg.cost-actualCost;gold-=actualCost;if(gameMode!=='sandbox'){achStats.totalGoldSpent=(achStats.totalGoldSpent||0)+actualCost;if(achStats.totalGoldSpent>=50000)unlockAchievement('gambler');if(achStats.totalGoldSpent%5000<actualCost)saveAchStats();}
   const newTower={row,col,key:selBuild,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,angle:0,level:1,path:null,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],owner:MP.active?MP.playerId:null,ownerColor:MP.active?PLAYER_COLORS[MP.colorIndex]:'#00ff88',ownerName:MP.active?MP.playerName:'YOU',totalDmgDealt:0,totalKills:0,totalGoldSpent:actualCost,skins:{...mgEquipped},evolvedBlaster:_evoVariant};
-  towers.push(newTower);if(selBuild!=='wall'){_sessionTowerTypes.add(selBuild);}_sessionAllTypes.add(selBuild);if(selBuild==='wall')_sessionWallCount++;
+  towers.push(newTower);TowerStats.log(selBuild);if(selBuild!=='wall'){_sessionTowerTypes.add(selBuild);}_sessionAllTypes.add(selBuild);if(selBuild==='wall')_sessionWallCount++;
   if(typeof checkAchievements_towerPlaced==='function') checkAchievements_towerPlaced(selBuild);
   if(MP.active){MP.broadcast('tower:place',{pid:MP.playerId,row,col,key:selBuild,lvl:1,colorIdx:MP.colorIndex,name:MP.playerName,skins:{...mgEquipped},evolvedBlaster:_evoVariant});MP.updatePlayerGold();}if(selBuild==='heli') spawnHelicopter(newTower);if(selBuild==='admindrone') spawnAdminDrones(newTower);  if(selBuild==='barracks'||selBuild==='mech_base'){newTower.allySpawnCd=0;}
   if(selBuild==='silo'){newTower.siloCd=0;newTower.siloTarget=null;newTower.siloFiring=false;newTower.siloBeamLife=0;newTower.siloFrozenX=null;newTower.siloFrozenY=null;newTower.siloReticleFrozen=false;newTower.siloBeamHold=0;}
@@ -6978,7 +7176,7 @@ if(negativeWaveMode){
   var _nwt=pickWaveType(_aw);curWaveType=_nwt;
   var _nwdef=WAVE_TYPES[_nwt]||WAVE_TYPES[0];
   spawnQ=_nwdef.comp(_aw);spawnT=0;
-  var _nbon=Math.round((40+_aw*6)*MODES[gameMode].goldBonus);gold+=_nbon;
+  var _nbon=Math.round((40+_aw*6)*MODES[gameMode].goldBonus*(1+Math.max(0,_aw-50)*.012+Math.max(0,_aw-100)*.018));gold+=_nbon;
   var _nc=_king?'#ff0088':'#ff00ff';
   var _nl=_king?'\u2620 ADMIN BOSS KING (Wave '+wave+') \u2620':'\u26a0 NEGATIVE WAVE '+wave;
   ft(W/2,H/2-40,_nl,_nc);
@@ -6991,7 +7189,7 @@ if(negativeWaveMode){
   syncUI();return;
 }
 wave++;_negWaveClickCount=0;trackBlasterEvolveProgress();
-waveOn=true;if(gameMode==='hardcore'&&wave===100){updateModeUI();ft(W/2,H/2-60,'❄ ICE TOWER UNLOCKED!','#88ddff');sparks(W/2,H/2,'#88ddff',25,5);msg('❄ ICE TOWER is now available! (Wave 100+)',4000);}const wt=pickWaveType(wave);curWaveType=wt;const wdef=WAVE_TYPES[wt];const bon=Math.round((40+wave*6)*MODES[gameMode].goldBonus);gold+=bon;ft(W/2,H/2-16,`+${bon}g WAVE BONUS`,'#ffd700');if(wave>achStats.maxWave){achStats.maxWave=wave;saveAchStats();}if(gold>(achStats.maxSingleGameGold||0)&&gameMode!=='sandbox'){achStats.maxSingleGameGold=gold;}if(gameMode==='hardcore'&&wave>(achStats.maxWaveHardcore||0)){achStats.maxWaveHardcore=wave;saveAchStats();}if(wave>=100)unlockAchievement('inf_guard_1');if(wave>=200)unlockAchievement('inf_guard_2');if(wave>=300)unlockAchievement('inf_guard_3');if(wave>=600)unlockAchievement('inf_guard_4');if(wave>=1000)unlockAchievement('inf_guard_5');
+waveOn=true;if(gameMode==='hardcore'&&wave===100){updateModeUI();ft(W/2,H/2-60,'❄ ICE TOWER UNLOCKED!','#88ddff');sparks(W/2,H/2,'#88ddff',25,5);msg('❄ ICE TOWER is now available! (Wave 100+)',4000);}const wt=pickWaveType(wave);curWaveType=wt;const wdef=WAVE_TYPES[wt];const bon=Math.round((40+wave*6)*MODES[gameMode].goldBonus*(1+Math.max(0,wave-50)*.012+Math.max(0,wave-100)*.018));gold+=bon;ft(W/2,H/2-16,`+${bon}g WAVE BONUS`,'#ffd700');if(wave>achStats.maxWave){achStats.maxWave=wave;saveAchStats();}if(gold>(achStats.maxSingleGameGold||0)&&gameMode!=='sandbox'){achStats.maxSingleGameGold=gold;}if(gameMode==='hardcore'&&wave>(achStats.maxWaveHardcore||0)){achStats.maxWaveHardcore=wave;saveAchStats();}if(wave>=100)unlockAchievement('inf_guard_1');if(wave>=200)unlockAchievement('inf_guard_2');if(wave>=300)unlockAchievement('inf_guard_3');if(wave>=600)unlockAchievement('inf_guard_4');if(wave>=1000)unlockAchievement('inf_guard_5');
     
     if(wave>=50&&_sessionTowerTypes.size===1)unlockAchievement('why_this_tower');
     if(_sessionAllTypes.size>=14)unlockAchievement('full_arsenal');
@@ -8716,7 +8914,7 @@ if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.
 
   const bossEnemy=enemies.find(e=>e.isBoss);const bossHud=document.getElementById('boss-hud');
   if(bossEnemy){bossHud.classList.add('vis');const typeLabels={normal:'NORMAL BOSS',armor:'ARMOR BOSS',robot:'ROBOT BOSS',flying:'FLYING BOSS',commander:'⚔ COMMANDER',guardian:'🛡 GUARDIAN',mirror:'🪞 MIRROR — STAGE '+(bossEnemy.mirrorStage||1)+'/5',hacklord:'💻 HACKLORD',king:'👑 KING',reaver:'👁 VOID REAVER'};const typeColors={normal:'#ff0055',hacklord:'#00ff44',king:'#ffd700',armor:'#8844ff',robot:'#55aacc',flying:'#00ccff',commander:'#ffdd00',guardian:'#33ffaa',mirror:'#ff66ff',reaver:'#c060ff'};document.getElementById('boss-hud-type').textContent=typeLabels[bossEnemy.bossType]||'BOSS';document.getElementById('boss-hud-type').style.color=typeColors[bossEnemy.bossType]||'#ffaa00';const bar=document.getElementById('boss-hud-bar');bar.className='';if(bossEnemy.bossType==='armor') bar.classList.add('armor');else if(bossEnemy.bossType==='robot') bar.classList.add('robot');else if(bossEnemy.bossType==='flying') bar.classList.add('flying');bar.style.width=Math.max(0,bossEnemy.hp/bossEnemy.mhp*100)+'%';document.getElementById('boss-hud-hp').textContent=`${Math.max(0,Math.round(bossEnemy.hp))} / ${bossEnemy.mhp}`;}else bossHud.classList.remove('vis');
-  if(waveOn&&enemies.length===0&&spawnQ.length===0&&(!MP.active||MP.isHost)){waveOn=false;autoSkipTimer=0;const bon=wave*32;gold+=bon;score+=Math.round(bon*(MODES[gameMode].scoreMult||1)*(negativeWaveMode?1.5:1)*heroScoreMult());let minePayout=0,bankPayout=0;for(const t of towers){if(t.cfg.t===CT.MINE){if(t.cfg.mineType==='compound'||t.cfg.mineType==='basic'){const g=t.cfg.goldPerWave||20;gold+=g;minePayout+=g;}else if(t.cfg.mineType==='bank'){const interest=Math.round(gold*t.cfg.interestRate);const capped=Math.min(interest,t.cfg.maxInterest||100);gold+=capped;bankPayout+=capped;}}}let treasuryPayout=0;if(baseUpgPath==='B'&&baseUpgLevel>0){const upd=BASE_UPG.B[baseUpgLevel];gold+=upd.goldPerWave;treasuryPayout=upd.goldPerWave;}if(minePayout>0) ft(W/2-50,H/2,'\u{1F33E} +'+minePayout+'g FARM','#ffe066');if(bankPayout>0) ft(W/2+50,H/2,'🏦 +'+bankPayout+'g BANK','#ffd700');if(treasuryPayout>0) ft(W/2,H/2+20,'🏛 +'+treasuryPayout+'g TREASURY','#00ff88');for(const t of towers){if(t.cfg.t===CT.WALL) continue;t.hp=Math.min(t.maxHp,t.hp+Math.ceil(t.maxHp*.09));}baseHP=Math.min(baseMaxHP,baseHP+10);msg(`✓ Wave ${wave} cleared! +${bon}g${autoSkip?' · Auto-launching...':''}`,3500);syncUI();refreshSaveSlotUI();const _xpGained=xpForWave(wave,gameMode);grantXP(_xpGained);if(typeof checkAchievements_waveEnd==='function') checkAchievements_waveEnd();ft(W/2,H/2+40,`+${_xpGained} XP`,'#44ffcc');autoSaveTrigger();}
+  if(waveOn&&enemies.length===0&&spawnQ.length===0&&(!MP.active||MP.isHost)){waveOn=false;autoSkipTimer=0;const bon=Math.round(wave*32*(1+Math.max(0,wave-50)*.012+Math.max(0,wave-100)*.018));gold+=bon;score+=Math.round(bon*(MODES[gameMode].scoreMult||1)*(negativeWaveMode?1.5:1)*heroScoreMult());let minePayout=0,bankPayout=0;for(const t of towers){if(t.cfg.t===CT.MINE){if(t.cfg.mineType==='compound'||t.cfg.mineType==='basic'){const g=t.cfg.goldPerWave||20;gold+=g;minePayout+=g;}else if(t.cfg.mineType==='bank'){const interest=Math.round(gold*t.cfg.interestRate);const capped=Math.min(interest,t.cfg.maxInterest||100);gold+=capped;bankPayout+=capped;}}}let treasuryPayout=0;if(baseUpgPath==='B'&&baseUpgLevel>0){const upd=BASE_UPG.B[baseUpgLevel];gold+=upd.goldPerWave;treasuryPayout=upd.goldPerWave;}if(minePayout>0) ft(W/2-50,H/2,'\u{1F33E} +'+minePayout+'g FARM','#ffe066');if(bankPayout>0) ft(W/2+50,H/2,'🏦 +'+bankPayout+'g BANK','#ffd700');if(treasuryPayout>0) ft(W/2,H/2+20,'🏛 +'+treasuryPayout+'g TREASURY','#00ff88');for(const t of towers){if(t.cfg.t===CT.WALL) continue;t.hp=Math.min(t.maxHp,t.hp+Math.ceil(t.maxHp*.09));}baseHP=Math.min(baseMaxHP,baseHP+10);msg(`✓ Wave ${wave} cleared! +${bon}g${autoSkip?' · Auto-launching...':''}`,3500);syncUI();refreshSaveSlotUI();const _xpGained=xpForWave(wave,gameMode);grantXP(_xpGained);if(typeof checkAchievements_waveEnd==='function') checkAchievements_waveEnd();ft(W/2,H/2+40,`+${_xpGained} XP`,'#44ffcc');autoSaveTrigger();}
 }
 
 // ══════════════════════════════
@@ -12392,10 +12590,12 @@ async function sendChat(){
   const input=document.getElementById('chat-input');
   const msg=input.value.trim();
   if(!msg) return;
-  // Top3 chat: only actual top3 leaderboard players can send — no admin bypass
+  const isAdmin=playerName&&playerName.toLowerCase()==='admin';
+  
+  // Top3 chat: only top3 + admin can send
   if(chatChannel==='top3'){
     if(_chatAllowed===null) await checkChatPermission();
-    if(!_chatAllowed){
+    if(!_chatAllowed&&!isAdmin){
       const msgs=document.getElementById('chat-msgs');
       const div=document.createElement('div');div.className='chat-msg system';
       div.textContent='⚠ Only Top 3 leaderboard players can chat here!';
@@ -12744,21 +12944,36 @@ async function bgChatPoll(){
   'use strict';
 
   const WIKI_TOWER_META = {
-    wall:{type:'Support'}, basic:{type:'Attack'}, sniper:{type:'Attack'}, cannon:{type:'Splash'}, mace:{type:'Splash'},
+    wall:{type:'Support'}, basic:{type:'Attack'}, evolved_rifle:{type:'Attack (Evolved)'}, evolved_shotgun:{type:'Splash (Evolved)'}, sniper:{type:'Attack'}, cannon:{type:'Splash'}, mace:{type:'Splash'},
     electric:{type:'Splash'}, healer:{type:'Support'}, spike:{type:'Executioner'}, buff:{type:'Support'},
-    mine:{type:'Economic'}, cowboy:{type:'Economic'}, necromancer:{type:'Support'}, flame:{type:'Splash'}, laser:{type:'Executioner'}, bhole:{type:'Executioner'},
+    mine:{type:'Economic'}, cowboy:{type:'Economic'}, necromancer:{type:'Support'}, flame:{type:'Splash'}, laser:{type:'Executioner'}, bhole:{type:'Executioner'}, alchemist:{type:'Splash (DoT)'},
     ice:{type:'Support'}, heli:{type:'Attack'}, barracks:{type:'Support'}, mech_base:{type:'Support'}, silo:{type:'Executioner'},
-    hero_accel:{type:'Hero'}, hero_score:{type:'Hero'}, hero_sacrifice:{type:'Hero'}, admindrone:{type:'Attack'}, barbwire:{type:'Support'}, hunter:{type:'Executioner'}
+    hero_accel:{type:'Hero'}, hero_score:{type:'Hero'}, hero_sacrifice:{type:'Hero'}, admindrone:{type:'Attack'}, barbwire:{type:'Support'}, hunter:{type:'Executioner'},
+    railgun_cannon:{type:'Merge 2\u00d72 \u2014 Attack'}, blaster_cannon:{type:'Merge 2\u00d72 \u2014 Attack'}, tesla_cannon:{type:'Merge 2\u00d72 \u2014 Splash'},
+    siege_cannon:{type:'Merge 2\u00d72 \u2014 Splash'}, barrier_cannon:{type:'Merge 2\u00d72 \u2014 Support'}, laser_cannon:{type:'Merge 2\u00d72 \u2014 Executioner'},
+    mega_blaster_cannon:{type:'Merge 4\u00d74 \u2014 Attack'}
   };
-  const TOWER_ORDER = ['wall','basic','sniper','cannon','mace','electric','healer','spike','buff','mine','cowboy','hunter','flame','laser','bhole','ice','barbwire','heli','barracks','necromancer','mech_base','admindrone','silo','hero_accel','hero_score','hero_sacrifice'];
+  const TOWER_ORDER = ['wall','basic','evolved_rifle','evolved_shotgun','sniper','cannon','mace','electric','healer','spike','buff','mine','cowboy','hunter','flame','laser','alchemist','bhole','ice','barbwire','heli','barracks','necromancer','mech_base','admindrone','silo','hero_accel','hero_score','hero_sacrifice',
+    'railgun_cannon','blaster_cannon','tesla_cannon','siege_cannon','barrier_cannon','laser_cannon','mega_blaster_cannon'];
 
   let curTowerKey = null;
 
   // Reads TS live so any cost/dmg/hp edits show up here immediately too.
   function towerLevels(key){
+    if(key==='evolved_rifle'||key==='evolved_shotgun'){
+      const variant = key==='evolved_rifle'?'rifle':'shotgun';
+      const path = key==='evolved_rifle'?'A':'B';
+      return [1,2,3,4,5].map(l=>({lvl:l,path:null,cfg:getEvolvedBlasterCfg(TS.basic[1],l,variant),label:'LV '+l}));
+    }
     const t = TS[key];
     if(!t) return [];
     if(key==='wall'){
+      return [1,2,3,4,5].filter(l=>t[l]).map(l=>({lvl:l,path:null,cfg:t[l],label:'LV '+l}));
+    }
+    // Merge towers (railgun_cannon, blaster_cannon, tesla_cannon, siege_cannon, laser_cannon,
+    // barrier_cannon, mega_blaster_cannon) key their upgrades the same way as wall/basic —
+    // numeric-only for barrier_cannon/mega_blaster_cannon, lvl+path for the rest.
+    if(key==='barrier_cannon'||key==='mega_blaster_cannon'){
       return [1,2,3,4,5].filter(l=>t[l]).map(l=>({lvl:l,path:null,cfg:t[l],label:'LV '+l}));
     }
     const out=[];
@@ -12775,8 +12990,11 @@ async function bgChatPoll(){
   function renderTowerList(){
     const list = document.getElementById('wiki-tower-list');
     if(!list) return;
-    list.innerHTML = TOWER_ORDER.filter(k=>TS[k]).map(k=>{
-      const base = TS[k][1] || Object.values(TS[k])[0];
+    list.innerHTML = TOWER_ORDER.filter(k=>TS[k]||k==='evolved_rifle'||k==='evolved_shotgun').map(k=>{
+      let base;
+      if(k==='evolved_rifle') base=getEvolvedBlasterCfg(TS.basic[1],1,'rifle');
+      else if(k==='evolved_shotgun') base=getEvolvedBlasterCfg(TS.basic[1],1,'shotgun');
+      else base = TS[k][1] || Object.values(TS[k])[0];
       const col = base.col || '#888';
       const name = base.name || k;
       return `<div class="wiki-tower-item${k===curTowerKey?' on':''}" style="--wc:${col}" onclick="Wiki.selectTower('${k}')">
@@ -12789,6 +13007,8 @@ async function bgChatPoll(){
   // tower's config, so support towers don't show "DMG: 0" etc.
   const STAT_ORDER = [
     ['hp','HP'],['dmg','DMG'],['rng','RANGE'],['cd','COOLDOWN'],['chargeTime','CHARGE (frm)'],['aoe','SPLASH RAD'],['chn','CHAIN'],
+    ['beamWidth','BEAM WIDTH'],['shots','SHOTS/BURST'],['blastRadius','BLAST RADIUS'],['stunDur','STUN DUR'],
+    ['absorbRadius','SHIELD RADIUS'],['absorbPct','ABSORB %'],['selfDmgPct','SELF-DMG %'],
     ['healAmt','HEAL/TICK'],['healTick','HEAL TICK'],['baseHealAmt','BASE HEAL'],
     ['goldPerWave','GOLD/WAVE'],['interestRate','INTEREST'],
     ['dmgBoost','DMG BOOST'],['spdBoost','SPD BOOST'],['rngBoost','RNG BOOST'],['costReduce','COST -'],['goldBonus','GOLD BONUS'],['scoreMultBonus','SCORE MULT +'],
@@ -12797,9 +13017,9 @@ async function bgChatPoll(){
     ['allyDmg','ALLY DMG'],['allyHp','ALLY HP'],['allyMax','MAX ALLIES'],['allySpawnCd','ALLY SPAWN CD'],
     ['siloDmg','SILO DMG'],['siloAoe','SILO RADIUS'],['siloCdMax','SILO CD'],
     ['burnDmg','BURN DMG'],['burnDur','BURN DUR'],['slowFactor','SLOW %'],['slowDur','SLOW DUR'],
-    ['armorShred','ARMOR SHRED'],['thorns','THORNS'],['wallRegen','WALL REGEN'],['stunDur','STUN DUR']
+    ['armorShred','ARMOR SHRED'],['thorns','THORNS'],['wallRegen','WALL REGEN']
   ];
-  const PCT_KEYS = new Set(['dmgBoost','spdBoost','rngBoost','costReduce','slowFactor','armorShred','goldBonus','scoreMultBonus']);
+  const PCT_KEYS = new Set(['dmgBoost','spdBoost','rngBoost','costReduce','slowFactor','armorShred','goldBonus','scoreMultBonus','absorbPct','selfDmgPct']);
 
   function statsHtmlFor(c){
     let out='';
@@ -12818,7 +13038,7 @@ async function bgChatPoll(){
     if(!detail) return;
     const levels = towerLevels(key);
     if(!levels.length){ detail.innerHTML='<div class="wiki-hint">No data</div>'; return; }
-    const base = TS[key][1] || levels[0].cfg;
+    const base = (key==='evolved_rifle'||key==='evolved_shotgun') ? levels[0].cfg : (TS[key][1] || levels[0].cfg);
     const meta = WIKI_TOWER_META[key]||{type:''};
     let html = `<div class="wiki-detail-title" style="color:${base.col}">${base.name || key}</div>
       <div class="wiki-detail-type">${meta.type ? meta.type.toUpperCase()+' TOWER' : ''}</div>`;
@@ -13099,12 +13319,25 @@ function applyHeroLockUI(){
       <div class="set-sec-lbl" style="margin-top:7px;border-color:#0a1e2e;">CUSTOM TRACK URL</div>
       <div style="display:flex;gap:4px;margin-bottom:3px;">
         <input type="text" id="yt-custom-url-input"
-          placeholder="Paste direct audio URL (.mp3, .ogg...)"
+          placeholder="Paste a YouTube link or direct audio URL (.mp3, .ogg...)"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();ytSetCustom();}"
           style="flex:1;background:#04090f;border:1px solid #0e2030;color:#00aaff;font-family:'Share Tech Mono',monospace;font-size:9px;padding:5px 8px;outline:none;min-width:0;"/>
         <button onclick="ytSetCustom()"
           style="background:#020e1c;border:1px solid #00aaff;color:#00aaff;font-family:'Share Tech Mono',monospace;font-size:9px;padding:5px 10px;cursor:pointer;letter-spacing:1px;white-space:nowrap;flex-shrink:0;">&#9654;</button>
       </div>
       <div id="yt-status-msg" style="font-size:8px;color:#ff6644;min-height:13px;text-align:center;letter-spacing:1px;"></div>
+      <div id="yt-visible-player-wrap" style="display:none;margin-top:4px;text-align:center;">
+        <div id="yt-visible-hint" style="font-size:8px;color:#4a7a9a;margin-bottom:3px;letter-spacing:.5px;">&#9654; Click play on the video below to start the music &mdash; Chrome requires a direct click on it</div>
+        <div id="yt-visible-player" style="display:inline-block;"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:7px;">
+        <div style="flex:1;height:1px;background:#0a1e2e;"></div>
+        <span style="font-size:8px;color:#1a4060;letter-spacing:1px;">OR</span>
+        <div style="flex:1;height:1px;background:#0a1e2e;"></div>
+      </div>
+      <input type="file" id="local-music-input" accept="audio/*" style="display:none;" onchange="loadLocalMusicFile(this.files[0])">
+      <button onclick="document.getElementById('local-music-input').click()"
+        style="width:100%;margin-top:5px;background:#020e1c;border:1px solid #00aaff;color:#00aaff;font-family:'Share Tech Mono',monospace;font-size:9px;padding:6px 8px;cursor:pointer;letter-spacing:1px;">&#128193; LOAD MUSIC FROM YOUR COMPUTER</button>
     </div>
     <div class="set-sec">
       <div class="set-sec-lbl">SCREEN SHAKE</div>
