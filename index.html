@@ -2764,7 +2764,7 @@ function applyBarrierAbsorb(targetTower,atkEnemy,dmgAmount){
   if(!targetTower) return dmgAmount;
   const tx=targetTower.col*CS+CS*(targetTower.size||1)/2,ty=targetTower.row*CS+CS*(targetTower.size||1)/2;
   for(const bt of towers){
-    if(bt===targetTower||!bt.cfg||!bt.cfg.barrierCannon||bt.stunned>0||bt.hp<=0) continue;
+    if(bt===targetTower||!bt.cfg||!bt.cfg.barrierCannon||bt.hp<=0) continue;
     const bx=bt.col*CS+CS,by=bt.row*CS+CS;
     const dx=tx-bx,dy=ty-by;
     if(dx*dx+dy*dy<=bt.cfg.absorbRadius*bt.cfg.absorbRadius){
@@ -3966,6 +3966,7 @@ const ACHIEVEMENTS = [
   {id:'rickrolled', icon:'🎵', name:'YOU GOT RICKROLLED', desc:'Never gonna give you up... \u266a', secret:true},
   {id:'negative_wave', icon:'⁻¹', name:'REALITY.EXE HAS STOPPED WORKING', desc:'You discovered the forbidden negative wave glitch...', secret:true},
   {id:'living_legend', icon:'🌟', name:'LIVING LEGEND', desc:'Reach Player Level 1000', secret:false, progress:{stat:'playerLevelCurrent',target:1000}},
+  {id:'merge_master', icon:'🧩', name:'MERGE MASTER', desc:'Merge 1,000 towers (lifetime)', secret:false, progress:{stat:'totalMerged',target:1000}},
   {id:'perfection', icon:'💯', name:'PERFECTION', desc:'Unlock every other achievement', secret:false},
 ];
 
@@ -4071,6 +4072,12 @@ function checkAchievements_towerPlaced(towerKey) {
   if (achStats.totalBuilt >= 100) unlockAchievement('builder_3');
   if (achStats.totalBuilt >= 1000) unlockAchievement('builder_4');
   if (achStats.totalBuilt >= 10000) unlockAchievement('builder_5');
+}
+
+function checkAchievements_towerMerged() {
+  achStats.totalMerged = (achStats.totalMerged||0) + 1;
+  saveAchStats();
+  if (achStats.totalMerged >= 1000) unlockAchievement('merge_master');
 }
 
 function checkAchievements_waveEnd() {
@@ -4369,10 +4376,10 @@ async function sugSubmit(){
 
 // Persistent stat counters for achievements
 const STAT_KEY = 'bs_ach_stats';
-let achStats = {totalBuilt:0, totalKills:0, wasLbFirst:false, maxWave:0, totalGoldSpent:0, maxSingleGameGold:0, maxWaveHardcore:0, voidReaverLevel:0};
+let achStats = {totalBuilt:0, totalKills:0, wasLbFirst:false, maxWave:0, totalGoldSpent:0, maxSingleGameGold:0, maxWaveHardcore:0, voidReaverLevel:0, totalMerged:0};
 
 function loadAchStats() {
-  try { const r=localStorage.getItem(STAT_KEY); if(r) achStats={totalBuilt:0,totalKills:0,wasLbFirst:false,maxWave:0,totalGoldSpent:0,maxSingleGameGold:0,maxWaveHardcore:0,voidReaverLevel:0,...JSON.parse(r)}; } catch(e) {}
+  try { const r=localStorage.getItem(STAT_KEY); if(r) achStats={totalBuilt:0,totalKills:0,wasLbFirst:false,maxWave:0,totalGoldSpent:0,maxSingleGameGold:0,maxWaveHardcore:0,voidReaverLevel:0,totalMerged:0,...JSON.parse(r)}; } catch(e) {}
 }
 function saveAchStats() {
   try { localStorage.setItem(STAT_KEY, JSON.stringify(achStats)); } catch(e) {}
@@ -6715,7 +6722,7 @@ document.getElementById('up-merge-btn').addEventListener('click',()=>{
   const cfg=getCfg('railgun_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'railgun_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.sniper[1].cost),0)};
-  towers.push(nt);TowerStats.log('railgun_cannon');bfs();hidePanel();msg('⚡ RAILGUN CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('railgun_cannon');checkAchievements_towerMerged();bfs();hidePanel();msg('⚡ RAILGUN CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:railgunMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn2').addEventListener('click',()=>{
@@ -6725,7 +6732,7 @@ document.getElementById('up-merge-btn2').addEventListener('click',()=>{
   const cfg=getCfg('blaster_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'blaster_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.basic[1].cost),0)};
-  towers.push(nt);TowerStats.log('blaster_cannon');bfs();hidePanel();msg('🔫 BLASTER CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('blaster_cannon');checkAchievements_towerMerged();bfs();hidePanel();msg('🔫 BLASTER CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:blasterMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn3').addEventListener('click',()=>{
@@ -6735,7 +6742,7 @@ document.getElementById('up-merge-btn3').addEventListener('click',()=>{
   const cfg=getCfg('siege_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'siege_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.cannon[1].cost),0)};
-  towers.push(nt);TowerStats.log('siege_cannon');bfs();hidePanel();msg('💣 SIEGE CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('siege_cannon');checkAchievements_towerMerged();bfs();hidePanel();msg('💣 SIEGE CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:siegeMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn4').addEventListener('click',()=>{
@@ -6745,7 +6752,7 @@ document.getElementById('up-merge-btn4').addEventListener('click',()=>{
   const cfg=getCfg('barrier_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'barrier_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.wall[1].cost),0)};
-  towers.push(nt);TowerStats.log('barrier_cannon');bfs();hidePanel();msg('🛡 BARRIER CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('barrier_cannon');checkAchievements_towerMerged();bfs();hidePanel();msg('🛡 BARRIER CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:barrierMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn5').addEventListener('click',()=>{
@@ -6755,7 +6762,7 @@ document.getElementById('up-merge-btn5').addEventListener('click',()=>{
   const cfg=getCfg('mega_blaster_cannon',1,null);
   for(let ddr=0;ddr<4;ddr++)for(let ddc=0;ddc<4;ddc++)grid[ar+ddr][ac+ddc]=cfg.t;
   const nt={row:ar,col:ac,size:4,key:'mega_blaster_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||0),0)};
-  towers.push(nt);TowerStats.log('mega_blaster_cannon');bfs();hidePanel();msg('💥 MEGA BLASTER CANNON ASSEMBLED!',2500);syncUI();
+  towers.push(nt);TowerStats.log('mega_blaster_cannon');checkAchievements_towerMerged();bfs();hidePanel();msg('💥 MEGA BLASTER CANNON ASSEMBLED!',2500);syncUI();
   if(MP.active) MP.broadcast('tower:megaBlasterMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn6').addEventListener('click',()=>{
@@ -6765,7 +6772,7 @@ document.getElementById('up-merge-btn6').addEventListener('click',()=>{
   const cfg=getCfg('tesla_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'tesla_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,teslaEnergy:0,teslaCharging:true,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.electric[1].cost),0)};
-  towers.push(nt);TowerStats.log('tesla_cannon');bfs();hidePanel();msg('⚡ TESLA CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('tesla_cannon');checkAchievements_towerMerged();bfs();hidePanel();msg('⚡ TESLA CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:teslaMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn7').addEventListener('click',()=>{
@@ -6775,7 +6782,7 @@ document.getElementById('up-merge-btn7').addEventListener('click',()=>{
   const cfg=getCfg('laser_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'laser_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserTargets:[],laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.laser[1].cost),0)};
-  towers.push(nt);TowerStats.log('laser_cannon');bfs();hidePanel();msg('💎 LASER CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('laser_cannon');checkAchievements_towerMerged();bfs();hidePanel();msg('💎 LASER CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:laserCannonMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-sell-btn').addEventListener('click',()=>{if(!selTower) return;const t=selTower;const ti=towers.indexOf(t);if(ti===-1) return;if(MP.active&&!MP.canInteractTower(t)){msg(MP.getTowerOwnerMsg(t)||'Not your tower',2000);return;}const ref=Math.floor((t.totalGoldSpent||TS[t.key][1].cost)*.5);if(t.key==='healer'&&t.path==='A'&&t.level>=2){const bon=t.level===2?25:t.level===3?55:t.level===4?90:140;baseMaxHP=Math.max(150,baseMaxHP-bon);baseHP=Math.min(baseHP,baseMaxHP);}if(t.key==='heli'){const hi=helicopters.findIndex(h=>h.towerId===t.id);if(hi!==-1) helicopters.splice(hi,1);}if(t.key==='barracks'||t.key==='mech_base'||t.key==='cowboy'||t.key==='necromancer'){for(let ai=allies.length-1;ai>=0;ai--){if(allies[ai]&&allies[ai].towerId===t.id){sparks(allies[ai].x,allies[ai].y,'#ff4444',5,2);allies.splice(ai,1);}}}gold+=ref;const row=t.row,col=t.col;towers.splice(ti,1);clearTowerGrid(t);bfs();ft(col*CS+CS/2,row*CS,'+'+ref+'g');hidePanel();syncUI();if(MP.active){MP.broadcast('tower:sell',{pid:MP.playerId,row,col});MP.updatePlayerGold();}});
