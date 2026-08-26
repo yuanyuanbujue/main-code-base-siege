@@ -1595,6 +1595,19 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
 .qs-cost{font-size:9px;color:#1a5a2a;flex-shrink:0;}
 .qs-chg{position:absolute;right:2px;top:2px;background:transparent;border:1px solid #0a1a28;color:#1a3a4a;font-size:7px;cursor:pointer;padding:1px 3px;line-height:1.3;font-family:'Share Tech Mono',monospace;letter-spacing:0;}
 .qs-chg:hover{color:#00ccff;border-color:#00ccff55;}
+/* ── TOWER ROULETTE SHOP ── */
+#rs{display:flex;flex-direction:column;gap:6px;}
+.rs-hdr{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;color:#ffaa33;border-bottom:1px solid #2a1a08;padding-bottom:6px;margin-bottom:1px;}
+.rs-slots{display:flex;flex-direction:column;gap:6px;}
+.rs-slot{background:#0a0602;border:1px solid #2a1a08;padding:10px 10px 10px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .12s;position:relative;}
+.rs-slot:hover{border-color:var(--ra,#ff8844);background:#100a04;}
+.rs-slot.on{border-color:var(--ra,#ff8844);background:color-mix(in srgb,var(--ra,#ff8844) 10%,#0a0602);box-shadow:0 0 8px color-mix(in srgb,var(--ra,#ff8844) 45%,transparent);}
+.rs-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.rs-name{font-size:11px;flex:1;letter-spacing:.5px;}
+.rs-cost{font-size:10px;color:#ffd700;flex-shrink:0;}
+.rs-empty{cursor:default;opacity:.4;justify-content:center;border-style:dashed;}
+.rs-sold{font-size:9px;letter-spacing:2px;color:#ff4444;}
+.rs-note{font-size:8px;color:#5a4a3a;text-align:center;letter-spacing:1px;margin-top:2px;}
 /* ── TOWER PICKER MODAL ── */
 #tp-modal{position:fixed;inset:0;background:rgba(2,5,12,.96);z-index:700;display:none;align-items:center;justify-content:center;}
 #tp-modal.vis{display:flex;}
@@ -1946,6 +1959,7 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
       <button class="ss-map ss-map-ultra" data-map="free_ultra">⚡ ULTRA FREE BUILD<br><span class="ss-mode-desc">60×36 mega field · same cell size · pan view with WASD / arrow keys</span></button>
       <button class="ss-map" data-map="lastlight">🔥 LAST LIGHT<br><span class="ss-mode-desc">Hard · fixed enemy corridor · no building on the path</span></button>
       <button class="ss-map" data-map="abyssaldepths" id="ss-map-abyssal">🕳️ ABYSSAL DEPTHS<br><span class="ss-mode-desc">Beat Last Light on Hard/Hardcore to unlock</span></button>
+      <button class="ss-map" data-map="towerroulette">🎰 TOWER ROULETTE<br><span class="ss-mode-desc">Classic field · shop rotates 3 random towers · buy before they're gone</span></button>
     </div>
   </div>
   <div class="ss-title">BASE SIEGE</div>
@@ -2616,6 +2630,7 @@ function deserializeGameState(data){
   for(const td of data.towers){const cfg=getCfg(td.key,td.level,td.path);{const tdsz=td.size||1;if(tdsz>1){for(let edr=0;edr<tdsz;edr++)for(let edc=0;edc<tdsz;edc++)grid[td.row+edr][td.col+edc]=cfg.t;}else{grid[td.row][td.col]=cfg.t;}}const t={row:td.row,col:td.col,key:td.key,cfg,hp:td.hp,maxHp:td.maxHp,level:td.level,path:td.path,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],size:td.size,railCharge:0};towers.push(t);if(td.key==='heli') spawnHelicopter(t);if(td.key==='admindrone') spawnAdminDrones(t);}
   bfs();waveOn=false;spawnQ=[];spawnT=0;selTower=null;pathBlocked=false;_sessionTowerTypes=new Set();_sessionWallCount=0;_sessionAllTypes=new Set();_sessionNoDmgStreak=0;_sessionBaseHpAtWaveStart=0;baseTurretCd=0;baseTurretAngle=0;gameOver=false;gameStarted=true;startPlayTimeTracker();
   updateModeUI();updateHcUI();document.querySelectorAll('.mb').forEach(b=>{b.classList.toggle('on',b.dataset.m===gameMode);b.style.opacity=b.dataset.m===gameMode?'1':'.25';b.style.pointerEvents='none';});
+  if(typeof rsUpdateVisibility==='function') rsUpdateVisibility(true);
   syncUI();return true;}catch(e){console.error(e);return false;}
 }
 
@@ -2764,7 +2779,7 @@ function applyBarrierAbsorb(targetTower,atkEnemy,dmgAmount){
   if(!targetTower) return dmgAmount;
   const tx=targetTower.col*CS+CS*(targetTower.size||1)/2,ty=targetTower.row*CS+CS*(targetTower.size||1)/2;
   for(const bt of towers){
-    if(bt===targetTower||!bt.cfg||!bt.cfg.barrierCannon||bt.hp<=0) continue;
+    if(bt===targetTower||!bt.cfg||!bt.cfg.barrierCannon||bt.stunned>0||bt.hp<=0) continue;
     const bx=bt.col*CS+CS,by=bt.row*CS+CS;
     const dx=tx-bx,dy=ty-by;
     if(dx*dx+dy*dy<=bt.cfg.absorbRadius*bt.cfg.absorbRadius){
@@ -2802,7 +2817,8 @@ const MAPS={
   free_large:{key:'free_large',name:'LARGE FREE BUILD',desc:'Massive 36×22 open field · smaller scale · maximum building room',locked:false,path:null},
   free_ultra:{key:'free_ultra',name:'ULTRA FREE BUILD',desc:'Insane 60×36 mega field · tiny scale · towers are very small!',locked:false,path:null},
   lastlight:{key:'lastlight',name:'LAST LIGHT',desc:'Hard · fixed enemy corridor · no building on the path',locked:true,path:LAST_LIGHT_PATH},
-  abyssaldepths:{key:'abyssaldepths',name:'ABYSSAL DEPTHS',desc:'Hard/Hardcore · larger void corridor · unlocked after Last Light',locked:true,path:ABYSSAL_DEPTHS_PATH,chapterLock:true}
+  abyssaldepths:{key:'abyssaldepths',name:'ABYSSAL DEPTHS',desc:'Hard/Hardcore · larger void corridor · unlocked after Last Light',locked:true,path:ABYSSAL_DEPTHS_PATH,chapterLock:true},
+  towerroulette:{key:'towerroulette',name:'TOWER ROULETTE',desc:'Open field · random rotating tower shop · only 3 towers available at a time',locked:false,path:null,roulette:true}
 };
 let selectedMap='free';
 const GUNNER_BASE_DMG=18,GUNNER_STUN_DUR=30;
@@ -3966,7 +3982,6 @@ const ACHIEVEMENTS = [
   {id:'rickrolled', icon:'🎵', name:'YOU GOT RICKROLLED', desc:'Never gonna give you up... \u266a', secret:true},
   {id:'negative_wave', icon:'⁻¹', name:'REALITY.EXE HAS STOPPED WORKING', desc:'You discovered the forbidden negative wave glitch...', secret:true},
   {id:'living_legend', icon:'🌟', name:'LIVING LEGEND', desc:'Reach Player Level 1000', secret:false, progress:{stat:'playerLevelCurrent',target:1000}},
-  {id:'merge_master', icon:'🧩', name:'MERGE MASTER', desc:'Merge 1,000 towers (lifetime)', secret:false, progress:{stat:'totalMerged',target:1000}},
   {id:'perfection', icon:'💯', name:'PERFECTION', desc:'Unlock every other achievement', secret:false},
 ];
 
@@ -4072,12 +4087,6 @@ function checkAchievements_towerPlaced(towerKey) {
   if (achStats.totalBuilt >= 100) unlockAchievement('builder_3');
   if (achStats.totalBuilt >= 1000) unlockAchievement('builder_4');
   if (achStats.totalBuilt >= 10000) unlockAchievement('builder_5');
-}
-
-function checkAchievements_towerMerged() {
-  achStats.totalMerged = (achStats.totalMerged||0) + 1;
-  saveAchStats();
-  if (achStats.totalMerged >= 1000) unlockAchievement('merge_master');
 }
 
 function checkAchievements_waveEnd() {
@@ -4376,10 +4385,10 @@ async function sugSubmit(){
 
 // Persistent stat counters for achievements
 const STAT_KEY = 'bs_ach_stats';
-let achStats = {totalBuilt:0, totalKills:0, wasLbFirst:false, maxWave:0, totalGoldSpent:0, maxSingleGameGold:0, maxWaveHardcore:0, voidReaverLevel:0, totalMerged:0};
+let achStats = {totalBuilt:0, totalKills:0, wasLbFirst:false, maxWave:0, totalGoldSpent:0, maxSingleGameGold:0, maxWaveHardcore:0, voidReaverLevel:0};
 
 function loadAchStats() {
-  try { const r=localStorage.getItem(STAT_KEY); if(r) achStats={totalBuilt:0,totalKills:0,wasLbFirst:false,maxWave:0,totalGoldSpent:0,maxSingleGameGold:0,maxWaveHardcore:0,voidReaverLevel:0,totalMerged:0,...JSON.parse(r)}; } catch(e) {}
+  try { const r=localStorage.getItem(STAT_KEY); if(r) achStats={totalBuilt:0,totalKills:0,wasLbFirst:false,maxWave:0,totalGoldSpent:0,maxSingleGameGold:0,maxWaveHardcore:0,voidReaverLevel:0,...JSON.parse(r)}; } catch(e) {}
 }
 function saveAchStats() {
   try { localStorage.setItem(STAT_KEY, JSON.stringify(achStats)); } catch(e) {}
@@ -5868,6 +5877,7 @@ function init(){
   bfs();syncUI();hidePanel();hideBasePanel();
   document.getElementById('abar').classList.remove('vis');document.getElementById('wname').classList.remove('vis');
   updateModeUI();refreshSaveSlotUI();updateXPHud();applyLevelUnlocks();autoSaveReset();negativeWaveMode=false;lastLightWon=false;_negClickCount=0;var _rvw=document.getElementById('vw');if(_rvw)_rvw.style.color='';
+  if(typeof rsUpdateVisibility==='function') rsUpdateVisibility(true);
 }
 
 function isMapLocked(){return !!(MAPS[selectedMap]&&MAPS[selectedMap].locked);}
@@ -6722,7 +6732,7 @@ document.getElementById('up-merge-btn').addEventListener('click',()=>{
   const cfg=getCfg('railgun_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'railgun_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.sniper[1].cost),0)};
-  towers.push(nt);TowerStats.log('railgun_cannon');checkAchievements_towerMerged();bfs();hidePanel();msg('⚡ RAILGUN CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('railgun_cannon');bfs();hidePanel();msg('⚡ RAILGUN CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:railgunMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn2').addEventListener('click',()=>{
@@ -6732,7 +6742,7 @@ document.getElementById('up-merge-btn2').addEventListener('click',()=>{
   const cfg=getCfg('blaster_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'blaster_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.basic[1].cost),0)};
-  towers.push(nt);TowerStats.log('blaster_cannon');checkAchievements_towerMerged();bfs();hidePanel();msg('🔫 BLASTER CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('blaster_cannon');bfs();hidePanel();msg('🔫 BLASTER CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:blasterMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn3').addEventListener('click',()=>{
@@ -6742,7 +6752,7 @@ document.getElementById('up-merge-btn3').addEventListener('click',()=>{
   const cfg=getCfg('siege_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'siege_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.cannon[1].cost),0)};
-  towers.push(nt);TowerStats.log('siege_cannon');checkAchievements_towerMerged();bfs();hidePanel();msg('💣 SIEGE CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('siege_cannon');bfs();hidePanel();msg('💣 SIEGE CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:siegeMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn4').addEventListener('click',()=>{
@@ -6752,7 +6762,7 @@ document.getElementById('up-merge-btn4').addEventListener('click',()=>{
   const cfg=getCfg('barrier_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'barrier_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.wall[1].cost),0)};
-  towers.push(nt);TowerStats.log('barrier_cannon');checkAchievements_towerMerged();bfs();hidePanel();msg('🛡 BARRIER CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('barrier_cannon');bfs();hidePanel();msg('🛡 BARRIER CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:barrierMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn5').addEventListener('click',()=>{
@@ -6762,7 +6772,7 @@ document.getElementById('up-merge-btn5').addEventListener('click',()=>{
   const cfg=getCfg('mega_blaster_cannon',1,null);
   for(let ddr=0;ddr<4;ddr++)for(let ddc=0;ddc<4;ddc++)grid[ar+ddr][ac+ddc]=cfg.t;
   const nt={row:ar,col:ac,size:4,key:'mega_blaster_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||0),0)};
-  towers.push(nt);TowerStats.log('mega_blaster_cannon');checkAchievements_towerMerged();bfs();hidePanel();msg('💥 MEGA BLASTER CANNON ASSEMBLED!',2500);syncUI();
+  towers.push(nt);TowerStats.log('mega_blaster_cannon');bfs();hidePanel();msg('💥 MEGA BLASTER CANNON ASSEMBLED!',2500);syncUI();
   if(MP.active) MP.broadcast('tower:megaBlasterMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn6').addEventListener('click',()=>{
@@ -6772,7 +6782,7 @@ document.getElementById('up-merge-btn6').addEventListener('click',()=>{
   const cfg=getCfg('tesla_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'tesla_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,teslaEnergy:0,teslaCharging:true,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.electric[1].cost),0)};
-  towers.push(nt);TowerStats.log('tesla_cannon');checkAchievements_towerMerged();bfs();hidePanel();msg('⚡ TESLA CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('tesla_cannon');bfs();hidePanel();msg('⚡ TESLA CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:teslaMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-merge-btn7').addEventListener('click',()=>{
@@ -6782,7 +6792,7 @@ document.getElementById('up-merge-btn7').addEventListener('click',()=>{
   const cfg=getCfg('laser_cannon',1,null);
   grid[ar][ac]=cfg.t;grid[ar][ac+1]=cfg.t;grid[ar+1][ac]=cfg.t;grid[ar+1][ac+1]=cfg.t;
   const nt={row:ar,col:ac,size:2,key:'laser_cannon',cfg,hp:cfg.hp,maxHp:cfg.hp,level:1,path:null,cd:0,angle:0,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserTargets:[],laserStacks:0,laserFiring:0,crystals:[],railCharge:0,railBeam:null,totalGoldSpent:members.reduce((s,m)=>s+(m.totalGoldSpent||TS.laser[1].cost),0)};
-  towers.push(nt);TowerStats.log('laser_cannon');checkAchievements_towerMerged();bfs();hidePanel();msg('💎 LASER CANNON ASSEMBLED!',2200);syncUI();
+  towers.push(nt);TowerStats.log('laser_cannon');bfs();hidePanel();msg('💎 LASER CANNON ASSEMBLED!',2200);syncUI();
   if(MP.active) MP.broadcast('tower:laserCannonMerge',{pid:MP.playerId,row:ar,col:ac});
 });
 document.getElementById('up-sell-btn').addEventListener('click',()=>{if(!selTower) return;const t=selTower;const ti=towers.indexOf(t);if(ti===-1) return;if(MP.active&&!MP.canInteractTower(t)){msg(MP.getTowerOwnerMsg(t)||'Not your tower',2000);return;}const ref=Math.floor((t.totalGoldSpent||TS[t.key][1].cost)*.5);if(t.key==='healer'&&t.path==='A'&&t.level>=2){const bon=t.level===2?25:t.level===3?55:t.level===4?90:140;baseMaxHP=Math.max(150,baseMaxHP-bon);baseHP=Math.min(baseHP,baseMaxHP);}if(t.key==='heli'){const hi=helicopters.findIndex(h=>h.towerId===t.id);if(hi!==-1) helicopters.splice(hi,1);}if(t.key==='barracks'||t.key==='mech_base'||t.key==='cowboy'||t.key==='necromancer'){for(let ai=allies.length-1;ai>=0;ai--){if(allies[ai]&&allies[ai].towerId===t.id){sparks(allies[ai].x,allies[ai].y,'#ff4444',5,2);allies.splice(ai,1);}}}gold+=ref;const row=t.row,col=t.col;towers.splice(ti,1);clearTowerGrid(t);bfs();ft(col*CS+CS/2,row*CS,'+'+ref+'g');hidePanel();syncUI();if(MP.active){MP.broadcast('tower:sell',{pid:MP.playerId,row,col});MP.updatePlayerGold();}});
@@ -6924,6 +6934,7 @@ cv.addEventListener('click',e=>{
   if(!oldUpgradeStyle){const directT=towerAt(row,col);if(directT&&!sellMode){if(MP.active&&!MP.canInteractTower(directT)){msg(MP.getTowerOwnerMsg(directT)||'Not your tower',2000);return;}showPanel(directT);return;}}
   if(grid[row][col]===CT.PATH){msg('⚠ Cannot build on the enemy path!',1800);return;}
   if(grid[row][col]!==CT.EMPTY) return;
+  if(selectedMap==='towerroulette'&&typeof rsIsAvailable==='function'&&!rsIsAvailable(selBuild)){msg('⚠ This tower is not currently in the Roulette Shop!',2200);return;}
   if(!isUnlocked('tower',selBuild)){msg(`⚠ ${selBuild.toUpperCase()} unlocks at Level ${getUnlockLevel('tower',selBuild)}!`,2500);return;}
   if(selBuild==='heli'&&gameMode==='hardcore'&&!hcUnlocked.has('heli')){msg('⚠ Unlock Heli Pad first! (10 pts)',2500);return;}
   if(selBuild==='ice'&&gameMode==='hardcore'&&wave<100&&!hcUnlocked.has('ice')){msg('⚠ Unlock Ice Tower first! (5 pts) or reach Wave 100.',2500);return;}
@@ -6954,6 +6965,7 @@ cv.addEventListener('click',e=>{
   grid[row][col]=cfg.t;bfs();const saved=cfg.cost-actualCost;gold-=actualCost;if(gameMode!=='sandbox'){achStats.totalGoldSpent=(achStats.totalGoldSpent||0)+actualCost;if(achStats.totalGoldSpent>=50000)unlockAchievement('gambler');if(achStats.totalGoldSpent%5000<actualCost)saveAchStats();}
   const newTower={row,col,key:selBuild,cfg,hp:cfg.hp,maxHp:cfg.hp,cd:0,angle:0,level:1,path:null,healCd:0,hitFlash:0,stunned:0,id:++_towerIdCounter,laserTarget:null,laserStacks:0,laserFiring:0,crystals:[],owner:MP.active?MP.playerId:null,ownerColor:MP.active?PLAYER_COLORS[MP.colorIndex]:'#00ff88',ownerName:MP.active?MP.playerName:'YOU',totalDmgDealt:0,totalKills:0,totalGoldSpent:actualCost,skins:{...mgEquipped},evolvedBlaster:_evoVariant};
   towers.push(newTower);TowerStats.log(selBuild);if(selBuild!=='wall'){_sessionTowerTypes.add(selBuild);}_sessionAllTypes.add(selBuild);if(selBuild==='wall')_sessionWallCount++;
+  if(selectedMap==='towerroulette'&&typeof rsOnBuilt==='function') rsOnBuilt(selBuild);
   if(typeof checkAchievements_towerPlaced==='function') checkAchievements_towerPlaced(selBuild);
   if(MP.active){MP.broadcast('tower:place',{pid:MP.playerId,row,col,key:selBuild,lvl:1,colorIdx:MP.colorIndex,name:MP.playerName,skins:{...mgEquipped},evolvedBlaster:_evoVariant});MP.updatePlayerGold();}if(selBuild==='heli') spawnHelicopter(newTower);if(selBuild==='admindrone') spawnAdminDrones(newTower);  if(selBuild==='barracks'||selBuild==='mech_base'){newTower.allySpawnCd=0;}
   if(selBuild==='silo'){newTower.siloCd=0;newTower.siloTarget=null;newTower.siloFiring=false;newTower.siloBeamLife=0;newTower.siloFrozenX=null;newTower.siloFrozenY=null;newTower.siloReticleFrozen=false;newTower.siloBeamHold=0;}
@@ -7196,6 +7208,7 @@ if(negativeWaveMode){
   syncUI();return;
 }
 wave++;_negWaveClickCount=0;trackBlasterEvolveProgress();
+if(selectedMap==='towerroulette'&&typeof rsRefresh==='function') rsRefresh();
 waveOn=true;if(gameMode==='hardcore'&&wave===100){updateModeUI();ft(W/2,H/2-60,'❄ ICE TOWER UNLOCKED!','#88ddff');sparks(W/2,H/2,'#88ddff',25,5);msg('❄ ICE TOWER is now available! (Wave 100+)',4000);}const wt=pickWaveType(wave);curWaveType=wt;const wdef=WAVE_TYPES[wt];const bon=Math.round((40+wave*6)*MODES[gameMode].goldBonus*(1+Math.max(0,wave-50)*.012+Math.max(0,wave-100)*.018));gold+=bon;ft(W/2,H/2-16,`+${bon}g WAVE BONUS`,'#ffd700');if(wave>achStats.maxWave){achStats.maxWave=wave;saveAchStats();}if(gold>(achStats.maxSingleGameGold||0)&&gameMode!=='sandbox'){achStats.maxSingleGameGold=gold;}if(gameMode==='hardcore'&&wave>(achStats.maxWaveHardcore||0)){achStats.maxWaveHardcore=wave;saveAchStats();}if(wave>=100)unlockAchievement('inf_guard_1');if(wave>=200)unlockAchievement('inf_guard_2');if(wave>=300)unlockAchievement('inf_guard_3');if(wave>=600)unlockAchievement('inf_guard_4');if(wave>=1000)unlockAchievement('inf_guard_5');
     
     if(wave>=50&&_sessionTowerTypes.size===1)unlockAchievement('why_this_tower');
@@ -7206,7 +7219,7 @@ waveOn=true;if(gameMode==='hardcore'&&wave===100){updateModeUI();ft(W/2,H/2-60,'
       spawnQ=[{variant:'void_reaver',sizeMult:1},{variant:'void_darkmatter',sizeMult:1},{variant:'void_voidchampion',sizeMult:1},...mkComp(wave,{void_abyss:.35,void_corruptor:.25,void_phantom:.4},0.7)];
       _voidWaveName='⚠ VOID REAVER AWAKENS ⚠';_voidWaveCol='#c060ff';
     } else if(selectedMap==='abyssaldepths'&&wave===50){
-      spawnQ=[{variant:'void_reaver',sizeMult:1.15},{variant:'null_emperor',sizeMult:1},{variant:'void_darkmatter',sizeMult:1},...mkComp(wave,{void_abyss:.3,void_corruptor:.3,void_phantom:.4},0.7)];
+      spawnQ=[{variant:'void_reaver',sizeMult:1.15},{variant:'void_caster',sizeMult:1.15},{variant:'null_emperor',sizeMult:1},{variant:'void_darkmatter',sizeMult:1},...mkComp(wave,{void_abyss:.3,void_corruptor:.3,void_phantom:.4},0.7)];
       _voidWaveName='⚠ THE ABYSS OPENS — VOID REAVER & NULL EMPEROR ⚠';_voidWaveCol='#8888ff';
     } else {
       spawnQ=wdef.comp(wave);
@@ -7238,6 +7251,7 @@ waveOn=true;if(gameMode==='hardcore'&&wave===100){updateModeUI();ft(W/2,H/2-60,'
       }
       if(selectedMap==='abyssaldepths'&&wave>50&&wave%17===0){
         spawnQ.push({variant:'void_reaver',sizeMult:1});
+        spawnQ.push({variant:'void_caster',sizeMult:1});
       }
     }
     ft(W/2,H/2+10,_voidWaveName||wdef.name,_voidWaveCol||wdef.col);const sc=waveScale();ft(W/2,H/2+28,`ENEMY HP ×${sc.toFixed(1)}`,'#ff6644');const wn=document.getElementById('wname');wn.textContent=_voidWaveName?`👁 ${_voidWaveName} 👁`:`⚔ ${wdef.name} ⚔`;wn.style.color=_voidWaveCol||wdef.col;wn.style.borderColor=(_voidWaveCol||wdef.col)+'66';wn.classList.add('vis');setTimeout(()=>wn.classList.remove('vis'),3000);msg(_voidWaveName?'👁 THE VOID REAVER HAS AWAKENED — BEWARE 👁':wdef.desc,3000);spawnT=0;syncUI();}
@@ -7274,6 +7288,7 @@ const EDEFS={
   void_null:{hpM:2.3,spdM:.4,spdCap:2.5,rw:20,sz:12,col:'#160028',glow:'#d060ff',lbl:'N',atkD:20,atkCdB:50,flying:false,robot:false,isSummoner:true,name:'Null Entity'},
   void_reaver:{hpM:85,spdM:.16,spdCap:2.0,rw:20000,sz:32,col:'#6a1acc',glow:'#d080ff',lbl:'👁',atkD:160,atkCdB:50,flying:false,robot:false,isBoss:true,_bossSpawnTime:Date.now(),bossType:'reaver',name:'Void Reaver',holeCdMax:840,slashCdMax:540},
   null_emperor:{hpM:140,spdM:.20,spdCap:2.0,rw:20000,sz:30,col:'#101018',glow:'#8888ff',lbl:'☠',atkD:110,atkCdB:50,flying:false,robot:false,isBoss:true,_bossSpawnTime:Date.now(),bossType:'nullemperor',name:'Null Emperor',spawnCdMax:300,leechThreshold:.3,leechRadius:180},
+  void_caster:{hpM:40,spdM:.11,spdCap:1.6,rw:15000,sz:26,col:'#2a0845',glow:'#aa66ff',lbl:'🔮',atkD:60,atkCdB:60,flying:false,robot:false,isBoss:true,_bossSpawnTime:Date.now(),bossType:'caster',name:'Void Caster',reviveFrac:1/3},
   void_darkmatter:{hpM:9,spdM:.30,spdCap:2.2,rw:140,sz:19,col:'#170833',glow:'#7a3aff',lbl:'☄',atkD:55,atkCdB:46,flying:false,robot:false,isMiniBoss:true,darkMatter:true,name:'Dark Matter Beast'},
   void_voidchampion:{hpM:7,spdM:.42,spdCap:2.6,rw:120,sz:18,col:'#2a0850',glow:'#b060ff',lbl:'♛',atkD:42,atkCdB:44,flying:false,robot:false,isMiniBoss:true,isChampion:true,name:'Void Champion'},
 };
@@ -7307,7 +7322,7 @@ function spawnBossWithEscorts(key,sizeMult=1){
   }
   return spawned;
 }
-const VOID_ROSTER=new Set(['void_lost','void_phantom','void_abyss','void_corruptor','void_null','void_reaver','void_darkmatter','void_voidchampion','null_emperor']);
+const VOID_ROSTER=new Set(['void_lost','void_phantom','void_abyss','void_corruptor','void_null','void_reaver','void_darkmatter','void_voidchampion','null_emperor','void_caster']);
 // Every non-void variant (including flying/robot/armored/boss types) is remapped to a void-roster equivalent on Last Light — no outside enemy types appear.
 const VOID_REMAP={
   normal:['void_lost'],
@@ -7605,7 +7620,30 @@ function update(){
   for(let i=0;i<enemies.length;i++) enemies[i].shielded=false;
   for(let i=0;i<enemies.length;i++){const e=enemies[i];if(!e.isShielder||e.stun>0) continue;for(let j=0;j<enemies.length;j++){const other=enemies[j];if(other===e||other.isShielder) continue;const dx=other.x-e.x,dy=other.y-e.y;if(dx*dx+dy*dy<=65*65) other.shielded=true;}}
   for(const _ge of enemies) _ge.guardianBuffed=false;
-  for(let i=enemies.length-1;i>=0;i--){const e=enemies[i];e.wob+=.1;if(e.stun>0){e.stun--;continue;}if(e.burnDur>0){e.burnDur--;e.hp-=e.burnDmg;if(e.burnDur<=0){e.burnDmg=0;}}if(e.shredDur>0){e.shredDur--;if(e.shredDur<=0){e.armorShred=0;}}if(e.barbCd>0){e.barbCd--;}if(e.slowDur>0){e.slowDur--;if(e.slowDur<=0){e.slowFactor=0;e.spd=e.spdBase;}}
+  for(let i=enemies.length-1;i>=0;i--){const e=enemies[i];e.wob+=.1;
+    if(e.pendingRevive){
+      e.reviveCd--;
+      if(e.bossType==='reaver') e.hp=1; // held alive at 1hp, frozen, until the windup finishes
+      else if(e.bossType==='caster') e.hp=e.mhp; // stays warded through its own windup
+      if(e.reviveCd<=0){
+        e.pendingRevive=false;
+        if(e.bossType==='reaver'){
+          e.hp=Math.max(1,Math.round(e.mhp*(EDEFS.void_caster.reviveFrac||1/3)));
+          const caster=e.casterRef;
+          // ── VOID CASTER REVIVE PAYOFF — reform pulse travels caster→reaver, then the reaver bursts back to life ──
+          if(caster&&enemies.includes(caster)){
+            for(let ring=0;ring<16;ring++){const ra=(ring/16)*Math.PI*2;parts.push({x:caster.x+Math.cos(ra)*20,y:caster.y+Math.sin(ra)*20,vx:Math.cos(ra)*-1.4,vy:Math.sin(ra)*-1.4,life:24,ml:24,col:'#aa66ff',sz:3});}
+            sparks(caster.x,caster.y,'#aa66ff',30,5);
+            addBeam(caster.x,caster.y,e.x,e.y);
+          }
+          flashes.push({x:e.x,y:e.y,r:60,life:16,ml:16,col:'#aa66ff'});
+          sparks(e.x,e.y,'#c060ff',28,4);
+          addShake(10);
+          ft(e.x,e.y-e.sz-30,'🔮 REAVER REFORMED!','#aa66ff');
+        }
+      } else continue;
+    }
+    if(e.stun>0){e.stun--;continue;}if(e.burnDur>0){e.burnDur--;e.hp-=e.burnDmg;if(e.burnDur<=0){e.burnDmg=0;}}if(e.shredDur>0){e.shredDur--;if(e.shredDur<=0){e.armorShred=0;}}if(e.barbCd>0){e.barbCd--;}if(e.slowDur>0){e.slowDur--;if(e.slowDur<=0){e.slowFactor=0;e.spd=e.spdBase;}}
     // Alchemist poison DoT (stacking)
     if(e.poisonDur>0){e.poisonDur--;const ptick=Math.round(e.poisonDmg*(1+e.poisonStacks*.15));e.hp-=ptick;if(e.poisonDur<=0){e.poisonDmg=0;e.poisonStacks=0;}if(e.poisonDur%20===0&&e.poisonStacks>0&&gfxMode<3){parts.push({x:e.x+(Math.random()-.5)*e.sz,y:e.y-e.sz*.4,vx:(Math.random()-.5)*.6,vy:-0.8-Math.random()*.6,life:16+Math.random()*10,ml:26,col:['#88ff44','#aaff00','#66cc00'][Math.floor(Math.random()*3)],sz:2+Math.random()*2});}}
     // Alchemist curse debuff
@@ -7630,6 +7668,18 @@ function update(){
         if(e.gdSlamCd<=0){e.gdSlamCd=280;e.gdSlamming=40;ft(e.x,e.y-e.sz-16,'⚠ GUARDIAN SLAM!','#33ffaa');}
         for(const oe of enemies){if(oe===e) continue;const gdx=oe.x-e.x,gdy=oe.y-e.y;if(gdx*gdx+gdy*gdy<=210*210) oe.guardianBuffed=true;}
       }
+    }
+    if(e.isBoss&&e.bossType==='caster'&&!e.reaverRef){
+      // ── Link to the nearest un-linked Void Reaver so its infinite-HP ward is tied to a specific boss ──
+      // (retry every frame until a Reaver is actually found — it may not have spawned yet on the Caster's first frame)
+      let bestR=null,bestRd=Infinity;
+      for(const oe of enemies){if(oe===e||!oe.isBoss||oe.bossType!=='reaver'||oe.casterRef) continue;const ddx=oe.x-e.x,ddy=oe.y-e.y,dd=ddx*ddx+ddy*ddy;if(dd<bestRd){bestRd=dd;bestR=oe;}}
+      if(bestR){e.reaverRef=bestR;bestR.casterRef=e;}
+    }
+    if(e.isBoss&&e.bossType==='caster'){
+      const casterLinked=e.reaverRef&&enemies.includes(e.reaverRef)&&e.reaverRef.hp>0;
+      e.casterInvuln=casterLinked&&!e.reviveUsed;
+      if(e.casterInvuln) e.hp=e.mhp;
     }
     if(e.isBoss&&e.bossType==='reaver'){
       const rd=EDEFS.void_reaver;
@@ -8595,7 +8645,23 @@ if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.
     continue;
   }
   if(d<p.spd*1.5){if(p.type==='iceBullet'){const te=p.tgt;if(te&&enemies.includes(te)){te.hp-=applyArmor(te,p.dmg);if(p.armorShred>te.armorShred){te.armorShred=p.armorShred;te.shredDur=Math.max(te.shredDur,p.shredDur);}if(p.slowFactor>te.slowFactor){te.slowFactor=p.slowFactor;te.slowDur=Math.max(te.slowDur,p.slowDur);te.spd=te.spdBase*(1-te.slowFactor);}if(te.flying){const ff=p.flyFreeze||.80;te.slowFactor=Math.max(te.slowFactor,ff);te.slowDur=Math.max(te.slowDur,p.slowDur+60);te.spd=Math.min(te.spdBase*(1-ff),te.spdBase*(p.flySpdCap||.25));ft(te.x,te.y-te.sz-10,'❄ FROZEN','#4488ff');}else{ft(te.x,te.y-te.sz-6,'❄','#88ddff');}sparks(te.x,te.y,'#88ddff',8,2);}}else if(p.type==='elecBall') explodeElecBall(p);else if(p.type==='towershot'){const tw=p.stunTwr;if(tw&&towers.includes(tw)){const wallBonus=tw.cfg.t===CT.WALL?2.5:1;const _gunRawDmg=Math.round(p.dmg*wallBonus);const _gunFinalDmg=applyBarrierAbsorb(tw,null,_gunRawDmg);tw.hp-=_gunFinalDmg;tw.hitFlash=12;if(tw.cfg.t!==CT.WALL&&!tw.cfg.stunImmuneTower) tw.stunned=(tw.stunned||0)+p.stunDur;sparks(p.lastX,p.lastY,'#ff8800',10,2.5);if(tw.cfg.t===CT.WALL) ft(tw.col*CS+CS/2,tw.row*CS,'HIT!','#ff6600');if(tw.hp<=0) destroyTower(tw);}}else if(p.type==='missile'){explodeFx(p.lastX,p.lastY,'#00ffaa',Math.max(p.aoe||60,60));if(p.aoe>0){for(const e of enemies){if(e.isHidden&&!(p.src&&canSeeHidden(p.src.cfg))) continue;const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){if(mirrorBlocked(e,p.src&&p.src.key)) continue;const md=e.shielded?Math.round(p.dmg*0.4):p.dmg;e.hp-=md;mirrorTrack(e,p.src&&p.src.key,md);}}}else if(p.tgt&&enemies.includes(p.tgt)){if(!mirrorBlocked(p.tgt,p.src&&p.src.key)){const md=applyArmor(p.tgt,p.dmg);p.tgt.hp-=md;mirrorTrack(p.tgt,p.src&&p.src.key,md);}}}else if(p.type==='hammer'){if(p.aoe>0){for(const e of enemies){if(e.isHidden&&!(p.src&&canSeeHidden(p.src.cfg))) continue;const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){if(mirrorBlocked(e,p.src&&p.src.key)){applyStun(e,p.stunDur||45);continue;}const hd=applyArmor(e,p.dmg);e.hp-=hd;mirrorTrack(e,p.src&&p.src.key,hd);applyStun(e,p.stunDur||45);sparks(e.x,e.y,p.col,4,1.5);}}}sparks(p.lastX,p.lastY,'#ff2255',16,3.5);ft(p.lastX,p.lastY-8,'STUN!','#ff2255');}else{if(p.aoe>0){explodeFx(p.lastX,p.lastY,p.col,p.aoe);for(const e of enemies){if(e.isHidden&&!(p.src&&canSeeHidden(p.src.cfg))) continue;const ex=e.x-p.lastX,ey=e.y-p.lastY;if(ex*ex+ey*ey<=p.aoe*p.aoe){if(mirrorBlocked(e,p.src&&p.src.key)) continue;const ad=applyArmor(e,p.dmg);e.hp-=ad;mirrorTrack(e,p.src&&p.src.key,ad);sparks(e.x,e.y,p.col,3,1);}}}else{if(p.tgt&&enemies.includes(p.tgt)){const blocker=isBlockedByShield(p.x,p.y,p.tgt);if(blocker){blocker.hp-=Math.max(1,Math.round(p.dmg*0.25));sparks(blocker.x,blocker.y,'#00ddff',8,2.5);ft(blocker.x,blocker.y-blocker.sz-6,'BLOCKED!','#00ddff');}else{if(mirrorBlocked(p.tgt,p.src&&p.src.key)){}else{let _baseDmg=p.dmg,_isCrit=false,_blackFlash=false;if(p.src&&p.src.cfg&&p.src.cfg.hunterTower){if(Math.random()<(p.src.cfg.critChance||0)){_isCrit=true;_baseDmg=Math.round(_baseDmg*(p.src.cfg.critMult||2));const _yujiSkin=p.src.skins?p.src.skins['skin_yuji_hunter']:mgEquipped['skin_yuji_hunter'];if(_yujiSkin){_blackFlash=true;_baseDmg=Math.round(_baseDmg*1.5);}}}const _pd=applyArmor(p.tgt,_baseDmg);p.tgt.hp-=_pd;if(_isCrit){ft(p.tgt.x,p.tgt.y-p.tgt.sz-6,'CRIT! -'+_pd,'#ffee33');sparks(p.tgt.x,p.tgt.y,'#ffee33',12,3);if(_blackFlash){ft(p.tgt.x,p.tgt.y-p.tgt.sz-20,'⚫ BLACK FLASH! -'+_pd,'#ff2222');addShake(14);flashes.push({x:p.tgt.x,y:p.tgt.y,r:50,life:24,ml:24,col:'#0a0a0a'});blackFlashFX.push({x:p.tgt.x,y:p.tgt.y,life:26,ml:26});sparks(p.tgt.x,p.tgt.y,'#000000',24,5.5);sparks(p.tgt.x,p.tgt.y,'#ff2222',14,4.5);}}if(p.src){p.src.totalDmgDealt=(p.src.totalDmgDealt||0)+_pd;p.tgt._lastHitTower=p.src;mirrorTrack(p.tgt,p.src.key,_pd);if(p.src.cfg&&p.src.cfg.t===CT.SNIPER){sparks(p.tgt.x,p.tgt.y,'#ffffff',6,3);sparks(p.tgt.x,p.tgt.y,p.col,10,3.5);flashes.push({x:p.tgt.x,y:p.tgt.y,r:14,life:8,ml:8,col:p.col});}else if(p.src.cfg&&p.src.cfg.hunterTower){sparks(p.tgt.x,p.tgt.y,p.col,_isCrit?10:5,_isCrit?3:2);}else if(p.type==='worldcut'){sparks(p.tgt.x,p.tgt.y,'#ffffff',6,2.8);sparks(p.tgt.x,p.tgt.y,'#ff1133',12,3.5);flashes.push({x:p.tgt.x,y:p.tgt.y,r:12,life:9,ml:9,col:'#ff1133'});}else{sparks(p.tgt.x,p.tgt.y,p.col,4,1.8);}}}}}}}projs.splice(i,1);}else{p.x+=dx/d*p.spd;p.y+=dy/d*p.spd;}}
-  for(let i=enemies.length-1;i>=0;i--){if(enemies[i].hp<=0){const e=enemies[i];
+  for(let i=enemies.length-1;i>=0;i--){if(enemies[i].hp<=0&&!enemies[i].pendingRevive){const e=enemies[i];
+    if(e.isBoss&&e.bossType==='reaver'&&e.casterRef&&enemies.includes(e.casterRef)&&e.casterRef.hp>0&&!e.casterRef.reviveUsed&&!e.pendingRevive){
+      const caster=e.casterRef;
+      caster.reviveUsed=true;caster.casterInvuln=false;
+      // Both freeze in place for a windup before the reaver reforms
+      const WINDUP=70;
+      caster.pendingRevive=true;caster.reviveCd=WINDUP;
+      e.pendingRevive=true;e.reviveCd=WINDUP;e.hp=1;
+      // ── VOID REAVER "DEATH" BURST — plays the same beat as a real boss kill, then both hold still ──
+      explodeFx(e.x,e.y,'#c060ff',110);
+      sparks(e.x,e.y,'#0a0016',30,4.5);
+      flashes.push({x:e.x,y:e.y,r:70,life:14,ml:14,col:'#ffffff'});
+      addShake(14);
+      ft(e.x,e.y-e.sz-20,'👁 VOID REAVER FALLS...','#c060ff');
+      ft(caster.x,caster.y-caster.sz-20,'🔮 WARD AWAKENING...','#e0c0ff');
+      continue;
+    }
     if(e.isBoss&&e.bossType==='mirror'&&(e.mirrorStage||1)<5){
       e.mirrorStage=(e.mirrorStage||1)+1;
       const gain=Math.max(80,Math.round(e.mirrorStageDmg||e.mhp*0.5));
@@ -8923,7 +8989,7 @@ if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.
   }
 
   const bossEnemy=enemies.find(e=>e.isBoss);const bossHud=document.getElementById('boss-hud');
-  if(bossEnemy){bossHud.classList.add('vis');const typeLabels={normal:'NORMAL BOSS',armor:'ARMOR BOSS',robot:'ROBOT BOSS',flying:'FLYING BOSS',commander:'⚔ COMMANDER',guardian:'🛡 GUARDIAN',mirror:'🪞 MIRROR — STAGE '+(bossEnemy.mirrorStage||1)+'/5',hacklord:'💻 HACKLORD',king:'👑 KING',reaver:'👁 VOID REAVER'};const typeColors={normal:'#ff0055',hacklord:'#00ff44',king:'#ffd700',armor:'#8844ff',robot:'#55aacc',flying:'#00ccff',commander:'#ffdd00',guardian:'#33ffaa',mirror:'#ff66ff',reaver:'#c060ff'};document.getElementById('boss-hud-type').textContent=typeLabels[bossEnemy.bossType]||'BOSS';document.getElementById('boss-hud-type').style.color=typeColors[bossEnemy.bossType]||'#ffaa00';const bar=document.getElementById('boss-hud-bar');bar.className='';if(bossEnemy.bossType==='armor') bar.classList.add('armor');else if(bossEnemy.bossType==='robot') bar.classList.add('robot');else if(bossEnemy.bossType==='flying') bar.classList.add('flying');bar.style.width=Math.max(0,bossEnemy.hp/bossEnemy.mhp*100)+'%';document.getElementById('boss-hud-hp').textContent=`${Math.max(0,Math.round(bossEnemy.hp))} / ${bossEnemy.mhp}`;}else bossHud.classList.remove('vis');
+  if(bossEnemy){bossHud.classList.add('vis');const typeLabels={normal:'NORMAL BOSS',armor:'ARMOR BOSS',robot:'ROBOT BOSS',flying:'FLYING BOSS',commander:'⚔ COMMANDER',guardian:'🛡 GUARDIAN',mirror:'🪞 MIRROR — STAGE '+(bossEnemy.mirrorStage||1)+'/5',hacklord:'💻 HACKLORD',king:'👑 KING',reaver:(bossEnemy.pendingRevive?'👁 VOID REAVER (REFORMING...)':'👁 VOID REAVER'),nullemperor:'☠ NULL EMPEROR',caster:(bossEnemy.pendingRevive?'🔮 VOID CASTER (CHANNELING...)':bossEnemy.casterInvuln?'🔮 VOID CASTER (WARDED)':'🔮 VOID CASTER')};const typeColors={normal:'#ff0055',hacklord:'#00ff44',king:'#ffd700',armor:'#8844ff',robot:'#55aacc',flying:'#00ccff',commander:'#ffdd00',guardian:'#33ffaa',mirror:'#ff66ff',reaver:'#c060ff',nullemperor:'#8888ff',caster:'#aa66ff'};document.getElementById('boss-hud-type').textContent=typeLabels[bossEnemy.bossType]||'BOSS';document.getElementById('boss-hud-type').style.color=typeColors[bossEnemy.bossType]||'#ffaa00';const bar=document.getElementById('boss-hud-bar');bar.className='';if(bossEnemy.bossType==='armor') bar.classList.add('armor');else if(bossEnemy.bossType==='robot') bar.classList.add('robot');else if(bossEnemy.bossType==='flying') bar.classList.add('flying');bar.style.width=Math.max(0,bossEnemy.hp/bossEnemy.mhp*100)+'%';document.getElementById('boss-hud-hp').textContent=`${Math.max(0,Math.round(bossEnemy.hp))} / ${bossEnemy.mhp}`;}else bossHud.classList.remove('vis');
   if(waveOn&&enemies.length===0&&spawnQ.length===0&&(!MP.active||MP.isHost)){waveOn=false;autoSkipTimer=0;const bon=Math.round(wave*32*(1+Math.max(0,wave-50)*.012+Math.max(0,wave-100)*.018));gold+=bon;score+=Math.round(bon*(MODES[gameMode].scoreMult||1)*(negativeWaveMode?1.5:1)*heroScoreMult());let minePayout=0,bankPayout=0;for(const t of towers){if(t.cfg.t===CT.MINE){if(t.cfg.mineType==='compound'||t.cfg.mineType==='basic'){const g=t.cfg.goldPerWave||20;gold+=g;minePayout+=g;}else if(t.cfg.mineType==='bank'){const interest=Math.round(gold*t.cfg.interestRate);const capped=Math.min(interest,t.cfg.maxInterest||100);gold+=capped;bankPayout+=capped;}}}let treasuryPayout=0;if(baseUpgPath==='B'&&baseUpgLevel>0){const upd=BASE_UPG.B[baseUpgLevel];gold+=upd.goldPerWave;treasuryPayout=upd.goldPerWave;}if(minePayout>0) ft(W/2-50,H/2,'\u{1F33E} +'+minePayout+'g FARM','#ffe066');if(bankPayout>0) ft(W/2+50,H/2,'🏦 +'+bankPayout+'g BANK','#ffd700');if(treasuryPayout>0) ft(W/2,H/2+20,'🏛 +'+treasuryPayout+'g TREASURY','#00ff88');for(const t of towers){if(t.cfg.t===CT.WALL) continue;t.hp=Math.min(t.maxHp,t.hp+Math.ceil(t.maxHp*.09));}baseHP=Math.min(baseMaxHP,baseHP+10);msg(`✓ Wave ${wave} cleared! +${bon}g${autoSkip?' · Auto-launching...':''}`,3500);syncUI();refreshSaveSlotUI();const _xpGained=xpForWave(wave,gameMode);grantXP(_xpGained);if(typeof checkAchievements_waveEnd==='function') checkAchievements_waveEnd();ft(W/2,H/2+40,`+${_xpGained} XP`,'#44ffcc');autoSaveTrigger();}
 }
 
@@ -12032,6 +12098,7 @@ function executeAdminCommand(cmd) {
     }
     case 'spawn_void_reaver':
       const vr = spawnE({variant:'void_reaver',sizeMult:1}); enemies.push(vr);
+      if(selectedMap==='abyssaldepths'){const vcs = spawnE({variant:'void_caster',sizeMult:1}); enemies.push(vcs);}
       ft(BASE_C*CS+CS/2, BASE_R*CS-10, '👁 VOID REAVER!', '#c060ff'); sparks(vr.x,vr.y,'#c060ff',30,6);
       break;
     case 'heal_base':
@@ -12950,6 +13017,154 @@ async function bgChatPoll(){
 })();
 </script>
 <script>
+// ── TOWER ROULETTE SHOP ── (used only on the "Tower Roulette" map)
+(function(){
+  const RS_POOL = [
+    {key:'wall',    name:'BARRIER',   col:'#4a708a'},
+    {key:'basic',   name:'BLASTER',   col:'#33aaff'},
+    {key:'sniper',  name:'RAILGUN',   col:'#bb44ff'},
+    {key:'cannon',  name:'CANNON',    col:'#ff8800'},
+    {key:'mace',    name:'MACE',      col:'#7766cc'},
+    {key:'electric',name:'TESLA',     col:'#aaff00'},
+    {key:'healer',  name:'MEDIC',     col:'#00ffcc'},
+    {key:'spike',   name:'SPIKE',     col:'#ff4488'},
+    {key:'buff',    name:'DJ TOWER',  col:'#ffaa33'},
+    {key:'mine',    name:'FARM',      col:'#ffe066'},
+    {key:'cowboy',  name:'COWBOY',    col:'#d2a679'},
+    {key:'hunter',  name:'HUNTER',    col:'#33cc66'},
+    {key:'necromancer',name:'NECROMANCER',col:'#7a4fae'},
+    {key:'alchemist',name:'ALCHEMIST',col:'#88ff44'},
+    {key:'flame',   name:'FLAME',     col:'#ff6622'},
+    {key:'laser',   name:'LASER',     col:'#00ccff'},
+    {key:'bhole',   name:'B.HOLE',    col:'#aa44ff'},
+    {key:'ice',     name:'ICE',       col:'#88ddff'},
+    {key:'barbwire',name:'BARBWIRE',  col:'#c8a874'},
+    {key:'heli',    name:'HELI PAD',  col:'#44ffcc'},
+    {key:'barracks',name:'BARRACKS',  col:'#44aa44'},
+    {key:'mech_base',name:'MECH BASE',col:'#8899aa'},
+    {key:'admindrone',name:'DRONE PAD',col:'#ff88ff'},
+  ];
+
+  let rsSlots = [null, null, null]; // {key,name,col,cost} | null (sold out until refresh)
+
+  function rsCost(key){
+    try{ if(typeof TS!=='undefined' && TS[key] && TS[key][1] && typeof TS[key][1].cost==='number') return TS[key][1].cost; }catch(e){}
+    return 0;
+  }
+
+  // Which towers are legal to offer right now (respects mode restrictions,
+  // level unlocks, achievement locks, and one-only limits) — mirrors the
+  // checks the normal build panel already performs.
+  function rsPool(){
+    let ea = null;
+    try{
+      if(typeof MODES!=='undefined' && MODES[gameMode] && MODES[gameMode].allowed) ea = new Set([...MODES[gameMode].allowed]);
+    }catch(e){}
+    return RS_POOL.filter(t=>{
+      const k = t.key;
+      if(ea && !ea.has(k)) return false;
+      try{ if(typeof isUnlocked==='function' && !isUnlocked('tower',k)) return false; }catch(e){}
+      if(k==='necromancer'){ try{ if(typeof necromancerUnlocked==='function' && !necromancerUnlocked()) return false; }catch(e){} }
+      if(k==='buff'){ try{ if(typeof getDjLimit==='function' && typeof towers!=='undefined' && towers.filter(x=>x.key==='buff').length>=getDjLimit()) return false; }catch(e){} }
+      return true;
+    });
+  }
+
+  const RS_CHEAP_MAX_COST = 200; // guaranteed slot is drawn from towers around this price or less (Blaster, Railgun, Cannon, etc.)
+
+  function rsRefresh(){
+    const pool = rsPool().slice();
+    for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const tmp=pool[i]; pool[i]=pool[j]; pool[j]=tmp; }
+    // Guarantee one slot is a cheap-tier tower (~200g or less, e.g. Blaster/Railgun/Cannon).
+    let cheapPool = pool.filter(t=>rsCost(t.key)<=RS_CHEAP_MAX_COST);
+    if(cheapPool.length===0){
+      // fallback: nothing under the threshold is available, just take the cheapest we've got
+      let cheapIdx=-1, cheapCost=Infinity;
+      pool.forEach((t,i)=>{ const c=rsCost(t.key); if(c<cheapCost){ cheapCost=c; cheapIdx=i; } });
+      if(cheapIdx!==-1) cheapPool=[pool[cheapIdx]];
+    }
+    let picks = [];
+    if(cheapPool.length>0){
+      const pick = cheapPool[Math.floor(Math.random()*cheapPool.length)];
+      picks.push(pick);
+      const idx = pool.indexOf(pick);
+      if(idx!==-1) pool.splice(idx,1);
+    }
+    picks = picks.concat(pool.slice(0, 3-picks.length));
+    // shuffle again so the guaranteed cheap tower isn't always in the same slot position
+    for(let i=picks.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const tmp=picks[i]; picks[i]=picks[j]; picks[j]=tmp; }
+    rsSlots = picks.map(t=>({key:t.key, name:t.name, col:t.col, cost:rsCost(t.key)}));
+    while(rsSlots.length<3) rsSlots.push(null);
+    rsRender();
+  }
+
+  function rsRender(){
+    const panel = document.getElementById('rs');
+    if(!panel) return;
+    const curSel = (typeof selBuild!=='undefined') ? selBuild : null;
+    const slotsHtml = rsSlots.map((s,i)=>{
+      if(!s) return `<div class="rs-slot rs-empty" data-slot="${i}"><span class="rs-sold">SOLD OUT</span></div>`;
+      const on = s.key===curSel;
+      return `<div class="rs-slot${on?' on':''}" data-slot="${i}" data-key="${s.key}" style="--ra:${s.col}">
+        <span class="rs-dot" style="background:${s.col};box-shadow:0 0 5px ${s.col}"></span>
+        <span class="rs-name">${s.name}</span>
+        <span class="rs-cost">${s.cost}g</span>
+      </div>`;
+    }).join('');
+    panel.innerHTML = `<div class="rs-hdr">🎰 TOWER ROULETTE SHOP</div><div class="rs-slots">${slotsHtml}</div><div class="rs-note">refreshes next wave</div>`;
+    panel.querySelectorAll('.rs-slot[data-key]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const key = el.dataset.key;
+        const btn = document.querySelector('.bb[data-t="'+key+'"]');
+        if(btn) btn.click();
+        rsRender();
+      });
+    });
+  }
+
+  function rsOnBuilt(key){
+    const idx = rsSlots.findIndex(s=>s && s.key===key);
+    if(idx!==-1){ rsSlots[idx]=null; rsRender(); }
+  }
+
+  function rsIsAvailable(key){ return rsSlots.some(s=>s && s.key===key); }
+
+  function rsUpdateVisibility(forceRefresh){
+    const panel = document.getElementById('rs');
+    const qb = document.getElementById('qb');
+    const isRoulette = (typeof selectedMap!=='undefined' && selectedMap==='towerroulette');
+    if(panel) panel.style.display = isRoulette ? 'flex' : 'none';
+    if(qb) qb.style.display = isRoulette ? 'none' : 'flex';
+    if(isRoulette){
+      if(forceRefresh || rsSlots.every(s=>s===null)) rsRefresh(); else rsRender();
+    }
+  }
+
+  window.rsRefresh = rsRefresh;
+  window.rsOnBuilt = rsOnBuilt;
+  window.rsIsAvailable = rsIsAvailable;
+  window.rsUpdateVisibility = rsUpdateVisibility;
+
+  function buildRS(){
+    const sb = document.getElementById('sb');
+    if(!sb){ setTimeout(buildRS,200); return; }
+    const buildHdr = Array.from(sb.querySelectorAll('.sh')).find(el => el.textContent.includes('BUILD'));
+    if(!buildHdr){ setTimeout(buildRS,200); return; }
+    const rs = document.createElement('div');
+    rs.id = 'rs';
+    rs.style.display = 'none';
+    buildHdr.parentNode.insertBefore(rs, buildHdr.nextSibling);
+    rsRender();
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', buildRS);
+  } else {
+    buildRS();
+  }
+})();
+</script>
+<script>
 (function(){
   'use strict';
 
@@ -13071,7 +13286,7 @@ async function bgChatPoll(){
   // ── ENEMIES TAB ──
   const ENEMY_ORDER = ['normal','fast','tank','flyer','robot','armored','berserk','heavyarmor','gunner','shielder','hidden',
     'boss_normal','boss_armor','boss_robot','boss_flying','boss_commander','boss_guardian','boss_mirror','boss_king','boss_hacklord',
-    'void_lost','void_phantom','void_abyss','void_corruptor','void_null','void_darkmatter','void_voidchampion','void_reaver'];
+    'void_lost','void_phantom','void_abyss','void_corruptor','void_null','void_darkmatter','void_voidchampion','void_reaver','void_caster'];
   const ENEMY_LABELS = {
     normal:'NORMAL', fast:'FAST', tank:'TANK', flyer:'FLYER', robot:'ROBOT', armored:'ARMORED',
     berserk:'BERSERK', heavyarmor:'HEAVY ARMOR', gunner:'GUNNER', shielder:'SHIELDER', hidden:'HIDDEN 👻',
@@ -13081,7 +13296,8 @@ async function bgChatPoll(){
     boss_hacklord:'BOSS \u2014 HACKLORD (secret)',
     void_lost:'LOST ONE', void_phantom:'PHANTOM', void_abyss:'ABYSS WALKER', void_corruptor:'CORRUPTOR',
     void_null:'NULL ENTITY', void_darkmatter:'DARK MATTER BEAST (mini-boss)', void_voidchampion:'VOID CHAMPION (mini-boss)',
-    void_reaver:'BOSS \u2014 VOID REAVER (Last Light)'
+    void_reaver:'BOSS \u2014 VOID REAVER (Last Light)',
+    void_caster:'BOSS \u2014 VOID CASTER'
   };
   const ENEMY_DESC = {
     normal:'A standard footsoldier with no special traits — the baseline every other enemy is measured against.',
@@ -13111,7 +13327,8 @@ async function bgChatPoll(){
     void_null:'A rift-touched summoner that periodically tears open small portals to spawn weakened Lost Ones and Phantoms as reinforcements.',
     void_darkmatter:'A rarely-spawning mini-boss that lumbers along, and upon death collapses into an unstable dark matter singularity — detonating in a huge radius that stuns every tower caught inside it. Doesn\u2019t appear often, but a wave carrying one is a real threat to your defenses.',
     void_voidchampion:'A rarely-spawning mini-boss that periodically radiates a warding pulse, granting nearby Void enemies a temporary defense buff that reduces incoming damage. Prioritize it quickly, or the enemies around it become far harder to kill.',
-    void_reaver:'The Void\u2019s final guardian, awakened on Wave 40 of Last Light. An immense, slow-moving eye of corrupted matter with devastating attacks and a colossal health pool. Defeating it wins Last Light and grants a big XP bonus — but you can keep playing afterward for a higher score.'
+    void_reaver:'The Void\u2019s final guardian, awakened on Wave 40 of Last Light. An immense, slow-moving eye of corrupted matter with devastating attacks and a colossal health pool. Defeating it wins Last Light and grants a big XP bonus — but you can keep playing afterward for a higher score.',
+    void_caster:'A hooded ritualist that always appears at the Void Reaver\u2019s side, shuffling along even slower than its master. While the Reaver still lives, the Caster is warded and cannot be harmed — but the instant the Reaver falls, the Caster burns its ward to revive it at 1/3 health, and in doing so becomes a normal, far lower-HP target itself. Kill the Caster first if you can catch it once it\u2019s vulnerable, or focus the Reaver down hard enough that the free revive doesn\u2019t matter.'
   };
 
   // Small SVG glyphs mirroring each enemy's in-game silhouette, used in place of the plain color dot.
@@ -13124,7 +13341,8 @@ async function bgChatPoll(){
     void_darkmatter:(d)=>`<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="9" fill="${d.col}" stroke="${d.glow}" stroke-width="1.5"/><circle cx="16" cy="5" r="1.8" fill="#c090ff"/><circle cx="25" cy="21" r="1.8" fill="#c090ff"/><circle cx="7" cy="21" r="1.8" fill="#c090ff"/></svg>`,
     void_voidchampion:(d)=>`<svg viewBox="0 0 32 32"><circle cx="16" cy="19" r="8" fill="${d.col}" stroke="${d.glow}" stroke-width="1.5"/><path d="M9 8 L12 3 L16 7 L20 3 L23 8 L21 11 L11 11 Z" fill="#e0b0ff"/></svg>`,
     void_reaver:(d)=>`<svg viewBox="0 0 32 32"><path d="M2 16 Q16 2 30 16 Q16 30 2 16 Z" fill="${d.col}" stroke="${d.glow}" stroke-width="1.5"/><ellipse cx="16" cy="16" rx="5" ry="9" fill="#0a0016"/><ellipse cx="16" cy="16" rx="2" ry="4" fill="#ff2255"/></svg>`,
-    boss_king:()=>`<svg viewBox="0 0 32 32"><path d="M4 22 L7 10 L13 16 L16 6 L19 16 L25 10 L28 22 Z" fill="#ffd700" stroke="#ffaa00" stroke-width="1.5"/><circle cx="16" cy="18" r="2" fill="#ff0055"/></svg>`
+    boss_king:()=>`<svg viewBox="0 0 32 32"><path d="M4 22 L7 10 L13 16 L16 6 L19 16 L25 10 L28 22 Z" fill="#ffd700" stroke="#ffaa00" stroke-width="1.5"/><circle cx="16" cy="18" r="2" fill="#ff0055"/></svg>`,
+    void_caster:(d)=>`<svg viewBox="0 0 32 32"><path d="M16 4 L26 12 L22 28 L10 28 L6 12 Z" fill="${d.col}" stroke="${d.glow}" stroke-width="1.5"/><circle cx="16" cy="16" r="3.5" fill="${d.glow}"/></svg>`
   };
 
   function populateModeSelect(){
