@@ -287,7 +287,7 @@ const MP={
     // Spawn helicopter for remote heli pads
     if(d.key==='heli') spawnHelicopter(t);
     // Init barracks spawn timer for remote barracks
-    if(d.key==='barracks'||d.key==='mech_base') t.allySpawnCd=0;
+    if(cfg.barracksTower) t.allySpawnCd=0;
     syncUI();
   },
 
@@ -2113,8 +2113,13 @@ canvas{display:block;border:1px solid #0e2030;box-shadow:0 0 30px rgba(0,255,136
   <button class="ab upg-on" id="ubtn" style="display:none">⬆ UPGRADE [click tower]</button>
   <button class="ab" id="sbtn">⤴ SELL [click tower]</button>
   <button class="ab" id="basebtn">🏛 UPGRADE BASE</button>
-  <button class="ab" id="custom-tower-access-btn" style="display:none;--a:#ffcc00;border-color:#ffcc0066;color:#ffcc00;">🛠 CUSTOM TOWER</button>
-  <button class="ab" id="custom-tower-edit-btn" style="display:none;--a:#ffcc00;border-color:#ffcc0066;color:#ffcc00;width:34px;flex:none;padding:0;">✎</button>
+  <div id="custom-tower-slots" style="display:none;flex-wrap:wrap;gap:4px;">
+    <button class="ab" id="custom-tower-access-btn-1" style="--a:#ffcc00;border-color:#ffcc0066;color:#ffcc00;flex:1 1 auto;min-width:64px;font-size:9px;padding:6px 2px;">🛠 SLOT 1</button>
+    <button class="ab" id="custom-tower-access-btn-2" style="--a:#ff66cc;border-color:#ff66cc66;color:#ff66cc;flex:1 1 auto;min-width:64px;font-size:9px;padding:6px 2px;">🛠 SLOT 2</button>
+    <button class="ab" id="custom-tower-access-btn-3" style="--a:#66ff99;border-color:#66ff9966;color:#66ff99;flex:1 1 auto;min-width:64px;font-size:9px;padding:6px 2px;">🛠 SLOT 3</button>
+    <button class="ab" id="custom-tower-access-btn-4" style="--a:#66aaff;border-color:#66aaff66;color:#66aaff;flex:1 1 auto;min-width:64px;font-size:9px;padding:6px 2px;">🛠 SLOT 4</button>
+    <button class="ab" id="custom-tower-edit-btn" style="--a:#ffcc00;border-color:#ffcc0066;color:#ffcc00;width:100%;flex:1 1 100%;padding:6px 2px;font-size:9px;">✎ DESIGN / MANAGE CUSTOM TOWERS</button>
+  </div>
   <div id="up">
     <div id="up-title">SELECT TOWER</div>
     <div id="up-level-bar"><div id="up-level-pips"></div></div>
@@ -2683,12 +2688,10 @@ function applyMapDimensions(mapKey){
   // Show/hide ultra pan hud
   const uh=document.getElementById('ultra-hud');
   if(uh) uh.style.display=(mapKey==='free_ultra')?'block':'none';
-  // Show/hide custom-tower designer button (Custom Map only)
-  const ctb=document.getElementById('custom-tower-access-btn');
-  const cte=document.getElementById('custom-tower-edit-btn');
-  if(ctb) ctb.style.display=(mapKey==='custom')?'':'none';
-  if(cte) cte.style.display=(mapKey==='custom')?'':'none';
-  if(mapKey!=='custom'&&typeof selBuild!=='undefined'&&selBuild==='custom'){
+  // Show/hide custom-tower designer buttons (Custom Map only)
+  const ctSlotsWrap=document.getElementById('custom-tower-slots');
+  if(ctSlotsWrap) ctSlotsWrap.style.display=(mapKey==='custom')?'flex':'none';
+  if(mapKey!=='custom'&&typeof selBuild!=='undefined'&&selBuild&&selBuild.indexOf('custom')===0){
     selBuild='wall';
     document.querySelectorAll('.bb').forEach(x=>x.classList.remove('on'));
     const wb=document.querySelector('.bb[data-t="wall"]');if(wb)wb.classList.add('on');
@@ -2699,7 +2702,7 @@ function applyMapDimensions(mapKey){
 const CT={EMPTY:0,WALL:1,BASIC:2,SNIPER:3,CANNON:4,BASE:5,SPAWN:6,ELECTRIC:7,HEALER:8,SPIKE:9,BUFF:10,MINE:11,HELI:12,FLAME:13,BHOLE:14,LASER:15,DRONE:16,ICE:17,BARRACKS:18,SILO:19,MECH_BASE:20,BARBWIRE:21,PATH:22,COWBOY:23,NECRO:24,MACE:25,ALCH:26,HUNTER:27};
 const ML=5;
 const HERO_ML=10; // Hero towers have 10 levels
-function getML(key){if(key==='custom')return 1;if(key==='hero_score')return 6;if(key==='mega_blaster_cannon')return 5;if(key==='railgun_cannon'||key==='blaster_cannon'||key==='siege_cannon'||key==='barrier_cannon')return 5;if(key==='tesla_cannon'||key==='laser_cannon')return 5;return(key==='hero_accel'||key==='hero_sacrifice')?HERO_ML:ML;}
+function getML(key){if(key&&key.indexOf('custom')===0)return 1;if(key==='hero_score')return 6;if(key==='mega_blaster_cannon')return 5;if(key==='railgun_cannon'||key==='blaster_cannon'||key==='siege_cannon'||key==='barrier_cannon')return 5;if(key==='tesla_cannon'||key==='laser_cannon')return 5;return(key==='hero_accel'||key==='hero_sacrifice')?HERO_ML:ML;}
 function towerAt(r,c){for(const t of towers){const sz=t.size||1;if(sz>1){if(r>=t.row&&r<=t.row+sz-1&&c>=t.col&&c<=t.col+sz-1) return t;}else if(t.row===r&&t.col===c) return t;}return null;}
 function clearTowerGrid(t){const sz=t.size||1;if(sz>1){for(let dr=0;dr<sz;dr++)for(let dc=0;dc<sz;dc++)grid[t.row+dr][t.col+dc]=CT.EMPTY;}else{grid[t.row][t.col]=CT.EMPTY;}}
 function findRailgunGroup(t){
@@ -2853,6 +2856,9 @@ const GUNNER_BASE_DMG=18,GUNNER_STUN_DUR=30;
 
 const TS={
   custom:{1:{t:CT.BASIC,cost:100,hp:85,rng:150,dmg:20,cd:52,aoe:0,chn:0,col:'#ffcc00',name:'CUSTOM TOWER'}},
+  custom2:{1:{t:CT.BASIC,cost:100,hp:85,rng:150,dmg:20,cd:52,aoe:0,chn:0,col:'#ff66cc',name:'CUSTOM TOWER 2'}},
+  custom3:{1:{t:CT.BASIC,cost:100,hp:85,rng:150,dmg:20,cd:52,aoe:0,chn:0,col:'#66ff99',name:'CUSTOM TOWER 3'}},
+  custom4:{1:{t:CT.BASIC,cost:100,hp:85,rng:150,dmg:20,cd:52,aoe:0,chn:0,col:'#66aaff',name:'CUSTOM TOWER 4'}},
   wall:{1:{t:CT.WALL,cost:60,hp:350,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#4a708a',name:'BARRIER'},2:{t:CT.WALL,cost:60,hp:600,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#5a80a0',name:'BARRIER II'},3:{t:CT.WALL,cost:60,hp:950,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#6a90b0',name:'BARRIER III',thorns:22},4:{t:CT.WALL,cost:100,hp:1500,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#7aaac0',name:'BARRIER IV',thorns:40},5:{t:CT.WALL,cost:200,hp:2400,rng:0,dmg:0,cd:0,aoe:0,chn:0,col:'#8abbd0',name:'BULWARK',thorns:65,wallRegen:12}},
   basic:{1:{t:CT.BASIC,cost:70,hp:85,rng:150,dmg:20,cd:52,aoe:0,chn:0,col:'#33aaff',name:'BLASTER'},'2A':{t:CT.BASIC,cost:350,hp:110,rng:155,dmg:10,cd:12,aoe:0,chn:0,col:'#33aaff',name:'MINIGUN',minigun:true,antiAir:true,antiHidden:true,basicMinigun:true,maxHeat:16,heatDecay:.09,overheatDecayMult:2.4,coolDelayFrames:36},'2B':{t:CT.BASIC,cost:150,hp:110,rng:175,dmg:10,cd:72,aoe:0,chn:0,col:'#55ddff',name:'SHOCKWAVE',shockwave:true,shockSpd:3.2,shockMaxR:200,antiHidden:true,crowdFalloff:true},'3A':{t:CT.BASIC,cost:500,hp:148,rng:162,dmg:12,cd:9,aoe:0,chn:0,col:'#55aaff',name:'MINIGUN+',minigun:true,antiAir:true,antiHidden:true,basicMinigun:true,maxHeat:18,heatDecay:.085,overheatDecayMult:2.4,coolDelayFrames:36},'3B':{t:CT.BASIC,cost:900,hp:148,rng:220,dmg:55,cd:40,aoe:0,chn:0,col:'#44eeff',name:'SHOCKWAVE+',shockwave:true,shockSpd:4,shockMaxR:290,antiHidden:true,crowdFalloff:true},'4A':{t:CT.BASIC,cost:750,hp:195,rng:172,dmg:16,cd:6,aoe:0,chn:0,col:'#66bbff',name:'MINIGUN++',minigun:true,antiAir:true,antiHidden:true,basicMinigun:true,maxHeat:20,heatDecay:.08,overheatDecayMult:2.5,coolDelayFrames:34},'4B':{t:CT.BASIC,cost:1400,hp:195,rng:260,dmg:85,cd:30,aoe:0,chn:0,col:'#33eeff',name:'SHOCKWAVE++',shockwave:true,shockSpd:4.8,shockMaxR:360,antiHidden:true,crowdFalloff:true},'5A':{t:CT.BASIC,cost:1000,hp:260,rng:185,dmg:24,cd:4,aoe:0,chn:0,col:'#88ccff',name:'GATLING',minigun:true,antiAir:true,antiHidden:true,basicMinigun:true,maxHeat:22,heatDecay:.075,overheatDecayMult:2.5,coolDelayFrames:32},'5B':{t:CT.BASIC,cost:2200,hp:260,rng:320,dmg:165,cd:20,aoe:0,chn:0,col:'#00ffff',name:'STORM WAVE',shockwave:true,shockSpd:5.5,shockMaxR:440,antiHidden:true,crowdFalloff:true}},
   railgun_cannon:{
@@ -3775,7 +3781,7 @@ const UNLOCK_MAP = {
 
 // FREE items (always unlocked regardless of level)
 const FREE_TOWERS = new Set(['wall','basic','sniper','cannon']);
-const FREE_SPEEDS = new Set(['1','2']);
+const FREE_SPEEDS = new Set(['0.5','1','2']);
 const FREE_MODES  = new Set(['easy','normal','hard','sandbox']);
 const FREE_SLOTS  = new Set(['0','1','2','3','4','5','6','7']);
 
@@ -6684,31 +6690,31 @@ function showPanel(t){
   const mergeBtn=document.getElementById('up-merge-btn');
   const railgunGrp=findRailgunGroup(t);
   mergeBtn.style.display='none';
-  if(railgunGrp){mergeBtn.style.display='';mergeBtn.disabled=false;}
+  if(railgunGrp){mergeBtn.style.display='';applyMergeLock(mergeBtn,'⚡ MERGE 2x2 INTO RAILGUN CANNON','hardcore_100');}
   const mergeBtn2=document.getElementById('up-merge-btn2');
   const blasterGrp=findBlasterGroup(t);
   mergeBtn2.style.display='none';
-  if(blasterGrp){mergeBtn2.style.display='';mergeBtn2.disabled=false;}
+  if(blasterGrp){mergeBtn2.style.display='';applyMergeLock(mergeBtn2,'🔫 MERGE 2x2 INTO BLASTER CANNON','hardcore_100');}
   const mergeBtn3=document.getElementById('up-merge-btn3');
   const siegeGrp=findSiegeGroup(t);
   mergeBtn3.style.display='none';
-  if(siegeGrp){mergeBtn3.style.display='';mergeBtn3.disabled=false;}
+  if(siegeGrp){mergeBtn3.style.display='';applyMergeLock(mergeBtn3,'💣 MERGE 2x2 INTO SIEGE CANNON','hardcore_100');}
   const mergeBtn4=document.getElementById('up-merge-btn4');
   const barrierGrp=findBarrierGroup(t);
   mergeBtn4.style.display='none';
-  if(barrierGrp){mergeBtn4.style.display='';mergeBtn4.disabled=false;}
+  if(barrierGrp){mergeBtn4.style.display='';applyMergeLock(mergeBtn4,'🛡 MERGE 2x2 INTO BARRIER CANNON','hardcore_100');}
   const mergeBtn5=document.getElementById('up-merge-btn5');
   const megaBlasterGrp=findMegaBlasterGroup(t);
   mergeBtn5.style.display='none';
-  if(megaBlasterGrp){mergeBtn5.style.display='';mergeBtn5.disabled=false;}
+  if(megaBlasterGrp){mergeBtn5.style.display='';applyMergeLock(mergeBtn5,'💥 MERGE 4x 2x2 INTO MEGA BLASTER (4x4)','merge_master');}
   const mergeBtn6=document.getElementById('up-merge-btn6');
   const teslaGrp=findTeslaGroup(t);
   mergeBtn6.style.display='none';
-  if(teslaGrp){mergeBtn6.style.display='';mergeBtn6.disabled=false;}
+  if(teslaGrp){mergeBtn6.style.display='';applyMergeLock(mergeBtn6,'⚡ MERGE 2x2 INTO TESLA CANNON','hardcore_100');}
   const mergeBtn7=document.getElementById('up-merge-btn7');
   const laserGrp=findLaserGroup(t);
   mergeBtn7.style.display='none';
-  if(laserGrp){mergeBtn7.style.display='';mergeBtn7.disabled=false;}
+  if(laserGrp){mergeBtn7.style.display='';applyMergeLock(mergeBtn7,'💎 MERGE 2x2 INTO LASER CANNON','hardcore_100');}
   if(isSacTemple){
     // Temple never uses path/upgrade buttons
     pr.style.display='none';ub.style.display='none';
@@ -6768,7 +6774,7 @@ function doUpgrade(path){
   if(selTower.key==='healer'&&selTower.path==='A'&&selTower.cfg.baseMaxBonus){baseMaxHP+=selTower.cfg.baseMaxBonus;baseHP=Math.min(baseHP+selTower.cfg.baseMaxBonus,baseMaxHP);ft(BASE_C*CS+CS/2,BASE_R*CS,`MAX HP +${selTower.cfg.baseMaxBonus}`,'#00ccff');}
   if(selTower.key==='heli'){const h=helicopters.find(h=>h.towerId===selTower.id);if(h) syncHelicopterConfig(h,selTower);}
   if(selTower.key==='admindrone'){syncAdminDroneConfig(selTower);}
-  if(selTower.key==='barracks'||selTower.key==='mech_base'){const ncfg=selTower.cfg;for(const a of allies){if(a.towerId===selTower.id){a.dmg=ncfg.allyDmg;a.maxHp=ncfg.allyHp;a.hp=Math.min(a.hp,ncfg.allyHp);a.spd=ncfg.allySpd;a.col=ncfg.col;a.explode=!!ncfg.allyExplode;a.explodeDmg=ncfg.allyExplodeDmg||0;a.explodeAoe=ncfg.allyExplodeAoe||0;a.hasGun=!!ncfg.allyGun;a.gunDmg=ncfg.allyGunDmg||0;a.gunRng=ncfg.allyGunRng||0;a.gunCd=ncfg.allyGunCd||0;a.isTank=!!ncfg.allyTank;a.tankExplodeDmg=ncfg.allyTankExplodeDmg||0;a.tankExplodeAoe=ncfg.allyTankExplodeAoe||0;}}}
+  if(selTower.cfg&&selTower.cfg.barracksTower){const ncfg=selTower.cfg;for(const a of allies){if(a.towerId===selTower.id){a.dmg=ncfg.allyDmg;a.maxHp=ncfg.allyHp;a.hp=Math.min(a.hp,ncfg.allyHp);a.spd=ncfg.allySpd;a.col=ncfg.col;a.explode=!!ncfg.allyExplode;a.explodeDmg=ncfg.allyExplodeDmg||0;a.explodeAoe=ncfg.allyExplodeAoe||0;a.hasGun=!!ncfg.allyGun;a.gunDmg=ncfg.allyGunDmg||0;a.gunRng=ncfg.allyGunRng||0;a.gunCd=ncfg.allyGunCd||0;a.isTank=!!ncfg.allyTank;a.tankExplodeDmg=ncfg.allyTankExplodeDmg||0;a.tankExplodeAoe=ncfg.allyTankExplodeAoe||0;}}}
   ft(selTower.col*CS+CS/2,selTower.row*CS,`LVL ${selTower.level}!`,'#ffd700');sparks(selTower.col*CS+CS/2,selTower.row*CS+CS/2,selTower.cfg.col,12,2);syncUI();showPanel(selTower);
 }
 
@@ -6786,23 +6792,28 @@ document.getElementById('pA').addEventListener('click',()=>doUpgrade('A'));
 document.getElementById('pB').addEventListener('click',()=>doUpgrade('B'));
 document.getElementById('pC').addEventListener('click',()=>doUpgrade('C'));
 document.getElementById('base-up-btn').addEventListener('click',()=>doBaseUpgrade(baseUpgPath));
-document.getElementById('custom-tower-access-btn').addEventListener('click',()=>{
-  const cfg=(typeof TS!=='undefined'&&TS.custom)?TS.custom[1]:null;
-  const hasDesign=cfg&&cfg._libId;
-  if(!hasDesign){
-    // No custom tower designed yet — open the editor so the player can make one first
-    if(typeof openCustomTowerBuilder==='function') openCustomTowerBuilder();
-    return;
-  }
-  // A design already exists — clicking just selects it for placement, like any other tower button
-  if(selBuild==='custom'&&selectedMap!=='custom'){msg('⚠ Custom Tower is only available on Custom Map!',2200);return;}
-  sellMode=false;upgMode=false;baseUpgMode=false;selBuild='custom';
-  document.querySelectorAll('.bb').forEach(x=>x.classList.remove('on'));
-  document.getElementById('sbtn').classList.remove('sell-on');
-  document.getElementById('ubtn').classList.remove('upg-on');
-  document.getElementById('basebtn').classList.remove('base-on');
-  document.getElementById('custom-tower-access-btn').classList.add('on');
-  hidePanel();hideBasePanel();
+const CUSTOM_TOWER_KEYS=['custom','custom2','custom3','custom4'];
+CUSTOM_TOWER_KEYS.forEach((slotKey,slotIdx)=>{
+  const btn=document.getElementById('custom-tower-access-btn-'+(slotIdx+1));
+  if(!btn) return;
+  btn.addEventListener('click',()=>{
+    const cfg=(typeof TS!=='undefined'&&TS[slotKey])?TS[slotKey][1]:null;
+    const hasDesign=cfg&&cfg._libId;
+    if(!hasDesign){
+      // No design equipped to this slot yet — open the editor targeting this slot
+      if(typeof openCustomTowerBuilder==='function') openCustomTowerBuilder(slotKey);
+      return;
+    }
+    // A design already exists in this slot — clicking just selects it for placement
+    if(selBuild===slotKey&&selectedMap!=='custom'){msg('⚠ Custom Tower is only available on Custom Map!',2200);return;}
+    sellMode=false;upgMode=false;baseUpgMode=false;selBuild=slotKey;
+    document.querySelectorAll('.bb').forEach(x=>x.classList.remove('on'));
+    document.getElementById('sbtn').classList.remove('sell-on');
+    document.getElementById('ubtn').classList.remove('upg-on');
+    document.getElementById('basebtn').classList.remove('base-on');
+    CUSTOM_TOWER_KEYS.forEach((k2,i2)=>{const b2=document.getElementById('custom-tower-access-btn-'+(i2+1));if(b2) b2.classList.toggle('on',k2===slotKey);});
+    hidePanel();hideBasePanel();
+  });
 });
 document.getElementById('custom-tower-edit-btn').addEventListener('click',()=>{if(typeof openCustomTowerBuilder==='function') openCustomTowerBuilder();});
 document.getElementById('bpA').addEventListener('click',()=>doBaseUpgrade('A'));
@@ -6832,8 +6843,19 @@ document.querySelectorAll('.bb').forEach(b=>{b.addEventListener('click',()=>{
   if(b.classList.contains('ach-locked')||b.classList.contains('hc-locked'))return;
   sellMode=false;upgMode=false;baseUpgMode=false;selBuild=b.dataset.t;document.querySelectorAll('.bb').forEach(x=>x.classList.remove('on'));document.getElementById('sbtn').classList.remove('sell-on');document.getElementById('ubtn').classList.remove('upg-on');document.getElementById('basebtn').classList.remove('base-on');b.classList.add('on');hidePanel();hideBasePanel();if(selBuild==='buff') document.getElementById('buff-hint').classList.add('vis');else document.getElementById('buff-hint').classList.remove('vis');});});
 document.getElementById('up-close-btn').addEventListener('click',()=>{hidePanel();sellMode=false;upgMode=false;baseUpgMode=false;document.querySelectorAll('.bb').forEach(b=>b.classList.remove('on'));document.getElementById('sbtn').classList.remove('sell-on');document.getElementById('ubtn').classList.remove('upg-on');document.getElementById('basebtn').classList.remove('base-on');});
+function applyMergeLock(btn,baseLabel,achId){
+  const locked=!earnedAchievements.has(achId);
+  const ach=ACHIEVEMENTS.find(a=>a.id===achId);
+  btn.disabled=locked;
+  btn.textContent=locked?('🔒 REQUIRES: '+(ach?ach.name:achId)):baseLabel;
+  btn.style.opacity=locked?'0.5':'1';
+  btn.style.cursor=locked?'not-allowed':'pointer';
+  btn.dataset.mergeLocked=locked?'1':'';
+  btn.dataset.mergeAch=achId;
+}
 document.getElementById('up-merge-btn').addEventListener('click',()=>{
   if(!selTower) return;const grp=findRailgunGroup(selTower);if(!grp) return;
+  if(!earnedAchievements.has('hardcore_100')){msg('🔒 Requires the HARDCORE SURVIVOR achievement!',2500);return;}
   const{anchorRow:ar,anchorCol:ac,members}=grp;
   for(const m of members){const idx=towers.indexOf(m);if(idx!==-1) towers.splice(idx,1);}
   const cfg=getCfg('railgun_cannon',1,null);
@@ -6844,6 +6866,7 @@ document.getElementById('up-merge-btn').addEventListener('click',()=>{
 });
 document.getElementById('up-merge-btn2').addEventListener('click',()=>{
   if(!selTower) return;const grp=findBlasterGroup(selTower);if(!grp) return;
+  if(!earnedAchievements.has('hardcore_100')){msg('🔒 Requires the HARDCORE SURVIVOR achievement!',2500);return;}
   const{anchorRow:ar,anchorCol:ac,members}=grp;
   for(const m of members){const idx=towers.indexOf(m);if(idx!==-1) towers.splice(idx,1);}
   const cfg=getCfg('blaster_cannon',1,null);
@@ -6854,6 +6877,7 @@ document.getElementById('up-merge-btn2').addEventListener('click',()=>{
 });
 document.getElementById('up-merge-btn3').addEventListener('click',()=>{
   if(!selTower) return;const grp=findSiegeGroup(selTower);if(!grp) return;
+  if(!earnedAchievements.has('hardcore_100')){msg('🔒 Requires the HARDCORE SURVIVOR achievement!',2500);return;}
   const{anchorRow:ar,anchorCol:ac,members}=grp;
   for(const m of members){const idx=towers.indexOf(m);if(idx!==-1) towers.splice(idx,1);}
   const cfg=getCfg('siege_cannon',1,null);
@@ -6864,6 +6888,7 @@ document.getElementById('up-merge-btn3').addEventListener('click',()=>{
 });
 document.getElementById('up-merge-btn4').addEventListener('click',()=>{
   if(!selTower) return;const grp=findBarrierGroup(selTower);if(!grp) return;
+  if(!earnedAchievements.has('hardcore_100')){msg('🔒 Requires the HARDCORE SURVIVOR achievement!',2500);return;}
   const{anchorRow:ar,anchorCol:ac,members}=grp;
   for(const m of members){const idx=towers.indexOf(m);if(idx!==-1) towers.splice(idx,1);}
   const cfg=getCfg('barrier_cannon',1,null);
@@ -6874,6 +6899,7 @@ document.getElementById('up-merge-btn4').addEventListener('click',()=>{
 });
 document.getElementById('up-merge-btn5').addEventListener('click',()=>{
   if(!selTower) return;const grp=findMegaBlasterGroup(selTower);if(!grp) return;
+  if(!earnedAchievements.has('merge_master')){msg('🔒 Requires the MERGE MASTER achievement!',2500);return;}
   const{anchorRow:ar,anchorCol:ac,members}=grp;
   for(const m of members){const idx=towers.indexOf(m);if(idx!==-1) towers.splice(idx,1);}
   const cfg=getCfg('mega_blaster_cannon',1,null);
@@ -6884,6 +6910,7 @@ document.getElementById('up-merge-btn5').addEventListener('click',()=>{
 });
 document.getElementById('up-merge-btn6').addEventListener('click',()=>{
   if(!selTower) return;const grp=findTeslaGroup(selTower);if(!grp) return;
+  if(!earnedAchievements.has('hardcore_100')){msg('🔒 Requires the HARDCORE SURVIVOR achievement!',2500);return;}
   const{anchorRow:ar,anchorCol:ac,members}=grp;
   for(const m of members){const idx=towers.indexOf(m);if(idx!==-1) towers.splice(idx,1);}
   const cfg=getCfg('tesla_cannon',1,null);
@@ -6894,6 +6921,7 @@ document.getElementById('up-merge-btn6').addEventListener('click',()=>{
 });
 document.getElementById('up-merge-btn7').addEventListener('click',()=>{
   if(!selTower) return;const grp=findLaserGroup(selTower);if(!grp) return;
+  if(!earnedAchievements.has('hardcore_100')){msg('🔒 Requires the HARDCORE SURVIVOR achievement!',2500);return;}
   const{anchorRow:ar,anchorCol:ac,members}=grp;
   for(const m of members){const idx=towers.indexOf(m);if(idx!==-1) towers.splice(idx,1);}
   const cfg=getCfg('laser_cannon',1,null);
@@ -6972,6 +7000,7 @@ function updateHcUI(){
 }
 document.getElementById('autoskip-btn').addEventListener('click',()=>{autoSkip=!autoSkip;const btn=document.getElementById('autoskip-btn');btn.classList.toggle('on',autoSkip);const toast=document.getElementById('autoskip-toast');toast.textContent=autoSkip?'⚡ AUTO-SKIP ON':'⏹ AUTO-SKIP OFF';toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1400);msg(autoSkip?'⚡ Auto-skip enabled!':'⏹ Auto-skip disabled.',2200);});
 window.addEventListener('DOMContentLoaded',()=>{
+try{ mgApplySpeedUpgrade(); }catch(e){ console.error('mgApplySpeedUpgrade failed',e); }
 document.querySelectorAll('#save-slots-row .save-slot').forEach((btn,i)=>{btn.addEventListener('click',()=>{if(!isUnlocked('slot',String(i))){msg(`⚠ Slot ${i+1} unlocks at Level ${getUnlockLevel('slot',String(i))}!`,2500);return;}selectedSaveSlot=i;refreshSaveSlotUI();});});
 document.getElementById('save-btn').addEventListener('click',()=>{if(MP.active){msg('⚠ Cannot save in CO-OP mode',2000);return;}if(!gameStarted||gameOver){saveStatus('⚠ Cannot save now.','#ff4444');return;}if(!confirm(`Save to Slot ${selectedSaveSlot+1}? This will overwrite the current data.`)) return;const data=serializeGameState();if(setSaveData(selectedSaveSlot,data)){saveStatus(`✓ Saved to Slot ${selectedSaveSlot+1}`);ft(W/2,H/2,`SAVED → SLOT ${selectedSaveSlot+1}`,'#00ff88');sparks(W/2,H/2,'#00ff88',16,2.5);autoSaveSlot=selectedSaveSlot;updateAutoSaveUI();refreshSaveSlotUI();}else saveStatus('✗ Save failed!','#ff4444');});
 document.getElementById('load-btn').addEventListener('click',()=>{if(MP.active){msg('⚠ Cannot load saves in CO-OP mode',2000);return;}const data=getSaveData(selectedSaveSlot);if(!data){saveStatus('⚠ No data in slot.','#ff4444');return;}if(!confirm(`Load Slot ${selectedSaveSlot+1}? (Wave ${data.wave}, ${MODES[data.gameMode]?.label||data.gameMode})`)) return;if(deserializeGameState(data)){document.getElementById('startScreen').classList.add('gone');gameStarted=true;saveStatus(`✓ Loaded Slot ${selectedSaveSlot+1}  W${data.wave}`);msg(`Loaded from Slot ${selectedSaveSlot+1} — Wave ${data.wave}`,3000);}else saveStatus('✗ Load failed.','#ff4444');});
@@ -6979,7 +7008,7 @@ document.getElementById('delete-btn').addEventListener('click',()=>{const data=g
 document.getElementById('prev-btn').addEventListener('click',()=>{if(MP.active){msg('⚠ Cannot load saves in CO-OP mode',2000);return;}const data=getPrevSaveData(selectedSaveSlot);if(!data){saveStatus('⚠ No previous version.','#ff4444');return;}if(!confirm(`Load previous version of Slot ${selectedSaveSlot+1}? (Wave ${data.wave}, ${MODES[data.gameMode]?.label||data.gameMode})`)) return;if(deserializeGameState(data)){document.getElementById('startScreen').classList.add('gone');gameStarted=true;saveStatus(`✓ Loaded prev ver  W${data.wave}`);msg(`Previous version of Slot ${selectedSaveSlot+1} loaded — Wave ${data.wave}`,3000);}else saveStatus('✗ Load failed.','#ff4444');});
 });
 document.querySelectorAll('.mb').forEach(b=>{b.addEventListener('click',()=>{if(gameStarted) return;if(!isUnlocked('mode',b.dataset.m)){msg(`⚠ ${b.dataset.m.toUpperCase()} unlocks at Level ${getUnlockLevel('mode',b.dataset.m)}!`,2500);return;}gameMode=b.dataset.m;document.querySelectorAll('.mb').forEach(x=>x.classList.remove('on'));b.classList.add('on');init();msg(`Mode: ${MODES[gameMode].label}`,2000);});});
-document.querySelectorAll('.spb').forEach(b=>{b.addEventListener('click',()=>{if(!isUnlocked('speed',b.dataset.spd)){msg(`⚠ ${b.dataset.spd}× speed unlocks at Level ${getUnlockLevel('speed',b.dataset.spd)}!`,2500);return;}speed=parseInt(b.dataset.spd);document.querySelectorAll('.spb').forEach(x=>x.classList.remove('on'));b.classList.add('on');});});
+document.querySelectorAll('.spb').forEach(b=>{b.addEventListener('click',()=>{if(!isUnlocked('speed',b.dataset.spd)){msg(`⚠ ${b.dataset.spd}× speed unlocks at Level ${getUnlockLevel('speed',b.dataset.spd)}!`,2500);return;}speed=parseFloat(b.dataset.spd);document.querySelectorAll('.spb').forEach(x=>x.classList.remove('on'));b.classList.add('on');});});
 document.querySelectorAll('.gfx-btn').forEach(b=>{b.addEventListener('click',()=>{gfxMode=parseInt(b.dataset.gfx);document.querySelectorAll('.gfx-btn').forEach(x=>x.classList.remove('on'));b.classList.add('on');msg(['HIGHEST','MEDIUM','LOW','POTATO'][gfxMode]+' graphics',1500);});});
 document.getElementById('start').addEventListener('click',startWave);
 
@@ -7042,7 +7071,7 @@ cv.addEventListener('click',e=>{
   if(grid[row][col]===CT.PATH){msg('⚠ Cannot build on the enemy path!',1800);return;}
   if(grid[row][col]!==CT.EMPTY) return;
   if(selectedMap==='towerroulette'&&typeof rsIsAvailable==='function'&&!rsIsAvailable(selBuild)){msg('⚠ This tower is not currently in the Roulette Shop!',2200);return;}
-  if(selBuild==='custom'&&selectedMap!=='custom'){msg('⚠ Custom Tower is only available on Custom Map!',2200);return;}
+  if(selBuild&&selBuild.indexOf('custom')===0&&selectedMap!=='custom'){msg('⚠ Custom Tower is only available on Custom Map!',2200);return;}
   if(!isUnlocked('tower',selBuild)){msg(`⚠ ${selBuild.toUpperCase()} unlocks at Level ${getUnlockLevel('tower',selBuild)}!`,2500);return;}
   if(selBuild==='heli'&&gameMode==='hardcore'&&!hcUnlocked.has('heli')){msg('⚠ Unlock Heli Pad first! (10 pts)',2500);return;}
   if(selBuild==='ice'&&gameMode==='hardcore'&&wave<100&&!hcUnlocked.has('ice')){msg('⚠ Unlock Ice Tower first! (5 pts) or reach Wave 100.',2500);return;}
@@ -7075,7 +7104,7 @@ cv.addEventListener('click',e=>{
   towers.push(newTower);TowerStats.log(selBuild);if(selBuild!=='wall'){_sessionTowerTypes.add(selBuild);}_sessionAllTypes.add(selBuild);if(selBuild==='wall')_sessionWallCount++;
   if(selectedMap==='towerroulette'&&typeof rsOnBuilt==='function') rsOnBuilt(selBuild);
   if(typeof checkAchievements_towerPlaced==='function') checkAchievements_towerPlaced(selBuild);
-  if(MP.active){MP.broadcast('tower:place',{pid:MP.playerId,row,col,key:selBuild,lvl:1,colorIdx:MP.colorIndex,name:MP.playerName,skins:{...mgEquipped},evolvedBlaster:_evoVariant});MP.updatePlayerGold();}if(selBuild==='heli') spawnHelicopter(newTower);if(selBuild==='admindrone') spawnAdminDrones(newTower);  if(selBuild==='barracks'||selBuild==='mech_base'){newTower.allySpawnCd=0;}
+  if(MP.active){MP.broadcast('tower:place',{pid:MP.playerId,row,col,key:selBuild,lvl:1,colorIdx:MP.colorIndex,name:MP.playerName,skins:{...mgEquipped},evolvedBlaster:_evoVariant});MP.updatePlayerGold();}if(selBuild==='heli') spawnHelicopter(newTower);if(selBuild==='admindrone') spawnAdminDrones(newTower);  if(newTower.cfg&&newTower.cfg.barracksTower){newTower.allySpawnCd=0;}
   if(selBuild==='silo'){newTower.siloCd=0;newTower.siloTarget=null;newTower.siloFiring=false;newTower.siloBeamLife=0;newTower.siloFrozenX=null;newTower.siloFrozenY=null;newTower.siloReticleFrozen=false;newTower.siloBeamHold=0;}
   sparks(col*CS+CS/2,row*CS+CS/2,cfg.col,7,1.5);if(saved>0) ft(col*CS+CS/2,row*CS-14,`DISCOUNT -${saved}g!`,'#ffd700');
   if(pathBlocked) msg('⚠ Path sealed! Enemies will breach!',2500);syncUI();
@@ -7540,6 +7569,7 @@ const SHOP_ITEMS=[
   {id:'skin_fire_cannon',name:'FIRE CANNON SKIN',icon:'🔥',price:225,desc:'Reforges the CANNON tower in cracked obsidian with glowing molten lava veins, an ember-lit barrel bore, and a smoldering muzzle that showers embers with every shot.',type:'skin',slot:'cannon',maxOwn:1},
   {id:'skin_legend_blaster',name:'LIVING LEGEND BLASTER SKIN',icon:'🌟',price:0,desc:'An exclusive star-forged blaster housing with a radiant golden-white aura and a trailing comet effect on every shot. Reserved for true legends.',type:'skin',slot:'basic',maxOwn:1,reqAch:'living_legend'},
   {id:'evolve_blaster',name:'EVOLVED BLASTER',icon:'🧬',price:18000,desc:'Unlock permanently, then equip so every NEW Blaster tower you place can evolve. At its first upgrade, choose a path in the field — RIFLE (bigger damage, burst-fires 4 rounds then reloads, summons allies from your base, detects flying enemies) or SHOTGUN (close-range AOE blast damage, immune to being stunned, detects hidden enemies). Already-placed towers are unaffected. Requires 100 rounds played with a Blaster tower on the field.',type:'skin',slot:'basic_evolve',maxOwn:1,reqBlasterRounds:100},
+  {id:'other_speed_extend',name:'SPEED EXTEND',icon:'⏩',price:10000,desc:'Overhauls the SPEED row. Equip it and your speed buttons change from 1×/2×/3×/4×/5× to 0.5×/1×/2×/5×/6×.',type:'other',slot:'speed_upgrade',maxOwn:1},
 ];
 // Tower items go here — currently empty. Add entries with type:'tower' to populate the TOWERS tab.
 (function mgSanitizeEquippedSlots(){
@@ -7580,6 +7610,23 @@ function mgToggleEquip(id){
   }
   mgEquipped[id]=turningOn;
   mgSaveEquipped();
+  if(id==='other_speed_extend') mgApplySpeedUpgrade();
+}
+const SPEED_SET_DEFAULT=['1','2','3','4','5'];
+const SPEED_SET_EXTENDED=['0.5','1','2','5','6'];
+function mgApplySpeedUpgrade(){
+  const on=!!mgEquipped['other_speed_extend'];
+  const set=on?SPEED_SET_EXTENDED:SPEED_SET_DEFAULT;
+  const btns=document.querySelectorAll('.spb[data-spd]');
+  if(!btns.length) return;
+  btns.forEach((btn,i)=>{
+    if(i>=set.length) return;
+    const wasActive=btn.classList.contains('on');
+    btn.dataset.spd=set[i];
+    btn.textContent=set[i]+'×';
+    if(wasActive) speed=parseFloat(set[i]);
+  });
+  if(typeof applyLevelUnlocks==='function') applyLevelUnlocks();
 }
 let mgShopTab='store';
 let mgShopCategory='skin';
@@ -7592,10 +7639,11 @@ function mgRenderShopModal(){
   const ownedCount=Object.values(mgBackpack).reduce((a,b)=>a+b,0);
   document.getElementById('shop-modal-tab-backpack').textContent='BACKPACK'+(ownedCount?' ('+ownedCount+')':'');
   if(mgShopTab==='store'){
-    const catItems=SHOP_ITEMS.filter(i=>(i.type==='tower')===(mgShopCategory==='tower'));
+    const catItems=SHOP_ITEMS.filter(i=>(i.type||'skin')===mgShopCategory);
     const catBar=`<div class="shop-tabs-big" style="margin-bottom:12px;">
       <button id="shop-cat-skin" class="${mgShopCategory==='skin'?'on':''}">🎨 SKINS</button>
       <button id="shop-cat-tower" class="${mgShopCategory==='tower'?'on':''}">🗼 TOWERS</button>
+      <button id="shop-cat-other" class="${mgShopCategory==='other'?'on':''}">⚙ OTHER</button>
     </div>`;
     content.innerHTML=catBar+(catItems.length===0?`<div class="shop-empty">Nothing here yet.</div>`:`<div class="shop-grid">${catItems.map(i=>{
       const owned=mgBackpack[i.id]||0;
@@ -7623,8 +7671,10 @@ function mgRenderShopModal(){
     });
     const catSkinBtn=document.getElementById('shop-cat-skin');
     const catTowerBtn=document.getElementById('shop-cat-tower');
+    const catOtherBtn=document.getElementById('shop-cat-other');
     if(catSkinBtn) catSkinBtn.addEventListener('click',()=>{ mgShopCategory='skin'; mgRenderShopModal(); });
     if(catTowerBtn) catTowerBtn.addEventListener('click',()=>{ mgShopCategory='tower'; mgRenderShopModal(); });
+    if(catOtherBtn) catOtherBtn.addEventListener('click',()=>{ mgShopCategory='other'; mgRenderShopModal(); });
   } else {
     const owned=Object.keys(mgBackpack).filter(k=>mgBackpack[k]>0);
     if(owned.length===0){
@@ -8644,7 +8694,7 @@ if(t.cd>0){t.cd--;continue;}const bfx=getBuffsAt(t.col,t.row);const effDmg=Math.
       }
     }
   }
-}else{if(cfg.t===CT.CANNON){sparks(tx,ty,'#ffcc00',5,2.5);sparks(tx,ty,cfg.col,4,3);flashes.push({x:tx,y:ty,r:12,life:6,ml:6,col:'#ffcc00'});}else if(cfg.t===CT.SNIPER){sparks(tx,ty,'#ffffff',3,4);flashes.push({x:tx,y:ty,r:9,life:5,ml:5,col:cfg.col});}projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:cfg.t===CT.SNIPER?10:5.5,dmg:effDmg,aoe:cfg.aoe||0,chn:0,col:cfg.t===CT.BASIC?gbCol:cfg.col,sz:cfg.t===CT.CANNON?7:3,type:'normal',src:t,ballistic:!!cfg.ballistic});}}
+}else{if(cfg.t===CT.CANNON){sparks(tx,ty,'#ffcc00',5,2.5);sparks(tx,ty,cfg.col,4,3);flashes.push({x:tx,y:ty,r:12,life:6,ml:6,col:'#ffcc00'});}else if(cfg.t===CT.SNIPER){sparks(tx,ty,'#ffffff',3,4);flashes.push({x:tx,y:ty,r:9,life:5,ml:5,col:cfg.col});}if(cfg.customMissile){sparks(tx,ty,cfg.col,6,2.5);projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:5.5,dmg:effDmg,aoe:Math.max(cfg.aoe||0,60),chn:0,col:cfg.col,sz:6,type:'missile',src:t});}else{projs.push({x:tx,y:ty,tgt,lastX:tgt.x,lastY:tgt.y,spd:cfg.t===CT.SNIPER?10:5.5,dmg:effDmg,aoe:cfg.aoe||0,chn:0,col:cfg.t===CT.BASIC?gbCol:cfg.col,sz:cfg.t===CT.CANNON?7:3,type:'normal',src:t,ballistic:!!cfg.ballistic});}}}
   // === BARBWIRE CONNECTIONS === (every barbwire tower links to every other barbwire tower in range, no chain limit)
   barbWireSegs.length=0;
   {
@@ -9250,7 +9300,7 @@ function drawGasterCannon(px,py,ang,eyeCol,firing,scale,level,accentCol){
 }
 function drawTower(t){
   const _frm=(gfxMode===3)?0:frame;
-  if(t.key==='custom'){
+  if(t.key&&t.key.indexOf('custom')===0){
     const cfg=t.cfg;
     const sz=CS*(t.size||1), x=t.col*CS, y=t.row*CS, cx=x+sz/2, cy=y+sz/2;
     const fl=t.hitFlash>0;
@@ -9266,21 +9316,22 @@ function drawTower(t){
       // Custom LOOK EDITOR parts (blocks/circles placed by the player)
       const ppu=sz/100, ang=t.angle||0;
       cfg.parts.forEach(p=>{
-        const bx=(p.x||0)*ppu, by=(p.y||0)*ppu, ps=Math.max(1,(p.size||20)*ppu);
+        const bx=(p.x||0)*ppu, by=(p.y||0)*ppu;
+        const pw=Math.max(1,(p.w||p.size||20)*ppu), ph=Math.max(1,(p.h||p.size||20)*ppu);
         ctx.fillStyle=fl?'#ff4444':(p.col||col);
         if(p.rot){
           // "aims where it shoots" — this part rotates with the tower's aim (acts as the cannon)
           const rx=bx*Math.cos(ang)-by*Math.sin(ang), ry=bx*Math.sin(ang)+by*Math.cos(ang);
           ctx.save();ctx.translate(rx,ry);ctx.rotate(ang);
           ctx.beginPath();
-          if(p.type==='circle'){ctx.arc(0,0,ps,0,Math.PI*2);}
-          else{ctx.rect(-ps,-ps,ps*2,ps*2);}
+          if(p.type==='circle'){ctx.ellipse(0,0,pw,ph,0,0,Math.PI*2);}
+          else{ctx.rect(-pw,-ph,pw*2,ph*2);}
           ctx.fill();ctx.stroke();
           ctx.restore();
         } else {
           ctx.beginPath();
-          if(p.type==='circle'){ctx.arc(bx,by,ps,0,Math.PI*2);}
-          else{ctx.rect(bx-ps,by-ps,ps*2,ps*2);}
+          if(p.type==='circle'){ctx.ellipse(bx,by,pw,ph,0,0,Math.PI*2);}
+          else{ctx.rect(bx-pw,by-ph,pw*2,ph*2);}
           ctx.fill();ctx.stroke();
         }
       });
@@ -12207,7 +12258,8 @@ function draw(){
   ctx.restore();
 }
 
-function loop(){if(!gameOver)for(let i=0;i<speed;i++)update();draw();updateCamera();requestAnimationFrame(loop);}
+let _speedAccum=0;
+function loop(){if(!gameOver){_speedAccum+=speed;while(_speedAccum>=1){update();_speedAccum-=1;}}draw();updateCamera();requestAnimationFrame(loop);}
 gameMode='easy';applyMapDimensions(selectedMap);init();requestAnimationFrame(loop);
 
 
@@ -12258,7 +12310,7 @@ function executeAdminCommand(cmd) {
       ft(BASE_C*CS+CS/2, BASE_R*CS-10, '❤️ HP → ' + hpVal, '#ff4444');
       break;
     case 'set_speed':
-      speed = parseInt(value) || 1;
+      speed = parseFloat(value) || 1;
       ft(BASE_C*CS+CS/2, BASE_R*CS-10, '⏩ Speed → ' + speed, '#00ff88');
       break;
     case 'set_mode':
@@ -12959,7 +13011,10 @@ async function bgChatPoll(){
     {key:'hero_accel', name:'HERO: ACCELERATOR',    col:'#ffd23f', type:'Hero', unlock:999},
     {key:'hero_score', name:'HERO: SCORE MACHINE',  col:'#ff66cc', type:'Hero', unlock:999},
     {key:'hero_sacrifice', name:'HERO: SACRIFICE TEMPLE',  col:'#ff1f5e', type:'Hero', unlock:50},
-    {key:'custom', name:'CUSTOM TOWER', col:'#ffcc00', type:'Custom', unlock:0},
+    {key:'custom', name:'CUSTOM TOWER 1', col:'#ffcc00', type:'Custom', unlock:0},
+    {key:'custom2', name:'CUSTOM TOWER 2', col:'#ff66cc', type:'Custom', unlock:0},
+    {key:'custom3', name:'CUSTOM TOWER 3', col:'#66ff99', type:'Custom', unlock:0},
+    {key:'custom4', name:'CUSTOM TOWER 4', col:'#66aaff', type:'Custom', unlock:0},
   ];
 
   // Live-cost getter: reads straight from TS[key][1].cost (the base/level-1
@@ -12977,9 +13032,10 @@ async function bgChatPoll(){
   const QB_TOWERS = QB_TOWERS_BASE.map(t=>{
     const o=Object.assign({},t);
     Object.defineProperty(o,'cost',{get(){return qbLiveCost(t.key);},enumerable:true});
-    if(t.key==='custom'){
-      Object.defineProperty(o,'name',{get(){try{return (TS.custom[1].name)||'CUSTOM TOWER';}catch(e){return 'CUSTOM TOWER';}},enumerable:true});
-      Object.defineProperty(o,'col',{get(){try{return (TS.custom[1].col)||'#ffcc00';}catch(e){return '#ffcc00';}},enumerable:true});
+    if(t.key&&t.key.indexOf('custom')===0){
+      const fallbackName=t.name, fallbackCol=t.col;
+      Object.defineProperty(o,'name',{get(){try{return (TS[t.key][1].name)||fallbackName;}catch(e){return fallbackName;}},enumerable:true});
+      Object.defineProperty(o,'col',{get(){try{return (TS[t.key][1].col)||fallbackCol;}catch(e){return fallbackCol;}},enumerable:true});
     }
     return o;
   });
@@ -13029,8 +13085,9 @@ async function bgChatPoll(){
         const i   = parseInt(el.dataset.slot);
         const key = qbSlots[i];
         if (!key) { qbOpenPicker(i); return; }
-        if (key === 'custom') {
-          const accessBtn = document.getElementById('custom-tower-access-btn');
+        if (key && key.indexOf('custom') === 0) {
+          const slotNum = key === 'custom' ? 1 : parseInt(key.replace('custom',''));
+          const accessBtn = document.getElementById('custom-tower-access-btn-' + slotNum);
           if (accessBtn) accessBtn.click();
           requestAnimationFrame(qbRender);
           return;
@@ -14031,6 +14088,10 @@ function applyHeroLockUI(){
     </div>
 
     <div style="padding:16px 18px;">
+      <!-- Slot picker: equip different designs to different slots so multiple custom towers can be built at once -->
+      <div style="font-size:8px;color:#4a6a7a;letter-spacing:1px;margin-bottom:5px;">DESIGNING FOR SLOT (equip up to 4 different custom towers)</div>
+      <div id="ct-slot-picker" style="display:flex;gap:5px;margin-bottom:14px;"></div>
+
       <!-- Live preview card -->
       <div id="ct-preview" style="display:flex;align-items:center;gap:12px;background:#0a1420;border:1px solid #1a2c3a;padding:10px 12px;margin-bottom:14px;">
         <div id="ct-preview-dot" style="width:34px;height:34px;border-radius:50%;flex-shrink:0;background:#ffcc00;box-shadow:0 0 10px #ffcc00;"></div>
@@ -14137,11 +14198,16 @@ function applyHeroLockUI(){
   const CT_BULLET_TYPES = [
     {key:'bullet',   label:'🔹 BULLET',    desc:'Single-target shot · AOE splashes on impact'},
     {key:'shockwave',label:'💥 SHOCKWAVE', desc:'Expanding ring · hits everything it passes through'},
-    {key:'electric', label:'⚡ ELECTRIC',  desc:'Bolt that chains between nearby enemies'}
+    {key:'electric', label:'⚡ ELECTRIC',  desc:'Bolt that chains between nearby enemies'},
+    {key:'laser',    label:'🔺 LASER',     desc:'Locks onto a target and beams it · damage ramps up the longer it stays locked'},
+    {key:'missile',  label:'🚀 MISSILE',   desc:'Slow homing rocket · explodes for AOE splash on impact'},
+    {key:'summon',   label:'🛡 SUMMON ALLIES', desc:'Spawns allies that fight for you · DAMAGE stat = allies\' damage, RANGE stat = allies\' HP'}
   ];
   const CT_DEFAULT_STATS = {dmg:20, rng:150, cd:52, hp:85, cost:100, aoe:0, chn:0};
-  function ctDefaultParts(){ return [{id:'p0',type:'circle',x:0,y:0,size:30}]; }
-  function ctCfg(){ return TS.custom[1]; }
+  function ctDefaultParts(){ return [{id:'p0',type:'circle',x:0,y:0,w:30,h:30}]; }
+  let ctActiveSlot='custom'; // which custom tower slot ('custom','custom2','custom3','custom4') is being designed
+  const CT_SLOT_NUMS={custom:1,custom2:2,custom3:3,custom4:4};
+  function ctCfg(){ return TS[ctActiveSlot][1]; }
 
   // ── SAVED CUSTOM TOWER LIBRARY ──
   const CT_LIB_KEY='ct_saved_towers_v1';
@@ -14181,6 +14247,55 @@ function applyHeroLockUI(){
     ctRenderLookEditor();
     ctEditingId=t.id;
     ctUpdatePreview();
+    ctRenderList();
+  }
+  function ctSlotLabel(k){return {custom:'SLOT 1',custom2:'SLOT 2',custom3:'SLOT 3',custom4:'SLOT 4'}[k]||k;}
+  function ctSlotCol(k){return {custom:'#ffcc00',custom2:'#ff66cc',custom3:'#66ff99',custom4:'#66aaff'}[k]||'#ffcc00';}
+  function ctRenderSlotPicker(){
+    const wrap=document.getElementById('ct-slot-picker');
+    if(!wrap) return;
+    wrap.innerHTML=CUSTOM_TOWER_KEYS.map(k=>{
+      const equipped=TS[k]&&TS[k][1]&&TS[k][1]._libId;
+      const on=(k===ctActiveSlot);
+      const c=ctSlotCol(k);
+      return `<button class="ct-slot-btn" data-k="${k}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:${on?'#1a1400':'#0a1420'};border:1px solid ${on?c+'aa':'#1a2c3a'};color:${on?c:'#7ab0d0'};padding:6px 2px;font-family:inherit;cursor:pointer;">
+        <span style="font-size:9px;">${ctSlotLabel(k)}</span>
+        <span style="font-size:7px;color:${equipped?'#2a8a4a':'#5a5a5a'};">${equipped?'EQUIPPED':'EMPTY'}</span>
+      </button>`;
+    }).join('');
+    wrap.querySelectorAll('.ct-slot-btn').forEach(b=>{
+      b.addEventListener('click',()=>{ ctSwitchSlot(b.dataset.k); });
+    });
+  }
+  function ctSwitchSlot(slotKey){
+    ctActiveSlot=slotKey;
+    ctEditingId=null;
+    const lib=ctLoadLib();
+    const active=ctCfg();
+    let startFrom=null;
+    if(active&&active._libId) startFrom=lib.find(x=>x.id===active._libId)||null;
+    document.getElementById('ct-color').value = ctSlotCol(slotKey);
+    if(startFrom){
+      ctLoadIntoEditor(startFrom);
+    } else {
+      document.getElementById('ct-name').value = active.name || 'CUSTOM TOWER';
+      document.getElementById('ct-color').value = active.col || ctSlotCol(slotKey);
+      CT_STATS.forEach(s=>{
+        const el=document.getElementById('ct-in-'+s.key);
+        if(!el) return;
+        const v=(active[s.key]!==undefined)?active[s.key]:(CT_DEFAULT_STATS[s.key]||0);
+        el.value=v;
+        document.getElementById('ct-val-'+s.key).textContent=v;
+      });
+      ctBType=active.btype||'bullet';
+      ctShape=active.shape||'square';
+      ctParts=(active.parts&&active.parts.length)?JSON.parse(JSON.stringify(active.parts)):ctDefaultParts();
+      ctSelPartId=ctParts[0].id;
+      ctBuildBTypes();
+      ctRenderLookEditor();
+      ctUpdatePreview();
+    }
+    ctRenderSlotPicker();
     ctRenderList();
   }
   function ctRenderList(){
@@ -14264,16 +14379,17 @@ function applyHeroLockUI(){
         '<line x1="0" y1="'+cy+'" x2="'+CT_LOOK_BOX+'" y2="'+cy+'" stroke="#1a2c3a" stroke-width="1"/>';
     }
     ctParts.forEach(p=>{
-      const px=cx+(p.x||0)*ppu, py=cy+(p.y||0)*ppu, ps=Math.max(2,(p.size||20)*ppu);
+      const px=cx+(p.x||0)*ppu, py=cy+(p.y||0)*ppu;
+      const pw=Math.max(2,(p.w||p.size||20)*ppu), ph=Math.max(2,(p.h||p.size||20)*ppu);
       const col=ctPartCol(p);
       const sel=interactive&&p.id===ctSelPartId;
       const strokeCol=sel?'#ffffff':(p.rot?'#5ad0ff':'#000000');
       const strokeW=sel?2:(p.rot?1.8:1.2);
       const dash=p.rot?' stroke-dasharray="2,1.4"':'';
       if(p.type==='circle'){
-        html+='<circle class="ct-look-shape" data-id="'+p.id+'" cx="'+px+'" cy="'+py+'" r="'+ps+'" fill="'+col+'" stroke="'+strokeCol+'" stroke-width="'+strokeW+'"'+dash+' style="cursor:grab;"/>';
+        html+='<ellipse class="ct-look-shape" data-id="'+p.id+'" cx="'+px+'" cy="'+py+'" rx="'+pw+'" ry="'+ph+'" fill="'+col+'" stroke="'+strokeCol+'" stroke-width="'+strokeW+'"'+dash+' style="cursor:grab;"/>';
       } else {
-        html+='<rect class="ct-look-shape" data-id="'+p.id+'" x="'+(px-ps)+'" y="'+(py-ps)+'" width="'+(ps*2)+'" height="'+(ps*2)+'" fill="'+col+'" stroke="'+strokeCol+'" stroke-width="'+strokeW+'"'+dash+' style="cursor:grab;"/>';
+        html+='<rect class="ct-look-shape" data-id="'+p.id+'" x="'+(px-pw)+'" y="'+(py-ph)+'" width="'+(pw*2)+'" height="'+(ph*2)+'" fill="'+col+'" stroke="'+strokeCol+'" stroke-width="'+strokeW+'"'+dash+' style="cursor:grab;"/>';
       }
     });
     if(interactive){
@@ -14330,8 +14446,10 @@ function applyHeroLockUI(){
         <input type="range" class="ct-look-x" data-id="${p.id}" min="-50" max="50" step="1" value="${p.x}" style="width:100%;accent-color:#ffcc00;margin-bottom:6px;">
         <label style="display:flex;justify-content:space-between;font-size:8px;color:#7ab0d0;margin-bottom:2px;"><span>Y POSITION</span><span>${p.y}</span></label>
         <input type="range" class="ct-look-y" data-id="${p.id}" min="-50" max="50" step="1" value="${p.y}" style="width:100%;accent-color:#ffcc00;margin-bottom:6px;">
-        <label style="display:flex;justify-content:space-between;font-size:8px;color:#7ab0d0;margin-bottom:2px;"><span>SIZE</span><span>${p.size}</span></label>
-        <input type="range" class="ct-look-size" data-id="${p.id}" min="4" max="55" step="1" value="${p.size}" style="width:100%;accent-color:#ffcc00;margin-bottom:8px;">
+        <label style="display:flex;justify-content:space-between;font-size:8px;color:#7ab0d0;margin-bottom:2px;"><span>LENGTH (WIDTH)</span><span>${p.w!==undefined?p.w:(p.size||20)}</span></label>
+        <input type="range" class="ct-look-w" data-id="${p.id}" min="4" max="55" step="1" value="${p.w!==undefined?p.w:(p.size||20)}" style="width:100%;accent-color:#ffcc00;margin-bottom:6px;">
+        <label style="display:flex;justify-content:space-between;font-size:8px;color:#7ab0d0;margin-bottom:2px;"><span>HEIGHT</span><span>${p.h!==undefined?p.h:(p.size||20)}</span></label>
+        <input type="range" class="ct-look-h" data-id="${p.id}" min="4" max="55" step="1" value="${p.h!==undefined?p.h:(p.size||20)}" style="width:100%;accent-color:#ffcc00;margin-bottom:8px;">
         <label style="display:flex;align-items:center;gap:6px;font-size:8px;color:#5ad0ff;cursor:pointer;">
           <input type="checkbox" class="ct-look-rot" data-id="${p.id}" ${p.rot?'checked':''} style="accent-color:#5ad0ff;">
           AIMS WHERE IT SHOOTS (acts as the cannon)
@@ -14366,10 +14484,16 @@ function applyHeroLockUI(){
         if(p){ p.y=parseInt(e.target.value); ctRenderLookSvg(); ctRenderLookList(); }
       });
     });
-    wrap.querySelectorAll('.ct-look-size').forEach(inp=>{
+    wrap.querySelectorAll('.ct-look-w').forEach(inp=>{
       inp.addEventListener('input',(e)=>{
         const p=ctParts.find(pp=>pp.id===e.target.dataset.id);
-        if(p){ p.size=parseInt(e.target.value); ctRenderLookSvg(); ctRenderLookList(); }
+        if(p){ p.w=parseInt(e.target.value); ctRenderLookSvg(); ctRenderLookList(); }
+      });
+    });
+    wrap.querySelectorAll('.ct-look-h').forEach(inp=>{
+      inp.addEventListener('input',(e)=>{
+        const p=ctParts.find(pp=>pp.id===e.target.dataset.id);
+        if(p){ p.h=parseInt(e.target.value); ctRenderLookSvg(); ctRenderLookList(); }
       });
     });
     wrap.querySelectorAll('.ct-look-rot').forEach(inp=>{
@@ -14388,7 +14512,7 @@ function applyHeroLockUI(){
 
   function ctAddPart(type){
     const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-    ctParts.push({id,type,x:0,y:0,size:20,rot:false});
+    ctParts.push({id,type,x:0,y:0,w:20,h:20,rot:false});
     ctSelPartId=id;
     ctRenderLookEditor();
   }
@@ -14434,22 +14558,24 @@ function applyHeroLockUI(){
     ctRenderLookEditor();
   }
 
-  window.openCustomTowerBuilder = function(){
+  window.openCustomTowerBuilder = function(slotKey){
+    ctActiveSlot = (slotKey&&TS[slotKey])?slotKey:(ctActiveSlot||'custom');
     const lib=ctLoadLib();
     // Load the currently-active build (last used) if it matches a saved entry, else default to newest saved, else defaults.
     const active=ctCfg();
     let startFrom=null;
     if(active&&active._libId) startFrom=lib.find(x=>x.id===active._libId)||null;
-    if(!startFrom&&lib.length) startFrom=lib[lib.length-1];
+    if(!startFrom&&!active._libId&&lib.length) startFrom=null; // new/empty slot starts blank, not from an unrelated saved design
     ctBuildSliders(); // builds sliders off current ctCfg() defaults first so elements exist
     if(startFrom){
       ctLoadIntoEditor(startFrom);
     } else {
       document.getElementById('ct-name').value = ctCfg().name || 'CUSTOM TOWER';
-      document.getElementById('ct-color').value = ctCfg().col || '#ffcc00';
+      document.getElementById('ct-color').value = ctCfg().col || ctSlotCol(ctActiveSlot);
       ctEditingId=null;
       ctUpdatePreview();
     }
+    ctRenderSlotPicker();
     ctRenderList();
     document.getElementById('ct-modal').style.display='flex';
   };
@@ -14482,13 +14608,23 @@ function applyHeroLockUI(){
     if(!ctEditingId) return;
     let lib=ctLoadLib();
     const t=lib.find(x=>x.id===ctEditingId);
+    const tName=t?t.name:'this tower';
+    if(!confirm('⚠ Delete "'+tName+'"?\n\nThis cannot be undone. If it\'s equipped to any slot, that slot will be emptied.')) return;
     lib=lib.filter(x=>x.id!==ctEditingId);
     ctSaveLib(lib);
+    // Unequip this design from any slot it was equipped to
+    try{
+      const equip=JSON.parse(localStorage.getItem('ct_equip_slots_v1')||'{}');
+      let changed=false;
+      CUSTOM_TOWER_KEYS.forEach(k=>{ if(equip[k]===ctEditingId){ delete equip[k]; changed=true; } });
+      if(changed) localStorage.setItem('ct_equip_slots_v1',JSON.stringify(equip));
+    }catch(e){}
     msg('🗑 '+(t?t.name:'Tower')+' deleted',2000);
     ctEditingId=null;
     document.getElementById('ct-name').value='CUSTOM TOWER';
-    document.getElementById('ct-color').value='#ffcc00';
+    document.getElementById('ct-color').value=ctSlotCol(ctActiveSlot);
     ctUpdatePreview();
+    ctRenderSlotPicker();
     ctRenderList();
   });
 
@@ -14516,8 +14652,38 @@ function applyHeroLockUI(){
     cfg.shape = vals.shape;
     cfg.parts = vals.parts;
     // Translate bullet type into engine fields
-    cfg.shockwave = false;
+    ctApplyBulletType(cfg, vals);
+
+    // Persist which saved design is equipped to which slot, so it's restored on reload
+    try{
+      const equip=JSON.parse(localStorage.getItem(CT_EQUIP_KEY)||'{}');
+      equip[ctActiveSlot]=id;
+      localStorage.setItem(CT_EQUIP_KEY,JSON.stringify(equip));
+    }catch(e){}
+
+    const slotNum=CT_SLOT_NUMS[ctActiveSlot]||1;
+    const accessBtn = document.getElementById('custom-tower-access-btn-'+slotNum);
+    sellMode=false;upgMode=false;baseUpgMode=false;selBuild=ctActiveSlot;
+    document.querySelectorAll('.bb').forEach(x=>x.classList.remove('on'));
+    document.getElementById('sbtn').classList.remove('sell-on');
+    document.getElementById('ubtn').classList.remove('upg-on');
+    document.getElementById('basebtn').classList.remove('base-on');
+    CUSTOM_TOWER_KEYS.forEach((k2,i2)=>{const b2=document.getElementById('custom-tower-access-btn-'+(i2+1));if(b2) b2.classList.toggle('on',k2===ctActiveSlot);});
+    hidePanel();hideBasePanel();
+    ctRenderSlotPicker();
+    ctClose();
+    msg('🛠 '+vals.name+' equipped to '+ctSlotLabel(ctActiveSlot)+' — click the map to build!',2500);
+  });
+
+  // ── Restore equipped designs into their slots on page load ──
+  const CT_EQUIP_KEY='ct_equip_slots_v1';
+  // Translates a bullet-type choice + the 4 stat sliders into the engine fields the
+  // tower simulation actually reads (cfg.t plus mode-specific flags/fields).
+  function ctApplyBulletType(cfg, vals){
+    cfg.shockwave = false; cfg.laserTower = false; cfg.customMissile = false; cfg.barracksTower = false;
     delete cfg.shockSpd; delete cfg.shockMaxR; delete cfg.elecBall; delete cfg.burst; delete cfg.teslaEnergyPath;
+    delete cfg.allyHp; delete cfg.allySpd; delete cfg.allyDmg; delete cfg.allyAtkCd; delete cfg.allyMax; delete cfg.allySpawnCd;
+    delete cfg.allyExplode; delete cfg.allyExplodeDmg; delete cfg.allyExplodeAoe;
     if(vals.btype==='electric'){
       cfg.t = CT.ELECTRIC;
     } else if(vals.btype==='shockwave'){
@@ -14525,21 +14691,49 @@ function applyHeroLockUI(){
       cfg.shockwave = true;
       cfg.shockSpd = 3.2;
       cfg.shockMaxR = Math.max(60,vals.rng);
+    } else if(vals.btype==='laser'){
+      cfg.t = CT.LASER;
+      cfg.laserTower = true;
+    } else if(vals.btype==='missile'){
+      cfg.t = CT.BASIC;
+      cfg.customMissile = true;
+    } else if(vals.btype==='summon'){
+      cfg.t = CT.BARRACKS;
+      cfg.barracksTower = true;
+      cfg.rng = 0; // barracks-type towers don't attack directly
+      cfg.cd = 0;
+      cfg.allyDmg = vals.dmg;          // DAMAGE slider -> allies' damage
+      cfg.allyHp = Math.max(1,vals.rng); // RANGE slider -> allies' HP
+      cfg.allySpd = 0.9;
+      cfg.allyAtkCd = Math.max(10, vals.cd||30);
+      cfg.allyMax = Math.max(1, vals.chn||3);
+      cfg.allySpawnCd = 240;
+      if(vals.aoe>0){ cfg.allyExplode = true; cfg.allyExplodeDmg = vals.dmg; cfg.allyExplodeAoe = vals.aoe; }
     } else {
       cfg.t = CT.BASIC;
     }
-
-    const accessBtn = document.getElementById('custom-tower-access-btn');
-    sellMode=false;upgMode=false;baseUpgMode=false;selBuild='custom';
-    document.querySelectorAll('.bb').forEach(x=>x.classList.remove('on'));
-    document.getElementById('sbtn').classList.remove('sell-on');
-    document.getElementById('ubtn').classList.remove('upg-on');
-    document.getElementById('basebtn').classList.remove('base-on');
-    if(accessBtn) accessBtn.classList.add('on');
-    hidePanel();hideBasePanel();
-    ctClose();
-    msg('🛠 '+vals.name+' saved — click the map to build!',2500);
-  });
+  }
+  function ctApplyEntryToSlot(entry,slotKey){
+    const cfg=TS[slotKey][1];
+    cfg.name=entry.name; cfg.col=entry.col;
+    CT_STATS.forEach(s=>{ if(entry[s.key]!==undefined) cfg[s.key]=entry[s.key]; });
+    cfg._libId=entry.id;
+    cfg.btype=entry.btype; cfg.shape=entry.shape; cfg.parts=entry.parts;
+    ctApplyBulletType(cfg, entry);
+  }
+  function ctRestoreEquipped(){
+    try{
+      const equip=JSON.parse(localStorage.getItem(CT_EQUIP_KEY)||'{}');
+      const lib=ctLoadLib();
+      CUSTOM_TOWER_KEYS.forEach(slotKey=>{
+        const libId=equip[slotKey];
+        if(!libId) return;
+        const entry=lib.find(x=>x.id===libId);
+        if(entry) ctApplyEntryToSlot(entry,slotKey);
+      });
+    }catch(e){}
+  }
+  ctRestoreEquipped();
 })();
 </script>
 
